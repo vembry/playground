@@ -1,0 +1,24 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: "local"
+      POSTGRES_PASSWORD: "local"
+
+  api:
+    image: credits-api:local
+    container_name: api
+    ports: 
+      - 8080:8080
+
+  load-test:
+    image: credits-load-test:local
+    container_name: load-test
+    network_mode: host
