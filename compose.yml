@@ -13,12 +13,16 @@ services:
       POSTGRES_PASSWORD: "local"
 
   api:
+    build:
+      context: ./api
     image: credits-api:local
     container_name: api
     ports: 
       - 8080:8080
 
   load-test:
+    build:
+      context: ./load-test
     image: credits-load-test:local
     container_name: load-test
     network_mode: host
