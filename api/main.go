@@ -10,13 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateTransactionRequest contains fields submitted via create-transaction api
-type CreateTransactionRequest struct {
-	Amount      float64 `json:"amount"`
-	Type        string  `json:"type"` // credit or debit
-	Description string  `json:"description"`
-}
-
 // GenericResponse contains fields returned to api requester
 type GenericResponse struct {
 	Status  bool   `json:"status"`
@@ -29,6 +22,12 @@ func main() {
 
 	// create transaction
 	r.POST("/transaction", func(ctx *gin.Context) {
+
+		// CreateTransactionRequest contains fields submitted via create-transaction api
+		type CreateTransactionRequest struct {
+			Amount      float64 `json:"amount"`
+			Description string  `json:"description"`
+		}
 
 		var trxRequest CreateTransactionRequest
 		if err := ctx.Bind(&trxRequest); err != nil {
@@ -43,6 +42,41 @@ func main() {
 		ctx.JSON(200, map[string]interface{}{
 			"status":  true,
 			"payload": trxRequest,
+		})
+	})
+
+	// to create topup
+	r.POST("/topup", func(ctx *gin.Context) {
+
+		// CreateTopupRequest contains fields submitted via create-topup api
+		type CreateTopupRequest struct {
+			Amount float64 `json:"amount"`
+		}
+
+		var topupRequest CreateTopupRequest
+		if err := ctx.Bind(&topupRequest); err != nil {
+			// when error, return 4xx
+			ctx.JSON(400, GenericResponse{
+				Status:  false,
+				Message: fmt.Errorf("found error. err=%w", err).Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, map[string]interface{}{
+			"status":  true,
+			"payload": topupRequest,
+		})
+	})
+
+	// to get balance
+	r.GET("/balance", func(ctx *gin.Context) {
+
+		userId := ctx.GetHeader("x-user-id")
+
+		ctx.JSON(200, map[string]interface{}{
+			"status":  true,
+			"payload": fmt.Sprintf("userId=%s", userId),
 		})
 	})
 
