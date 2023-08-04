@@ -3,23 +3,26 @@ version: '3.1'
 
 services:
   postgres:
-    image: postgres
+    image: postgres:latest
     container_name: postgres
     restart: always
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: "local"
-      POSTGRES_PASSWORD: "local"
+      POSTGRES_DB: credits
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
 
   api:
     build:
       context: ./api
     image: credits-api:local
-    container_name: api
+    container_name: api 
     ports: 
       - 8080:8080
-
+ 
   load-test:
     build:
       context: ./load-test
