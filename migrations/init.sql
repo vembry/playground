@@ -90,7 +90,8 @@ CREATE TABLE public.transactions (
     created_at TIMESTAMP DEFAULT current_timestamp,
     updated_at TIMESTAMP DEFAULT current_timestamp,
 
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT unique_id_userid UNIQUE(id, user_id)
 );
 
 -- index ledgers' type
