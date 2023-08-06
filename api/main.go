@@ -18,6 +18,7 @@ import (
 )
 
 var (
+	//go:embed configs
 	embedFS embed.FS
 )
 

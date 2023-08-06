@@ -4,8 +4,7 @@ import (
 	"embed"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
+	"strings"
 )
 
 type EnvConfig struct {
@@ -16,9 +15,26 @@ type EnvConfig struct {
 
 // NewConfig is to parse env
 func NewConfig(embedFs embed.FS) *EnvConfig {
-	err := godotenv.Load("configs/.env")
+	// load file from embed
+	envs, err := embedFs.ReadFile("configs/local.env")
 	if err != nil {
-		log.Fatalf("failed to load .env. err=%v", err)
+		log.Fatalf("failed to load .env file from embed.Fs. err=%v", err)
+	}
+
+	// load envs to runtime(?) line by line
+	lines := strings.Split(string(envs), "\n")
+	for _, line := range lines {
+		if line != "" {
+			splits := strings.SplitN(line, "=", 2)
+
+			// skip env if its defined already
+			if os.Getenv(splits[0]) != "" {
+				continue
+			}
+			if err := os.Setenv(splits[0], splits[1]); err != nil {
+				log.Fatalf("failed to inject .env values. env=%s. value%s. err=%v", splits[0], splits[1], err)
+			}
+		}
 	}
 
 	return &EnvConfig{
