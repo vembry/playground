@@ -23,8 +23,6 @@ WORKDIR /
 
 COPY --from=build-stage /api /api
 
-EXPOSE 8080
-
-# USER nonroot:nonroot
+EXPOSE 80
 
 ENTRYPOINT ["/api"]

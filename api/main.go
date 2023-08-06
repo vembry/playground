@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"log"
 	"os"
 	"os/signal"
@@ -16,9 +17,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	//go:embed configs
+	embedFs embed.FS
+)
+
 func main() {
 	// setup config
-	config := app.NewConfig()
+	config := app.NewConfig(embedFs)
 
 	// setup db
 	db := newOrmDb(config)

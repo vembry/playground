@@ -1,6 +1,7 @@
 package app
 
 import (
+	"embed"
 	"log"
 	"os"
 
@@ -14,7 +15,7 @@ type EnvConfig struct {
 }
 
 // NewConfig is to parse env
-func NewConfig() *EnvConfig {
+func NewConfig(embedFs embed.FS) *EnvConfig {
 	err := godotenv.Load("configs/.env")
 	if err != nil {
 		log.Fatalf("failed to load .env. err=%v", err)
