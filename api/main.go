@@ -47,6 +47,7 @@ func main() {
 
 	// setup transaction domain
 	transaction := transactionDomain.New(db)
+	transaction.WithLedger(ledger) // plug ledger to transaction domain
 
 	// setup server's http-handler
 	r := handler.NewHttpHandler(transaction, ledger)

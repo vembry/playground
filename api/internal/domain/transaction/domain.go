@@ -12,11 +12,17 @@ import (
 // domain is transaction's domain instance
 type domain struct {
 	transactionRepo repoProvider
+	ledger          ledgerProvider
 }
 
 // repoProvider is the spec of transaction's repository
 type repoProvider interface {
 	Create(ctx context.Context, in *model.Transaction) error
+}
+
+// ledgerProvider is the spec of ledger's instance
+type ledgerProvider interface {
+	CreateEntry(ctx context.Context, in model.CreateLedgerEntry) error
 }
 
 // New is to initialize transaction domain instance.
@@ -25,6 +31,11 @@ func New(db *gorm.DB) *domain {
 	return &domain{
 		transactionRepo: repo,
 	}
+}
+
+// WithLedger is to inject ledger into transaction domain
+func (d *domain) WithLedger(ledger ledgerProvider) {
+	d.ledger = ledger
 }
 
 // Create is to create a single transaction entry

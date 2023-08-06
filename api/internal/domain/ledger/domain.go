@@ -1,6 +1,11 @@
 package transaction
 
-import "gorm.io/gorm"
+import (
+	"api/internal/model"
+	"context"
+
+	"gorm.io/gorm"
+)
 
 // domain is ledger's domain instance
 type domain struct {
@@ -17,4 +22,9 @@ func New(db *gorm.DB) *domain {
 	return &domain{
 		ledgerRepo: repo,
 	}
+}
+
+// CreateEntry is to create ledger entry
+func (d *domain) CreateEntry(ctx context.Context, in model.CreateLedgerEntry) error {
+	return nil
 }
