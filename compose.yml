@@ -13,16 +13,31 @@ services:
       POSTGRES_PASSWORD: local
     volumes:
       - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
       context: ./api
     image: credits-api:local
+    restart: unless-stopped
     container_name: api 
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports: 
-      - 8080:8080
+      - 80:80
     environment:
-      - DB_CONN=host.docker.internal user=local password=local dbname=credit port=5432 sslmode=disable
+      DB_CONN: host=host.docker.internal user=local password=local dbname=credit port=5432 sslmode=disable
+    healthcheck:
+      test: wget --quiet --output-document=- http://0.0.0.0:80/health
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 10s
  
   # load-test:
   #   build:
