@@ -18,13 +18,12 @@ import (
 )
 
 var (
-	//go:embed configs
-	embedFs embed.FS
+	embedFS embed.FS
 )
 
 func main() {
 	// setup config
-	config := app.NewConfig(embedFs)
+	config := app.NewConfig(embedFS)
 
 	// setup db
 	db := newOrmDb(config)
