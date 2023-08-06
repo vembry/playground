@@ -1,4 +1,4 @@
--- CREATE DATABASE credits;
+-- CREATE DATABASE credit;
 
 -- create users table
 CREATE TABLE public.users (
@@ -41,7 +41,7 @@ CREATE TABLE public.ledgers (
     type ledger_entry_type,
     description VARCHAR(50) NOT NULL,
     amount NUMERIC(15, 2),
-    balance_now NUMERIC(15, 2),
+    balance_after NUMERIC(15, 2),
     balance_before NUMERIC(15, 2),
     created_at TIMESTAMP DEFAULT current_timestamp,
 

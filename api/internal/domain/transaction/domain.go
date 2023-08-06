@@ -9,10 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// domain is transaction's domain instance
 type domain struct {
 	transactionRepo repoProvider
 }
 
+// repoProvider is the spec of transaction's repository
 type repoProvider interface {
 	Create(ctx context.Context, in *model.Transaction) error
 }
@@ -30,7 +32,7 @@ func (d *domain) Create(ctx context.Context, in *model.CreateTransaction) (*mode
 	err := d.transactionRepo.Create(ctx, &model.Transaction{
 		Id:          ksuid.New().String(),
 		UserId:      in.UserId,
-		Status:      "pending",
+		Status:      model.TransactionStatusPending,
 		Description: in.Description,
 		Remarks:     "",
 		Amount:      in.Amount,

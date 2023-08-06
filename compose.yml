@@ -8,7 +8,7 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: credits
+      POSTGRES_DB: credit
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
     volumes:
@@ -21,6 +21,8 @@ services:
     container_name: api 
     ports: 
       - 8080:8080
+    environment:
+      - DB_CONN=host.docker.internal user=local password=local dbname=credit port=5432 sslmode=disable
  
   # load-test:
   #   build:

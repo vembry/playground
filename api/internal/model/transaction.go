@@ -20,3 +20,10 @@ type Transaction struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
+
+// containing transaction's status enum
+const (
+	TransactionStatusPending string = "pending"
+	TransactionStatusSuccess string = "success"
+	TransactionStatusFailed  string = "failed"
+)

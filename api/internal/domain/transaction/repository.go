@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// repository is transaction's repository instance
 type repository struct {
 	db *gorm.DB
 }
