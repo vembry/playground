@@ -37,6 +37,9 @@ func NewHttpHandler(transactionDomain transactionProvider, ledgerDomain ledgerPr
 	// to get balance
 	r.GET("/balance", s.GetBalance)
 
+	// to do health-check
+	r.GET("/health", s.HealthCheck)
+
 	return r
 }
 
