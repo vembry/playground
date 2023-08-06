@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"api/internal/app"
 	"api/internal/app/handler"
 	ledgerDomain "api/internal/domain/ledger"
 	transactionDomain "api/internal/domain/transaction"
@@ -16,8 +17,11 @@ import (
 )
 
 func main() {
+	// setup config
+	config := app.NewConfig()
+
 	// setup db
-	db := newOrmDb()
+	db := newOrmDb(config)
 
 	// close db connection on app closure
 	defer func() {
@@ -42,7 +46,7 @@ func main() {
 	r := handler.NewHttpHandler(transaction, ledger)
 
 	// start server
-	serve(r)
+	serve(config, r)
 
 	// awaits for interrupt signals
 	watchForExitSignal()
@@ -56,11 +60,11 @@ func main() {
 }
 
 // serve is to start the server
-func serve(r *gin.Engine) {
+func serve(cfg *app.EnvConfig, r *gin.Engine) {
 	// start server
 	log.Printf("starting http server...")
 	go func() {
-		if err := r.Run("0.0.0.0:80"); err != nil {
+		if err := r.Run(cfg.HttpAddress); err != nil {
 			log.Fatalf("gin stopped running. err=%v", err)
 		}
 	}()
@@ -82,9 +86,9 @@ func watchForExitSignal() os.Signal {
 }
 
 // newOrmDb is to initialize DB in ORM form using gorm
-func newOrmDb() *gorm.DB {
-	dsn := "host=localhost user=local password=local dbname=credits port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func newOrmDb(cfg *app.EnvConfig) *gorm.DB {
+	// dsn := "host=localhost user=local password=local dbname=credits port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(cfg.DBConn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to initiate db. err=%v", err)
 	}
