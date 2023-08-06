@@ -33,7 +33,7 @@ services:
     environment:
       DB_CONN: host=host.docker.internal user=local password=local dbname=credit port=5432 sslmode=disable
     healthcheck:
-      test: [ "CMD-SHELL", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
+      test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
  
   # load-test:
   #   build:
