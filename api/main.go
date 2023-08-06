@@ -1,92 +1,48 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"api/internal/app/handler"
+	ledgerDomain "api/internal/domain/ledger"
+	transactionDomain "api/internal/domain/transaction"
+
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-// GenericResponse contains fields returned to api requester
-type GenericResponse struct {
-	Status  bool   `json:"status"`
-	Message string `json:"message"`
-}
-
-// main is to start the server
 func main() {
-	r := gin.Default()
+	// setup db
+	db := newOrmDb()
 
-	// create transaction
-	r.POST("/transaction", func(ctx *gin.Context) {
-
-		// CreateTransactionRequest contains fields submitted via create-transaction api
-		type CreateTransactionRequest struct {
-			Amount      float64 `json:"amount"`
-			Description string  `json:"description"`
+	// close db connection on app closure
+	defer func() {
+		sqlDb, err := db.DB()
+		if err != nil {
+			log.Fatalf("found error on getting DB. err=%v", err)
 		}
 
-		var trxRequest CreateTransactionRequest
-		if err := ctx.Bind(&trxRequest); err != nil {
-			// when error, return 4xx
-			ctx.JSON(400, GenericResponse{
-				Status:  false,
-				Message: fmt.Errorf("found error. err=%w", err).Error(),
-			})
-			return
-		}
-
-		ctx.JSON(200, map[string]interface{}{
-			"status":  true,
-			"payload": trxRequest,
-		})
-	})
-
-	// to create topup
-	r.POST("/topup", func(ctx *gin.Context) {
-
-		// CreateTopupRequest contains fields submitted via create-topup api
-		type CreateTopupRequest struct {
-			Amount float64 `json:"amount"`
-		}
-
-		var topupRequest CreateTopupRequest
-		if err := ctx.Bind(&topupRequest); err != nil {
-			// when error, return 4xx
-			ctx.JSON(400, GenericResponse{
-				Status:  false,
-				Message: fmt.Errorf("found error. err=%w", err).Error(),
-			})
-			return
-		}
-
-		ctx.JSON(200, map[string]interface{}{
-			"status":  true,
-			"payload": topupRequest,
-		})
-	})
-
-	// to get balance
-	r.GET("/balance", func(ctx *gin.Context) {
-
-		userId := ctx.GetHeader("x-user-id")
-
-		ctx.JSON(200, map[string]interface{}{
-			"status":  true,
-			"payload": fmt.Sprintf("userId=%s", userId),
-		})
-	})
-
-	log.Printf("starting http server...")
-
-	go func() {
-		if err := r.Run("0.0.0.0:8080"); err != nil {
-			log.Fatalf("gin stopped running. err=%v", err)
+		err = sqlDb.Close()
+		if err != nil {
+			log.Fatalf("found error on closing DB connection. err=%v", err)
 		}
 	}()
+
+	// setup ledger domain
+	ledger := ledgerDomain.New(db)
+
+	// setup transaction domain
+	transaction := transactionDomain.New(db)
+
+	// setup server's http-handler
+	r := handler.NewHttpHandler(transaction, ledger)
+
+	// start server
+	serve(r)
 
 	// awaits for interrupt signals
 	watchForExitSignal()
@@ -97,6 +53,17 @@ func main() {
 	// ...
 
 	log.Printf("server stopped")
+}
+
+// serve is to start the server
+func serve(r *gin.Engine) {
+	// start server
+	log.Printf("starting http server...")
+	go func() {
+		if err := r.Run("0.0.0.0:80"); err != nil {
+			log.Fatalf("gin stopped running. err=%v", err)
+		}
+	}()
 }
 
 // watchForExitSignal is to awaits incoming interrupt signal
@@ -112,4 +79,15 @@ func watchForExitSignal() os.Signal {
 	)
 
 	return <-ch
+}
+
+// newOrmDb is to initialize DB in ORM form using gorm
+func newOrmDb() *gorm.DB {
+	dsn := "host=localhost user=local password=local dbname=credits port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to initiate db. err=%v", err)
+	}
+
+	return db
 }
