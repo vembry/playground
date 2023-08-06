@@ -14,7 +14,7 @@ services:
     volumes:
       - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -d postgres -U local"]
       interval: 1s
       timeout: 5s
       retries: 5
@@ -22,6 +22,11 @@ services:
   api:
     build:
       context: ./api
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./api
+          # target: 
     image: credits-api:local
     restart: unless-stopped
     container_name: api 

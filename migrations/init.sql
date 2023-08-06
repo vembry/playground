@@ -3,7 +3,8 @@
 -- create users table
 CREATE TABLE public.users (
     id CHAR(27) PRIMARY KEY,
-    name VARCHAR(50) NOT NULL
+    name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT current_timestamp
 );
 
 -- setup dummy users
@@ -52,7 +53,7 @@ CREATE TABLE public.ledgers (
 CREATE INDEX idx_ledgers_type ON public.ledgers (type);
 
 -- setup pre-balance
-INSERT INTO public.ledgers(id, user_id, type, description, amount, balance_now, balance_before)
+INSERT INTO public.ledgers(id, user_id, type, description, amount, balance_after, balance_before)
 VALUES
     ('2TWoNoIElOA5lEMz2YJ4hBtWKEW', '2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga', 'in', 'init balance', 0, 0, 0),
     ('2TWoNk4xFevVLpBa9CGcOlJMMtD', '2TWlPVmPjhonQ2DpOFt09O990th', 'in', 'init balance', 0, 0, 0),
