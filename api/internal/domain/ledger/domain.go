@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"api/internal/domain/ledger/repository"
 	"api/internal/model"
 	"context"
 
@@ -9,22 +10,35 @@ import (
 
 // domain is ledger's domain instance
 type domain struct {
-	ledgerRepo repoProvider
+	ledgerRepo  ledgerRepoProvider
+	balanceRepo balanceRepoProvider
 }
 
-// repoProvider is the spec of ledger's repository
-type repoProvider interface {
+// ledgerRepoProvider is the spec of ledger's repository
+type ledgerRepoProvider interface {
+}
+
+// balanceRepoProvider is the spec of balance's repository
+type balanceRepoProvider interface {
 }
 
 // New is to initialize ledger domain instance.
 func New(db *gorm.DB) *domain {
-	repo := newRepository(db)
+	ledgerRepo := repository.NewLedger(db)
+	balanceRepo := repository.NewBalance(db)
+
 	return &domain{
-		ledgerRepo: repo,
+		ledgerRepo:  ledgerRepo,
+		balanceRepo: balanceRepo,
 	}
 }
 
 // CreateEntry is to create ledger entry
-func (d *domain) CreateEntry(ctx context.Context, in model.CreateLedgerEntry) error {
+func (d *domain) CreateEntry(ctx context.Context, in *model.CreateLedgerEntry) error {
+	return nil
+}
+
+// GetBalance is to get user's balance
+func (d *domain) GetBalance(ctx context.Context, userId string) error {
 	return nil
 }

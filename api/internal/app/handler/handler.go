@@ -9,7 +9,7 @@ import (
 
 // transactionProvider is the spec of transaction-domain instance
 type transactionProvider interface {
-	Create(ctx context.Context, in *model.CreateTransaction) (*model.CommonResponse, error)
+	Create(ctx context.Context, in *model.CreateTransaction) error
 }
 
 // ledgerProvider is the spec of ledger-domain instance
@@ -25,6 +25,7 @@ type GenericResponse struct {
 // NewHttpHandler is to setup http handler
 func NewHttpHandler(transactionDomain transactionProvider, ledgerDomain ledgerProvider) *gin.Engine {
 
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	s := newServer(transactionDomain)
 

@@ -25,7 +25,7 @@ func (s *server) CreateTransaction(ctx *gin.Context) {
 	payload.UserId = userId
 
 	// call transaction domain
-	out, err := s.transactionDomain.Create(ctx.Request.Context(), &payload)
+	err := s.transactionDomain.Create(ctx.Request.Context(), &payload)
 	if err != nil {
 		ctx.JSON(500, model.CommonResponse{
 			Status:  false,
@@ -33,5 +33,8 @@ func (s *server) CreateTransaction(ctx *gin.Context) {
 		})
 	}
 
-	ctx.JSON(200, out)
+	ctx.JSON(200, model.CommonResponse{
+		Status:  true,
+		Message: "ok",
+	})
 }

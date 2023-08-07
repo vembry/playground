@@ -4,15 +4,14 @@ import (
 	"embed"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
+	"api/cmd"
 	"api/internal/app"
 	"api/internal/app/handler"
 	ledgerDomain "api/internal/domain/ledger"
 	transactionDomain "api/internal/domain/transaction"
 
-	"github.com/gin-gonic/gin"
+	"github.com/spf13/cobra"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -24,10 +23,10 @@ var (
 
 func main() {
 	// setup config
-	config := app.NewConfig(embedFS)
+	appConfig := app.NewConfig(embedFS)
 
 	// setup db
-	db := newOrmDb(config)
+	db := newOrmDb(appConfig)
 
 	// close db connection on app closure
 	defer func() {
@@ -52,44 +51,15 @@ func main() {
 	// setup server's http-handler
 	r := handler.NewHttpHandler(transaction, ledger)
 
-	// start server
-	serve(config, r)
+	// setup app-server
+	appServer := app.NewServer(appConfig, r.Handler())
 
-	// awaits for interrupt signals
-	watchForExitSignal()
+	// start app-server
+	appCli := newCli(appServer)
 
-	log.Printf("stopping http server...")
-
-	// do shutdown handling
-	// ...
-
-	log.Printf("server stopped")
-}
-
-// serve is to start the server
-func serve(cfg *app.EnvConfig, r *gin.Engine) {
-	// start server
-	log.Printf("starting http server...")
-	go func() {
-		if err := r.Run(cfg.HttpAddress); err != nil {
-			log.Fatalf("gin stopped running. err=%v", err)
-		}
-	}()
-}
-
-// watchForExitSignal is to awaits incoming interrupt signal
-// sent to the service
-func watchForExitSignal() os.Signal {
-	ch := make(chan os.Signal, 4)
-	signal.Notify(
-		ch,
-		syscall.SIGINT,
-		syscall.SIGQUIT,
-		syscall.SIGTERM,
-		syscall.SIGTSTP,
-	)
-
-	return <-ch
+	if err := appCli.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 // newOrmDb is to initialize DB in ORM form using gorm
@@ -101,4 +71,12 @@ func newOrmDb(cfg *app.EnvConfig) *gorm.DB {
 	}
 
 	return db
+}
+
+// newCli is to construct clis
+func newCli(server *app.Server) *cobra.Command {
+	command := &cobra.Command{}
+	command.AddCommand(cmd.NewServe(server))
+
+	return command
 }

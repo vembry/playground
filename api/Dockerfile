@@ -26,4 +26,4 @@ COPY --from=gcr.io/distroless/base:debug /busybox/wget /
 
 EXPOSE 80
 
-ENTRYPOINT ["/api"]
+CMD [ "/api", "serve" ]
