@@ -8,3 +8,6 @@ start:
 tear-down:
 	docker compose -f "compose.yml" down
 	(echo "y" | docker volume prune)
+
+watch:
+	docker compose alpha watch
