@@ -8,9 +8,9 @@ import (
 )
 
 type EnvConfig struct {
-	HttpAddress   string
-	DBConn        string
-	SomethingElse string
+	HttpAddress string
+	DBConn      string
+	RedisUri    string
 }
 
 // NewConfig is to parse env
@@ -38,8 +38,8 @@ func NewConfig(embedFs embed.FS) *EnvConfig {
 	}
 
 	return &EnvConfig{
-		HttpAddress:   os.Getenv("HTTP_ADDRESS"),
-		DBConn:        os.Getenv("DB_CONN"),
-		SomethingElse: os.Getenv("SOMETHING_ELSE"),
+		HttpAddress: os.Getenv("HTTP_ADDRESS"),
+		DBConn:      os.Getenv("DB_CONN"),
+		RedisUri:    os.Getenv("REDIS_URI"),
 	}
 }
