@@ -18,6 +18,16 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
+  
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass local
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
 
   api:
     build:
@@ -36,7 +46,8 @@ services:
     ports: 
       - 80:80
     environment:
-      DB_CONN: host=host.docker.internal user=local password=local dbname=credit port=5432 sslmode=disable
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
     healthcheck:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
  
