@@ -37,8 +37,8 @@ func (s *Server) Start() error {
 	return nil
 }
 
-// GracefulStop is to shutdown server gracefully
-func (s *Server) GracefulStop() error {
+// Shutdown is to shutdown server gracefully
+func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

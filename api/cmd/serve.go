@@ -2,52 +2,47 @@ package cmd
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/spf13/cobra"
 )
 
-type ServerProvider interface {
+// serverProvider contain the spec of a 'server'
+type serverProvider interface {
 	Start() error
-	GracefulStop() error
+	Shutdown() error
 	GetAddress() string
 }
 
 // NewServe is to initiate cli command of 'serve'
-func NewServe(server ServerProvider) *cobra.Command {
+func NewServe(server serverProvider, worker workerProvider) *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",
-		Short: "Run http server",
+		Short: "Run app's http server",
 		Run: func(cmd *cobra.Command, args []string) {
 			go func() {
 				log.Printf("* Starting the server at %s...", server.GetAddress())
 				server.Start()
 			}()
 
+			// had to do this, otherwise worker's handler
+			// wont be able to enqueue task to worker
+			if worker != nil {
+				worker.ConnectToQueue()
+			}
+
 			watchForExitSignal()
 
 			log.Print("* Shutting down the server...")
-			if err := server.GracefulStop(); err != nil {
+			if err := server.Shutdown(); err != nil {
 				log.Printf("found error on shutting down server. err=%v", err)
 			}
 
+			// had to do this, because of prior worker.ConnectToQueue
+			if worker != nil {
+				if err := worker.DisconnectFromQueue(); err != nil {
+					log.Printf("found error on disconnecting from queue. err=%v", err)
+				}
+			}
 		},
 	}
-}
-
-// watchForExitSignal is to awaits incoming interrupt signal
-// sent to the service
-func watchForExitSignal() os.Signal {
-	ch := make(chan os.Signal, 4)
-	signal.Notify(
-		ch,
-		syscall.SIGINT,
-		syscall.SIGQUIT,
-		syscall.SIGTERM,
-		syscall.SIGTSTP,
-	)
-
-	return <-ch
 }

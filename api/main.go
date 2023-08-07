@@ -5,15 +5,11 @@ import (
 	"log"
 	"os"
 
-	"api/cmd"
 	"api/internal/app"
 	"api/internal/app/handler"
 	ledgerDomain "api/internal/domain/ledger"
 	transactionDomain "api/internal/domain/transaction"
-
-	"github.com/spf13/cobra"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"api/internal/worker"
 )
 
 var (
@@ -26,7 +22,7 @@ func main() {
 	appConfig := app.NewConfig(embedFS)
 
 	// setup db
-	db := newOrmDb(appConfig)
+	db := app.NewOrmDb(appConfig)
 
 	// close db connection on app closure
 	defer func() {
@@ -46,7 +42,6 @@ func main() {
 
 	// setup transaction domain
 	transaction := transactionDomain.New(db)
-	transaction.WithLedger(ledger) // plug ledger to transaction domain
 
 	// setup server's http-handler
 	r := handler.NewHttpHandler(transaction, ledger)
@@ -54,29 +49,35 @@ func main() {
 	// setup app-server
 	appServer := app.NewServer(appConfig, r.Handler())
 
-	// start app-server
-	appCli := newCli(appServer)
+	// initiate individual worker
+	pendingTransactionWorker := worker.NewPendingTransaction(transaction)
 
+	// setup app-worker
+	appWorker := app.NewWorker(appConfig)
+	appWorker.WithPostStartCallback(func() {
+		// register individual workers to the app-worker
+		appWorker.RegisterWorkers(
+			pendingTransactionWorker,
+		)
+	})
+
+	// register individual queues + respective priority to the app-worker
+	appWorker.RegisterQueues(map[string]int{
+		pendingTransactionWorker.Queue(): 1,
+	})
+
+	// plug missing dependecies to transaction domain
+	transaction.WithLedger(ledger)
+	transaction.WithPendingTransactionHandler(pendingTransactionWorker)
+
+	// plug missing worker to worker-handler
+	pendingTransactionWorker.WithWorker(appWorker)
+
+	// setup app-cli
+	appCli := app.NewCli(appServer, appWorker)
+
+	// start app cli
 	if err := appCli.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-// newOrmDb is to initialize DB in ORM form using gorm
-func newOrmDb(cfg *app.EnvConfig) *gorm.DB {
-	// dsn := "host=localhost user=local password=local dbname=credits port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(cfg.DBConn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to initiate db. err=%v", err)
-	}
-
-	return db
-}
-
-// newCli is to construct clis
-func newCli(server *app.Server) *cobra.Command {
-	command := &cobra.Command{}
-	command.AddCommand(cmd.NewServe(server))
-
-	return command
 }
