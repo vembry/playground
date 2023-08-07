@@ -51,12 +51,21 @@ services:
     healthcheck:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
  
-  # load-test:
-  #   build:
-  #     context: ./load-test
-  #   image: credits-load-test:local
-  #   container_name: load-test
-  #   network_mode: host
+  load-test:
+    build:
+      context: ./load-test
+    image: credits-load-test:local
+    container_name: load-test
+    network_mode: host
+
+  asynq-mon:
+    container_name: asynq-mon
+    image: hibiken/asynqmon
+    platform: linux/amd64
+    ports:
+      - "7001:8080"
+    environment:
+      - REDIS_URL=redis://:local@redis:6379/0
 
   # grafana:
   #   image: grafana/grafana

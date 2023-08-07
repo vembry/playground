@@ -1,6 +1,15 @@
 import http from "k6/http";
 
 export default function () {
-  console.log(Date.now().toLocaleString());
-  http.post("http://0.0.0.0:8080/transaction");
+  const payload = JSON.stringify({
+    amount: 10,
+    description: `testing-${Date.now()}`,
+  });
+  const params = {
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-id": "2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga",
+    },
+  };
+  http.post("http://host.docker.internal:80/transaction", payload, params);
 }
