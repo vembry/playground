@@ -40,6 +40,7 @@ services:
     image: credits-api:local
     restart: unless-stopped
     container_name: api 
+    command: /api serve
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,12 +51,33 @@ services:
       REDIS_URI: redis://:local@redis:6379/0
     healthcheck:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
+
+  api-worker:
+    build:
+      context: ./api
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./api
+    image: credits-api:local
+    restart: unless-stopped
+    container_name: api-worker 
+    command: /api work
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
  
   load-test:
     build:
       context: ./load-test
     image: credits-load-test:local
     container_name: load-test
+    depends_on:
+      api:
+        condition: service_healthy
     network_mode: host
 
   asynq-mon:

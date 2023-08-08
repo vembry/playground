@@ -25,5 +25,3 @@ COPY --from=build-stage /api /api
 COPY --from=gcr.io/distroless/base:debug /busybox/wget /
 
 EXPOSE 80
-
-CMD [ "/api", "serve" ]
