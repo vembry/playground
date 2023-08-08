@@ -29,7 +29,7 @@ func (s *server) CreateTransaction(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(500, model.CommonResponse{
 			Status:  false,
-			Message: fmt.Errorf("error on creating transaction entry. err=%v", err).Error(),
+			Message: fmt.Errorf("error on creating transaction entry. err=%w", err).Error(),
 		})
 	}
 

@@ -109,7 +109,7 @@ func (w *Worker) RegisterWorkers(workers ...cmd.WorkerHandler) error {
 func (w *Worker) Enqueue(ctx context.Context, task *asynq.Task, taskOptions ...asynq.Option) (*asynq.TaskInfo, error) {
 	taksInfo, err := w.client.EnqueueContext(ctx, task, taskOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("found error on enqueuing task to worker. err=%v", err)
+		return nil, fmt.Errorf("found error on enqueuing task to worker. err=%w", err)
 	}
 
 	return taksInfo, nil

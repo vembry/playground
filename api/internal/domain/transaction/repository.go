@@ -3,7 +3,10 @@ package transaction
 import (
 	"api/internal/model"
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/segmentio/ksuid"
 	"gorm.io/gorm"
 )
 
@@ -23,4 +26,18 @@ func newRepository(db *gorm.DB) *repository {
 func (r *repository) Create(ctx context.Context, in *model.Transaction) error {
 	res := r.db.Create(in)
 	return res.Error
+}
+
+// Get is to get a single data from `transactions` table by transactionId
+func (r *repository) Get(ctx context.Context, transactionId ksuid.KSUID) (*model.Transaction, error) {
+	var out model.Transaction
+	res := r.db.WithContext(ctx).Table("transactions").First(&out, "id = ?", transactionId.String())
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("found error on getting transaction from db. transactionId=%s. err=%w", transactionId, res.Error)
+	}
+
+	return &out, nil
 }

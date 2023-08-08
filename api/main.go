@@ -7,7 +7,7 @@ import (
 
 	"api/internal/app"
 	"api/internal/app/handler"
-	ledgerDomain "api/internal/domain/ledger"
+	balanceDomain "api/internal/domain/balance"
 	transactionDomain "api/internal/domain/transaction"
 	"api/internal/worker"
 )
@@ -38,13 +38,13 @@ func main() {
 	}()
 
 	// setup ledger domain
-	ledger := ledgerDomain.New(db)
+	balance := balanceDomain.New(db)
 
 	// setup transaction domain
 	transaction := transactionDomain.New(db)
 
 	// setup server's http-handler
-	r := handler.NewHttpHandler(transaction, ledger)
+	r := handler.NewHttpHandler(transaction, balance)
 
 	// setup app-server
 	appServer := app.NewServer(appConfig, r.Handler())
@@ -67,7 +67,7 @@ func main() {
 	})
 
 	// plug missing dependecies to transaction domain
-	transaction.WithLedger(ledger)
+	transaction.WithBalance(balance)
 	transaction.WithPendingTransactionHandler(pendingTransactionWorker)
 
 	// plug missing worker to worker-handler
