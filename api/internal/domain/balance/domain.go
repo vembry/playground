@@ -41,6 +41,10 @@ func New(db *gorm.DB) *domain {
 	}
 }
 
+// dummy balance locker
+// TODO: make it using redis
+var balanceLocker map[ksuid.KSUID]struct{} = make(map[ksuid.KSUID]struct{})
+
 // Withdraw is to withdraw credit from balance
 func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
 	// get balance
@@ -49,9 +53,21 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
 		return fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
+	if _, ok := balanceLocker[balance.Id]; ok {
+		return model.ErrBalanceLocked
+	}
+
+	// TODO: lock balance
+	balanceLocker[balance.Id] = struct{}{}
+
+	// TODO: unlock balance
+	defer func() {
+		delete(balanceLocker, balance.Id)
+	}()
+
 	// validate amount withdrawn against amount available on current balance
 	if balance.Amount < in.Amount {
-		return fmt.Errorf("not enough balance. balanceId=%s", balance.Id)
+		return model.ErrInsufficientBalance
 	}
 
 	// transform balance

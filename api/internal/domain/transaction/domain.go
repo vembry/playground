@@ -3,6 +3,8 @@ package transaction
 import (
 	"api/internal/model"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -22,6 +24,7 @@ type domain struct {
 type repoProvider interface {
 	Create(ctx context.Context, in *model.Transaction) error
 	Get(ctx context.Context, transactionId ksuid.KSUID) (*model.Transaction, error)
+	Update(ctx context.Context, in *model.Transaction) error
 }
 
 // balanceProvider is the spec of balance's instance
@@ -95,6 +98,8 @@ func (d *domain) ProcessPending(ctx context.Context, transactionId ksuid.KSUID) 
 		return fmt.Errorf("found error on getting transaction by id. transactionId=%s. err=%w", transactionId, err)
 	}
 
+	finalTransactionStatus := model.TransactionStatusSuccess
+
 	// withdraw money
 	err = d.balance.Withdraw(ctx, &model.WithdrawParam{
 		UserId:      transaction.UserId,
@@ -102,7 +107,35 @@ func (d *domain) ProcessPending(ctx context.Context, transactionId ksuid.KSUID) 
 		Description: transaction.Description,
 	})
 	if err != nil {
-		return fmt.Errorf("found error on withdrawing money from balance. transactionId=%s. err=%w", transactionId, err)
+		if errors.Is(err, model.ErrInsufficientBalance) {
+			// for insufficient balance, we want to stop the queue right away
+			log.Printf("not enough balance to do transaction. transactionId=%s", transaction.Id)
+			// return nil
+			finalTransactionStatus = model.TransactionStatusFailed
+		} else if errors.Is(err, model.ErrBalanceLocked) {
+			// for locked balance we want to requeue the transaction
+			// instead of waiting for the balance get unlocked
+			// and then do early return
+			log.Printf("balance is currently locked, transaction requeued. transactionId=%s", transaction.Id)
+			d.pendingTransactionHandler.Enqueue(ctx, transaction.Id)
+			return nil
+		} else {
+			// else, just return the error wrapped
+			return fmt.Errorf("found error on withdrawing money from balance. transactionId=%s. err=%w", transactionId, err)
+		}
+	}
+
+	// update transaction
+	newTransaction := *transaction
+	newTransaction.Status = finalTransactionStatus
+
+	// save updated transaction
+	err = d.transactionRepo.Update(ctx, &newTransaction)
+	if err != nil {
+		// if there is error, dont break the process
+		// but leave logs. or else
+		raw, _ := json.Marshal(newTransaction)
+		log.Printf("found error on updating transaction. transactionId=%s. transaction=%s. err=%v", transaction.Id, string(raw), err)
 	}
 
 	return nil

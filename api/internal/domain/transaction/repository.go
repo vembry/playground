@@ -41,3 +41,12 @@ func (r *repository) Get(ctx context.Context, transactionId ksuid.KSUID) (*model
 
 	return &out, nil
 }
+
+// Update is to update existing transaction data
+func (r *repository) Update(ctx context.Context, in *model.Transaction) error {
+	res := r.db.WithContext(ctx).Table("transactions").Save(in)
+	if res.Error != nil {
+		return fmt.Errorf("found error on updating transaction to db. err=%w", res.Error)
+	}
+	return nil
+}

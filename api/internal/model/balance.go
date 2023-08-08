@@ -1,9 +1,15 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/segmentio/ksuid"
+)
+
+var (
+	ErrInsufficientBalance = errors.New("not enough balance")
+	ErrBalanceLocked       = errors.New("balance is locked")
 )
 
 // Balance contain fields of balance. The fields refers to 'balances' table
