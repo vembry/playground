@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -43,7 +44,7 @@ func New(db *gorm.DB) *domain {
 
 // dummy balance locker
 // TODO: make it using redis
-var balanceLocker map[ksuid.KSUID]struct{} = make(map[ksuid.KSUID]struct{})
+var balanceLocker *sync.Map = &sync.Map{}
 
 // Withdraw is to withdraw credit from balance
 func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
@@ -53,16 +54,16 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
 		return fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
-	if _, ok := balanceLocker[balance.Id]; ok {
+	if _, ok := balanceLocker.Load(balance.Id); ok {
 		return model.ErrBalanceLocked
 	}
 
 	// TODO: lock balance
-	balanceLocker[balance.Id] = struct{}{}
+	balanceLocker.Store(balance.Id, struct{}{})
 
 	// TODO: unlock balance
 	defer func() {
-		delete(balanceLocker, balance.Id)
+		balanceLocker.Delete(balance.Id)
 	}()
 
 	// validate amount withdrawn against amount available on current balance
