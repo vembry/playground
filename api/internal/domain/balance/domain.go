@@ -54,12 +54,10 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
 		return fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
-	if _, ok := balanceLocker.Load(balance.Id); ok {
+	// TODO: lock balance
+	if _, loaded := balanceLocker.LoadOrStore(balance.Id, struct{}{}); loaded {
 		return model.ErrBalanceLocked
 	}
-
-	// TODO: lock balance
-	balanceLocker.Store(balance.Id, struct{}{})
 
 	// TODO: unlock balance
 	defer func() {
