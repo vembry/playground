@@ -64,7 +64,7 @@ CREATE TABLE public.balances (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- setup pre-balance
+-- setup balance seeder
 INSERT INTO public.balances(id, user_id, amount)
 VALUES
     ('2TeSprhp2cN6nEIcayZsjjvnlsK', '2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga', 1000),
@@ -109,27 +109,27 @@ CREATE TABLE public.ledgers (
 -- index ledgers' type
 CREATE INDEX idx_ledgers_type ON public.ledgers (type);
 
--- setup pre-balance
+-- setup ledger seeder
 INSERT INTO public.ledgers(id, user_id, type, description, amount, balance_after, balance_before)
 VALUES
-    ('2TWoNoIElOA5lEMz2YJ4hBtWKEW', '2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNk4xFevVLpBa9CGcOlJMMtD', '2TWlPVmPjhonQ2DpOFt09O990th', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNjy0ZwMeCVJiSbUdEGD2rOF', '2TWlPdYWFbP3iXPMIKVRmdZ3ozC', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNlkQxwgYo7mK5SmHKhGgn7H', '2TWlPkjd1YcRDCBDQk11nygVDpe', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNjNrMz5Tk7KWrUoyzWd9n1x', '2TWlPw3U64nhEtzeazP5ELd7q4c', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNlsyvef315nycZp2Fo38ir2', '2TWlQ2JWBetv9MUkFsLPd4zhLa4', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNkSFocY94EtT1bzah03YW7M', '2TWlQ83iEHKIOtvMCfSnBwM2sEB', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNjXHN5wO1mCkKHWrmeqHXwl', '2TWlQJsEhRIW8XpeGGz2u75phWN', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNnfgdYCl6RP8uuId2UxiPV4', '2TWlQRnYNr5ViFi0wLTatYImXz5', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNkrfVNVHZJiuRQse59VuKK9', '2TWlQYYZVIC566T3XFVldQckPsB', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNkcUykDQ4sBOAy3IwLgGz0t', '2TWlQcFLvqE67A2qbZpWAdSJiZL', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNilW0BrGwmP95XZlIpN6zEg', '2TWlQjcMepYBrRJRRzwgXWLA0gX', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNmxDzxJvxVwxv7MQleJ5XL3', '2TWlQvGoGcHxUa4iod28bMsfW7e', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNju27StnXldwLZwKvhEV53V', '2TWlR5WFe7VUVMSxhgpEmfqlAAX', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNm6hVYSFmLA87XBe9UPU8NT', '2TWlR8ifwogFmktTwET0Eb2s4PE', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNiySHd5cook6r4qWbpWBmmh', '2TWlRFfCwsZo903aTO7xSRCYQIU', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNmYo3Tnc9isXPcL6xKRzvlp', '2TWlRRtrVofuy7C1ZzcWIICVEME', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNlmcEqb6pM0niSL1WgViSsD', '2TWlRZBGQlbQe34dVNU3GhQKshe', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNiKJghuwkEANCZ1lavtOBMw', '2TWlRedfruxmFYvYLJur7oGesXY', 'in', 'init balance', 0, 0, 0),
-    ('2TWoNiinHa0FTsSPIjzMvIww10k', '2TWlRnR3C0hopS7NkcwyjIOq5Kd', 'in', 'init balance', 0, 0, 0)
+    ('2TWoNoIElOA5lEMz2YJ4hBtWKEW', '2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNk4xFevVLpBa9CGcOlJMMtD', '2TWlPVmPjhonQ2DpOFt09O990th', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNjy0ZwMeCVJiSbUdEGD2rOF', '2TWlPdYWFbP3iXPMIKVRmdZ3ozC', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNlkQxwgYo7mK5SmHKhGgn7H', '2TWlPkjd1YcRDCBDQk11nygVDpe', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNjNrMz5Tk7KWrUoyzWd9n1x', '2TWlPw3U64nhEtzeazP5ELd7q4c', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNlsyvef315nycZp2Fo38ir2', '2TWlQ2JWBetv9MUkFsLPd4zhLa4', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNkSFocY94EtT1bzah03YW7M', '2TWlQ83iEHKIOtvMCfSnBwM2sEB', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNjXHN5wO1mCkKHWrmeqHXwl', '2TWlQJsEhRIW8XpeGGz2u75phWN', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNnfgdYCl6RP8uuId2UxiPV4', '2TWlQRnYNr5ViFi0wLTatYImXz5', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNkrfVNVHZJiuRQse59VuKK9', '2TWlQYYZVIC566T3XFVldQckPsB', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNkcUykDQ4sBOAy3IwLgGz0t', '2TWlQcFLvqE67A2qbZpWAdSJiZL', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNilW0BrGwmP95XZlIpN6zEg', '2TWlQjcMepYBrRJRRzwgXWLA0gX', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNmxDzxJvxVwxv7MQleJ5XL3', '2TWlQvGoGcHxUa4iod28bMsfW7e', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNju27StnXldwLZwKvhEV53V', '2TWlR5WFe7VUVMSxhgpEmfqlAAX', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNm6hVYSFmLA87XBe9UPU8NT', '2TWlR8ifwogFmktTwET0Eb2s4PE', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNiySHd5cook6r4qWbpWBmmh', '2TWlRFfCwsZo903aTO7xSRCYQIU', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNmYo3Tnc9isXPcL6xKRzvlp', '2TWlRRtrVofuy7C1ZzcWIICVEME', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNlmcEqb6pM0niSL1WgViSsD', '2TWlRZBGQlbQe34dVNU3GhQKshe', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNiKJghuwkEANCZ1lavtOBMw', '2TWlRedfruxmFYvYLJur7oGesXY', 'in', 'init balance', 1000, 1000, 0),
+    ('2TWoNiinHa0FTsSPIjzMvIww10k', '2TWlRnR3C0hopS7NkcwyjIOq5Kd', 'in', 'init balance', 1000, 1000, 0)
 ;

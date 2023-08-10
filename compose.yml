@@ -79,6 +79,8 @@ services:
       api:
         condition: service_healthy
     network_mode: host
+    environment:
+      - API_HOST=http://localhost
 
   asynq-mon:
     container_name: asynq-mon
