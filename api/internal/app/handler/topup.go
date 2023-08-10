@@ -10,7 +10,7 @@ import (
 )
 
 // CreateTopup is to create a topup entry.
-func (s *server) CreateTopup(ctx *gin.Context) {
+func (s *handler) CreateTopup(ctx *gin.Context) {
 	userIdStr := ctx.GetHeader("x-user-id")
 
 	// CreateTopupRequest contains fields submitted via create-topup api
@@ -41,13 +41,13 @@ func (s *server) CreateTopup(ctx *gin.Context) {
 		return
 	}
 
-	// add balance
-	err = s.balanceDomain.Add(ctx, &model.AddBalanceParam{
+	// add queue task add-balance worker
+	err = s.addBalanceHandler.Enqueue(ctx, &model.AddBalanceParam{
 		UserId: userId,
 		Amount: topupRequest.Amount,
 	})
 	if err != nil {
-		log.Printf("found error on adding balance. err=%v", err)
+		log.Printf("found error on queuing to balance-worker. err=%v", err)
 
 		// when error, return 4xx
 		ctx.JSON(400, GenericResponse{

@@ -10,7 +10,7 @@ import (
 )
 
 // GetBalance is to get user's latest balance
-func (s *server) GetBalance(c *gin.Context) {
+func (s *handler) GetBalance(c *gin.Context) {
 	userIdStr := c.GetHeader("x-user-id")
 
 	// parse user id

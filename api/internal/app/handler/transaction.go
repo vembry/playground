@@ -10,7 +10,7 @@ import (
 )
 
 // CreateTransaction is to create a transaction entry
-func (s *server) CreateTransaction(ctx *gin.Context) {
+func (s *handler) CreateTransaction(ctx *gin.Context) {
 	userIdStr := ctx.GetHeader("x-user-id")
 
 	var payload model.CreateTransaction

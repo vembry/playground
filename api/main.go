@@ -32,14 +32,15 @@ func main() {
 	// setup transaction domain
 	transaction := transactionDomain.New(db)
 
+	// initiate individual worker
+	pendingTransactionWorker := worker.NewPendingTransaction(transaction)
+	addBalanceWorker := worker.NewAddBalance(balance)
+
 	// setup server's http-handler
-	r := handler.NewHttpHandler(transaction, balance)
+	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker)
 
 	// setup app-server
 	appServer := app.NewServer(appConfig, r.Handler())
-
-	// initiate individual worker
-	pendingTransactionWorker := worker.NewPendingTransaction(transaction)
 
 	// setup app-worker
 	appWorker := app.NewWorker(appConfig)
@@ -47,12 +48,14 @@ func main() {
 		// register individual workers to the app-worker
 		appWorker.RegisterWorkers(
 			pendingTransactionWorker,
+			addBalanceWorker,
 		)
 	})
 
 	// register individual queues + respective priority to the app-worker
 	appWorker.RegisterQueues(map[string]int{
 		pendingTransactionWorker.Queue(): 1,
+		addBalanceWorker.Queue():         1,
 	})
 
 	// plug missing dependecies to transaction domain
@@ -61,6 +64,7 @@ func main() {
 
 	// plug missing worker to worker-handler
 	pendingTransactionWorker.WithWorker(appWorker)
+	addBalanceWorker.WithWorker(appWorker)
 
 	// setup app-cli
 	appCli := app.NewCli(appServer, appWorker)

@@ -19,6 +19,11 @@ type balanceProvider interface {
 	Get(ctx context.Context, userId ksuid.KSUID) (*model.Balance, error)
 }
 
+// addBalanceHandlerProvider contain spec for add-balance handler
+type addBalanceHandlerProvider interface {
+	Enqueue(ctx context.Context, in *model.AddBalanceParam) error
+}
+
 // GenericResponse contains fields returned to api requester
 type GenericResponse struct {
 	Status  bool   `json:"status"`
@@ -26,11 +31,15 @@ type GenericResponse struct {
 }
 
 // NewHttpHandler is to setup http handler
-func NewHttpHandler(transactionDomain transactionProvider, balanceDomain balanceProvider) *gin.Engine {
+func NewHttpHandler(
+	transactionDomain transactionProvider,
+	balanceDomain balanceProvider,
+	addBalanceHandler addBalanceHandlerProvider,
+) *gin.Engine {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	s := newServer(transactionDomain, balanceDomain)
+	s := newHandler(transactionDomain, balanceDomain, addBalanceHandler)
 
 	// create transaction
 	r.POST("/transaction", s.CreateTransaction)
@@ -47,16 +56,22 @@ func NewHttpHandler(transactionDomain transactionProvider, balanceDomain balance
 	return r
 }
 
-// server contain the server instance to handle incoming http request
-type server struct {
+// handler contain the server instance to handle incoming http request
+type handler struct {
 	transactionDomain transactionProvider
 	balanceDomain     balanceProvider
+	addBalanceHandler addBalanceHandlerProvider
 }
 
-// newServer is to initiate server
-func newServer(transactionDomain transactionProvider, balanceDomain balanceProvider) *server {
-	return &server{
+// newHandler is to setup handler instance
+func newHandler(
+	transactionDomain transactionProvider,
+	balanceDomain balanceProvider,
+	addBalanceHandler addBalanceHandlerProvider,
+) *handler {
+	return &handler{
 		transactionDomain: transactionDomain,
 		balanceDomain:     balanceDomain,
+		addBalanceHandler: addBalanceHandler,
 	}
 }
