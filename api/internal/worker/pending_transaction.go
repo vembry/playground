@@ -58,7 +58,7 @@ func (tp *pendingTransaction) WithWorker(worker workerHandler) {
 	tp.worker = worker
 }
 
-// Enqueue is the pending-transaction's handler prior to enqueue task
+// Enqueue is the pending-transaction's handler prior to enqueue task to main worker
 func (tp *pendingTransaction) Enqueue(ctx context.Context, transactionId ksuid.KSUID) error {
 	task := asynq.NewTask(tp.Type(), []byte(transactionId.String()))
 	_, err := tp.worker.Enqueue(ctx, task, asynq.Queue(tp.Type()))
