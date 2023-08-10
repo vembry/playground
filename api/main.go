@@ -22,14 +22,11 @@ func main() {
 
 	// setup db
 	db, close := app.NewOrmDb(appConfig)
-
 	// when main stack closes, then close db connection
 	defer close()
 
-	// setup ledger domain
+	// setup domain
 	balance := balanceDomain.New(db)
-
-	// setup transaction domain
 	transaction := transactionDomain.New(db)
 
 	// initiate individual worker
@@ -40,7 +37,7 @@ func main() {
 	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker)
 
 	// setup app-server
-	appServer := app.NewServer(appConfig, r.Handler())
+	appServer := app.NewServer(appConfig, r)
 
 	// setup app-worker
 	appWorker := app.NewWorker(appConfig)
@@ -55,14 +52,14 @@ func main() {
 	// register individual queues + respective priority to the app-worker
 	appWorker.RegisterQueues(map[string]int{
 		pendingTransactionWorker.Queue(): 1,
-		addBalanceWorker.Queue():         1,
+		addBalanceWorker.Queue():         2,
 	})
 
 	// plug missing dependecies to transaction domain
 	transaction.WithBalance(balance)
 	transaction.WithPendingTransactionHandler(pendingTransactionWorker)
 
-	// plug missing worker to worker-handler
+	// plug missing worker to worker-handlers
 	pendingTransactionWorker.WithWorker(appWorker)
 	addBalanceWorker.WithWorker(appWorker)
 

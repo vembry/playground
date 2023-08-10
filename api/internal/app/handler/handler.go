@@ -3,6 +3,7 @@ package handler
 import (
 	"api/internal/model"
 	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/segmentio/ksuid"
@@ -35,7 +36,7 @@ func NewHttpHandler(
 	transactionDomain transactionProvider,
 	balanceDomain balanceProvider,
 	addBalanceHandler addBalanceHandlerProvider,
-) *gin.Engine {
+) http.Handler {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -53,7 +54,7 @@ func NewHttpHandler(
 	// to do health-check
 	r.GET("/health", s.HealthCheck)
 
-	return r
+	return r.Handler()
 }
 
 // handler contain the server instance to handle incoming http request
