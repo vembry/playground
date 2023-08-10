@@ -29,7 +29,7 @@ type repoProvider interface {
 
 // balanceProvider is the spec of balance's instance
 type balanceProvider interface {
-	Withdraw(ctx context.Context, in *model.WithdrawParam) error
+	Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) error
 }
 
 // pendingTransactionHandlerProvider is the spec of transcation-pending worker's handler
@@ -57,14 +57,9 @@ func (d *domain) WithPendingTransactionHandler(pendingTransactionHandler pending
 
 // Create is to create a single transaction entry
 func (d *domain) Create(ctx context.Context, in *model.CreateTransaction) error {
-	userId, err := ksuid.Parse(in.UserId)
-	if err != nil {
-		return fmt.Errorf("failed parsing user-id. err=%w", err)
-	}
-
 	newTransaction := model.Transaction{
 		Id:          ksuid.New(),
-		UserId:      userId,
+		UserId:      in.UserId,
 		Status:      model.TransactionStatusPending,
 		Description: in.Description,
 		Remarks:     "",
@@ -74,7 +69,7 @@ func (d *domain) Create(ctx context.Context, in *model.CreateTransaction) error 
 	}
 
 	// create transaction entry
-	err = d.transactionRepo.Create(ctx, &newTransaction)
+	err := d.transactionRepo.Create(ctx, &newTransaction)
 	if err != nil {
 		return fmt.Errorf("failed to create transaction. err=%w", err)
 	}
@@ -101,7 +96,7 @@ func (d *domain) ProcessPending(ctx context.Context, transactionId ksuid.KSUID) 
 	finalTransactionStatus := model.TransactionStatusSuccess
 
 	// withdraw money
-	err = d.balance.Withdraw(ctx, &model.WithdrawParam{
+	err = d.balance.Withdraw(ctx, &model.WithdrawBalanceParam{
 		UserId:      transaction.UserId,
 		Amount:      transaction.Amount,
 		Description: transaction.Description,

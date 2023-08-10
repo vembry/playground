@@ -47,22 +47,15 @@ func New(db *gorm.DB) *domain {
 var balanceLocker *sync.Map = &sync.Map{}
 
 // Withdraw is to withdraw credit from balance
-func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
-	// get balance
-	balance, err := d.GetBalance(ctx, in.UserId)
+func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) error {
+
+	// get balance lock
+	balance, unlocker, err := d.GetLock(ctx, in.UserId)
 	if err != nil {
-		return fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", in.UserId, err)
+		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
-	// TODO: lock balance
-	if _, loaded := balanceLocker.LoadOrStore(balance.Id, struct{}{}); loaded {
-		return model.ErrBalanceLocked
-	}
-
-	// TODO: unlock balance
-	defer func() {
-		balanceLocker.Delete(balance.Id)
-	}()
+	defer unlocker()
 
 	// validate amount withdrawn against amount available on current balance
 	if balance.Amount < in.Amount {
@@ -104,8 +97,8 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawParam) error {
 	return nil
 }
 
-// GetBalance is to get user's balance
-func (d *domain) GetBalance(ctx context.Context, userId ksuid.KSUID) (*model.Balance, error) {
+// Get is to get user's balance
+func (d *domain) Get(ctx context.Context, userId ksuid.KSUID) (*model.Balance, error) {
 	// get balance
 	balance, err := d.balanceRepo.Get(ctx, userId)
 	if err != nil {
@@ -117,4 +110,69 @@ func (d *domain) GetBalance(ctx context.Context, userId ksuid.KSUID) (*model.Bal
 		return nil, fmt.Errorf("balance not found. userId=%s", userId)
 	}
 	return balance, nil
+}
+
+// GetLock is to get and lock user's balance
+func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balance, func(), error) {
+	// get balance
+	balance, err := d.Get(ctx, userId)
+	if err != nil {
+		return nil, nil, fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", userId, err)
+	}
+
+	//  lock balance
+	if _, loaded := balanceLocker.LoadOrStore(balance.Id, struct{}{}); loaded {
+		return nil, nil, model.ErrBalanceLocked
+	}
+
+	return balance, func() {
+		// balance unlock
+		balanceLocker.Delete(balance.Id)
+	}, nil
+}
+
+// Add is to add credit to active balance
+func (d *domain) Add(ctx context.Context, in *model.AddBalanceParam) error {
+
+	// get balance lock
+	balance, unlocker, err := d.GetLock(ctx, in.UserId)
+	if err != nil {
+		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId, err)
+	}
+
+	defer unlocker()
+
+	// transform balance
+	newBalance := *balance
+
+	// update balance values
+	newBalance.Amount += in.Amount
+	newBalance.UpdatedAt = time.Now().UTC()
+
+	// save updated balance
+	err = d.balanceRepo.Update(ctx, &newBalance)
+	if err != nil {
+		return fmt.Errorf("found error on updating balance. balanceId=%s. err=%w", balance.Id, err)
+	}
+
+	// create ledger entry
+	newLedgerEntry := model.Ledger{
+		Id:            ksuid.New(),
+		UserId:        balance.UserId,
+		Type:          model.LedgerTypeIn,
+		Description:   "topup",
+		Amount:        in.Amount,
+		BalanceAfter:  newBalance.Amount,
+		BalanceBefore: balance.Amount,
+		CreatedAt:     time.Now().UTC(),
+	}
+
+	// save new ledger entry
+	err = d.ledgerRepo.Create(ctx, &newLedgerEntry)
+	if err != nil {
+		raw, _ := json.Marshal(newLedgerEntry)
+		log.Printf("found error on creating ledger. ledgerEntry=%s. err=%v", string(raw), err)
+	}
+
+	return nil
 }

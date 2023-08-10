@@ -21,9 +21,22 @@ type Balance struct {
 	UpdatedAt time.Time   `json:"updated_at" db:"updated_at"`
 }
 
-// WithdrawParam contain fields to execute balance withdrawal
-type WithdrawParam struct {
+// WithdrawBalanceParam contain fields to execute balance withdrawal
+type WithdrawBalanceParam struct {
 	UserId      ksuid.KSUID `json:"user_id"`
 	Amount      float64     `json:"amount"`
 	Description string      `json:"description"`
+}
+
+// AddBalanceParam contain fields to execute balance addition
+type AddBalanceParam struct {
+	UserId ksuid.KSUID `json:"user_id"`
+	Amount float64     `json:"amount"`
+}
+
+// BalanceResponse contain fields of balance detail expose to public
+type BalanceResponse struct {
+	Amount    float64   `json:"amount"`
+	CreatedAt time.Time `json:"Created_at"`
+	UpdatedAt time.Time `json:"Updated_at"`
 }

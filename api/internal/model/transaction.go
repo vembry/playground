@@ -8,9 +8,9 @@ import (
 
 // CreateTransaction contain fields to create a transaction entry
 type CreateTransaction struct {
-	UserId      string  `json:"user_id"`
-	Amount      float64 `json:"amount"`
-	Description string  `json:"description"`
+	UserId      ksuid.KSUID `json:"user_id"`
+	Amount      float64     `json:"amount"`
+	Description string      `json:"description"`
 }
 
 // Transaction contain fields of transactions. The fields refers to 'transactions' table
