@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"log"
 	"os"
 
 	"api/internal/app"
@@ -22,20 +21,10 @@ func main() {
 	appConfig := app.NewConfig(embedFS)
 
 	// setup db
-	db := app.NewOrmDb(appConfig)
+	db, close := app.NewOrmDb(appConfig)
 
-	// close db connection on app closure
-	defer func() {
-		sqlDb, err := db.DB()
-		if err != nil {
-			log.Fatalf("found error on getting DB. err=%v", err)
-		}
-
-		err = sqlDb.Close()
-		if err != nil {
-			log.Fatalf("found error on closing DB connection. err=%v", err)
-		}
-	}()
+	// when main stack closes, then close db connection
+	defer close()
 
 	// setup ledger domain
 	balance := balanceDomain.New(db)
