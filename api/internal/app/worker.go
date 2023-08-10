@@ -97,8 +97,9 @@ func (w *Worker) RegisterWorkers(workers ...cmd.WorkerHandler) error {
 	}
 
 	for _, worker := range workers {
+		_worker := worker
 		w.mux.HandleFunc(worker.Type(), func(ctx context.Context, task *asynq.Task) error {
-			return worker.Perform(ctx, task)
+			return _worker.Perform(ctx, task)
 		})
 	}
 
