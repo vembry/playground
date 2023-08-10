@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"sync"
 	"time"
 
@@ -48,14 +49,18 @@ var balanceLocker *sync.Map = &sync.Map{}
 
 // Withdraw is to withdraw credit from balance
 func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) error {
-
 	// get balance lock
-	balance, unlocker, err := d.GetLock(ctx, in.UserId)
+	balance, unlocker, errLocked, err := d.GetLock(ctx, in.UserId)
+	if errLocked != nil {
+		return errLocked
+	}
 	if err != nil {
-		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId, err)
+		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId.String(), err)
 	}
 
-	defer unlocker()
+	defer func() {
+		unlocker()
+	}()
 
 	// validate amount withdrawn against amount available on current balance
 	if balance.Amount < in.Amount {
@@ -65,8 +70,13 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) e
 	// transform balance
 	newBalance := *balance
 
+	a := big.NewFloat(balance.Amount)
+	b := big.NewFloat(in.Amount)
+
+	c := new(big.Float).Sub(a, b)
+
 	// update balance values
-	newBalance.Amount -= in.Amount
+	newBalance.Amount, _ = c.Float64()
 	newBalance.UpdatedAt = time.Now().UTC()
 
 	// save updated balance
@@ -112,41 +122,50 @@ func (d *domain) Get(ctx context.Context, userId ksuid.KSUID) (*model.Balance, e
 	return balance, nil
 }
 
-// GetLock is to get and lock user's balance
-func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balance, func(), error) {
+// GetLock is to get and lock user's balance. Return balance, balance-unlocker, locked-error, and generic-error
+func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balance, func(), error, error) {
 	// get balance
 	balance, err := d.Get(ctx, userId)
 	if err != nil {
-		return nil, nil, fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", userId, err)
+		return nil, nil, nil, fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", userId, err)
 	}
 
 	//  lock balance
 	if _, loaded := balanceLocker.LoadOrStore(balance.Id, struct{}{}); loaded {
-		return nil, nil, model.ErrBalanceLocked
+		return nil, nil, model.ErrBalanceLocked, nil
 	}
 
 	return balance, func() {
 		// balance unlock
 		balanceLocker.Delete(balance.Id)
-	}, nil
+	}, nil, nil
 }
 
 // Add is to add credit to active balance
 func (d *domain) Add(ctx context.Context, in *model.AddBalanceParam) error {
-
 	// get balance lock
-	balance, unlocker, err := d.GetLock(ctx, in.UserId)
+	balance, unlocker, errLocked, err := d.GetLock(ctx, in.UserId)
+	if errLocked != nil {
+		return errLocked
+	}
 	if err != nil {
 		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
-	defer unlocker()
+	defer func() {
+		unlocker()
+	}()
 
 	// transform balance
 	newBalance := *balance
 
+	a := big.NewFloat(balance.Amount)
+	b := big.NewFloat(in.Amount)
+
+	c := new(big.Float).Add(a, b)
+
 	// update balance values
-	newBalance.Amount += in.Amount
+	newBalance.Amount, _ = c.Float64()
 	newBalance.UpdatedAt = time.Now().UTC()
 
 	// save updated balance
