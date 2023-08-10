@@ -1,4 +1,6 @@
-import http from "k6/http";
+import http, { get } from "k6/http";
+
+const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal";
 
 export const options = {
   vus: 10,
@@ -30,19 +32,32 @@ const userIds = [
 ];
 
 export default function () {
-  const payload = JSON.stringify({
-    amount: 10,
-    description: `testing-${Date.now()}`,
-  });
-
   // pick user id at random
   const userId = userIds[Math.floor(Math.random() * userIds.length)];
-
   const params = {
     headers: {
       "Content-Type": "application/json",
       "x-user-id": userId,
     },
   };
-  http.post("http://host.docker.internal:80/transaction", payload, params);
+
+  const payload = {
+    amount: Math.floor(Math.random() * 1000),
+    description: `testing-${Date.now()}`,
+  };
+
+  // get balance
+  const getBalanceRes = http.get(`${host}/balance`, params);
+  const out = getBalanceRes.json();
+
+  if (out.payload.amount < payload.amount) {
+    // do topup
+    const topupPayload = {
+      amount: Math.floor(Math.random() * 1000)
+    }
+    http.post(`${host}/topup`, JSON.stringify(topupPayload), params)
+  }
+
+  // create transaction
+  http.post(`${host}/transaction`, JSON.stringify(payload), params);
 }
