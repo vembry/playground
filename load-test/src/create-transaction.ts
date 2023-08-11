@@ -3,7 +3,7 @@ import http, { get } from "k6/http";
 const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal";
 
 export const options = {
-  vus: 10,
+  vus: 20,
   duration: "10s",
 };
 
