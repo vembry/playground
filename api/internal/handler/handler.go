@@ -39,8 +39,9 @@ func NewHttpHandler(
 ) http.Handler {
 
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
 	s := newHandler(transactionDomain, balanceDomain, addBalanceHandler)
+
+	r := gin.Default()
 
 	// create transaction
 	r.POST("/transaction", s.CreateTransaction)

@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"api/internal/app"
-	"api/internal/app/handler"
 	balanceDomain "api/internal/domain/balance"
 	mutexDomain "api/internal/domain/mutex"
 	transactionDomain "api/internal/domain/transaction"
+	"api/internal/handler"
 	"api/internal/worker"
 )
 
