@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -19,6 +18,7 @@ import (
 type domain struct {
 	ledgerRepo  ledgerRepoProvider
 	balanceRepo balanceRepoProvider
+	mutex       mutexProvider
 }
 
 // ledgerRepoProvider is the spec of ledger's repository
@@ -32,25 +32,28 @@ type balanceRepoProvider interface {
 	Update(ctx context.Context, balance *model.Balance) error
 }
 
+// mutexProvider is the spec of mutex's instance
+type mutexProvider interface {
+	Acquire(ctx context.Context, name string) (*model.Mutex, error)
+	Delete(ctx context.Context, mutex *model.Mutex) error
+}
+
 // New is to initialize balance domain instance.
-func New(db *gorm.DB) *domain {
+func New(db *gorm.DB, mutex mutexProvider) *domain {
 	ledgerRepo := repository.NewLedger(db)
 	balanceRepo := repository.NewBalance(db)
 
 	return &domain{
 		ledgerRepo:  ledgerRepo,
 		balanceRepo: balanceRepo,
+		mutex:       mutex,
 	}
 }
-
-// dummy balance locker
-// TODO: make it using redis
-var balanceLocker *sync.Map = &sync.Map{}
 
 // Withdraw is to withdraw credit from balance
 func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) error {
 	// get balance lock
-	balance, unlocker, errLocked, err := d.GetLock(ctx, in.UserId)
+	balance, unlockBalance, errLocked, err := d.GetLock(ctx, in.UserId)
 	if errLocked != nil {
 		return errLocked
 	}
@@ -58,9 +61,7 @@ func (d *domain) Withdraw(ctx context.Context, in *model.WithdrawBalanceParam) e
 		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId.String(), err)
 	}
 
-	defer func() {
-		unlocker()
-	}()
+	defer unlockBalance(ctx)
 
 	// validate amount withdrawn against amount available on current balance
 	if balance.Amount < in.Amount {
@@ -123,7 +124,7 @@ func (d *domain) Get(ctx context.Context, userId ksuid.KSUID) (*model.Balance, e
 }
 
 // GetLock is to get and lock user's balance. Return balance, balance-unlocker, locked-error, and generic-error
-func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balance, func(), error, error) {
+func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balance, func(context.Context), error, error) {
 	// get balance
 	balance, err := d.Get(ctx, userId)
 	if err != nil {
@@ -131,20 +132,24 @@ func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balanc
 	}
 
 	//  lock balance
-	if _, loaded := balanceLocker.LoadOrStore(balance.Id, struct{}{}); loaded {
+	mutexRes, err := d.mutex.Acquire(ctx, fmt.Sprintf("balanceLocker.%s", balance.Id))
+	_ = mutexRes
+	if err != nil {
 		return nil, nil, model.ErrBalanceLocked, nil
 	}
 
-	return balance, func() {
+	return balance, func(_ctx context.Context) {
 		// balance unlock
-		balanceLocker.Delete(balance.Id)
+		if err := d.mutex.Delete(_ctx, mutexRes); err != nil {
+			log.Printf("found error on deleting mutex. mutexName=%s. err=%v", mutexRes.Name, err)
+		}
 	}, nil, nil
 }
 
 // Add is to add credit to active balance
 func (d *domain) Add(ctx context.Context, in *model.AddBalanceParam) error {
 	// get balance lock
-	balance, unlocker, errLocked, err := d.GetLock(ctx, in.UserId)
+	balance, unlockBalance, errLocked, err := d.GetLock(ctx, in.UserId)
 	if errLocked != nil {
 		return errLocked
 	}
@@ -152,9 +157,7 @@ func (d *domain) Add(ctx context.Context, in *model.AddBalanceParam) error {
 		return fmt.Errorf("found error on getting balance lock by userId. userId=%s. err=%w", in.UserId, err)
 	}
 
-	defer func() {
-		unlocker()
-	}()
+	defer unlockBalance(ctx)
 
 	// transform balance
 	newBalance := *balance

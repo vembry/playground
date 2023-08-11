@@ -7,6 +7,7 @@ import (
 	"api/internal/app"
 	"api/internal/app/handler"
 	balanceDomain "api/internal/domain/balance"
+	mutexDomain "api/internal/domain/mutex"
 	transactionDomain "api/internal/domain/transaction"
 	"api/internal/worker"
 )
@@ -17,8 +18,11 @@ var (
 )
 
 func main() {
-	// setup config
+	// setup app-config
 	appConfig := app.NewConfig(embedFS)
+
+	// setup app-cache
+	appCache := app.NewCache(appConfig)
 
 	// setup db
 	db, close := app.NewOrmDb(appConfig)
@@ -26,7 +30,8 @@ func main() {
 	defer close()
 
 	// setup domain
-	balance := balanceDomain.New(db)
+	mutex := mutexDomain.New(appCache.GetClient())
+	balance := balanceDomain.New(db, mutex)
 	transaction := transactionDomain.New(db)
 
 	// initiate individual worker
