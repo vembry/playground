@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 5s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 5s # By default, scrape targets every 15 seconds.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: "credits"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: "containers"
+    static_configs:
+      - targets: # add service that provides prometheus metrics
+          # - localhost:9090
+          - api:80
+          - api-worker:80
+
+  - job_name: "docker"
+    metrics_path: /metrics
+    static_configs:
+      - targets: 
+        - host.docker.internal:9323
+
+  - job_name: "cadvisor"
+    static_configs:
+      - targets:
+        - cadvisor:8080
