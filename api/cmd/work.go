@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"api/common"
 	"context"
 	"log"
 
@@ -41,7 +42,7 @@ func NewWork(worker workerProvider) *cobra.Command {
 				postStartCallback()
 			}
 
-			watchForExitSignal()
+			common.WatchForExitSignal()
 
 			log.Print("* Shutting down the worker...")
 			if err := worker.Shutdown(); err != nil {

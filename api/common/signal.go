@@ -1,4 +1,4 @@
-package cmd
+package common
 
 import (
 	"os"
@@ -6,9 +6,9 @@ import (
 	"syscall"
 )
 
-// watchForExitSignal is to awaits incoming interrupt signal
+// WatchForExitSignal is to awaits incoming interrupt signal
 // sent to the service
-func watchForExitSignal() os.Signal {
+func WatchForExitSignal() os.Signal {
 	ch := make(chan os.Signal, 4)
 	signal.Notify(
 		ch,

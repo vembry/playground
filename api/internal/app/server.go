@@ -8,8 +8,9 @@ import (
 
 // Server contain the config of app-server
 type Server struct {
-	httpAddress string
-	server      *http.Server
+	httpAddress       string
+	server            *http.Server
+	postStartCallback func()
 }
 
 // NewServer is to setup app-server
@@ -20,7 +21,6 @@ func NewServer(cfg *EnvConfig, handler http.Handler) *Server {
 
 	return &Server{
 		httpAddress: cfg.HttpAddress,
-
 		server: &http.Server{
 			Addr:    cfg.HttpAddress,
 			Handler: mux,
@@ -50,4 +50,14 @@ func (s *Server) Shutdown() error {
 // GetAddress is to get server address
 func (s *Server) GetAddress() string {
 	return s.httpAddress
+}
+
+// PostStartCallback is execute functionality needed to run post start
+func (s *Server) WithPostStartCallback(callback func()) {
+	s.postStartCallback = callback
+}
+
+// WithPostStartCallback inject callback to the post start callback
+func (s *Server) GetPostStartCallback() func() {
+	return s.postStartCallback
 }

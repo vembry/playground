@@ -1,16 +1,21 @@
 package app
 
 import (
+	"context"
 	"embed"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/sethvargo/go-envconfig"
 )
 
+// EnvConfig is the instance to compile all env vars
 type EnvConfig struct {
-	HttpAddress string
-	DBConn      string
-	RedisUri    string
+	HttpAddress           string `env:"HTTP_ADDRESS"`
+	PrometheusHttpAddress string `env:"PROMETHEUS_HTTP_ADDRESS"`
+	DBConn                string `env:"DB_CONN"`
+	RedisUri              string `env:"REDIS_URI"`
 }
 
 // NewConfig is to parse env
@@ -37,9 +42,11 @@ func NewConfig(embedFs embed.FS) *EnvConfig {
 		}
 	}
 
-	return &EnvConfig{
-		HttpAddress: os.Getenv("HTTP_ADDRESS"),
-		DBConn:      os.Getenv("DB_CONN"),
-		RedisUri:    os.Getenv("REDIS_URI"),
+	// read all required env values
+	var cfg EnvConfig
+	if err := envconfig.Process(context.Background(), &cfg); err != nil {
+		log.Fatalf("failed to read environment variables. err=%v", err)
 	}
+
+	return &cfg
 }

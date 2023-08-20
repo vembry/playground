@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"api/common"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -9,6 +10,7 @@ import (
 // serverProvider contain the spec of a 'server'
 type serverProvider interface {
 	Start() error
+	GetPostStartCallback() func()
 	Shutdown() error
 	GetAddress() string
 }
@@ -30,7 +32,11 @@ func NewServe(server serverProvider, worker workerProvider) *cobra.Command {
 				worker.ConnectToQueue()
 			}
 
-			watchForExitSignal()
+			if postStartCallback := server.GetPostStartCallback(); postStartCallback != nil {
+				postStartCallback()
+			}
+
+			common.WatchForExitSignal()
 
 			log.Print("* Shutting down the server...")
 			if err := server.Shutdown(); err != nil {

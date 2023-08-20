@@ -24,6 +24,9 @@ func main() {
 	// setup app-cache
 	appCache := app.NewCache(appConfig)
 
+	// setup app-prometheus
+	appPrometheus := app.NewPrometheus(appConfig)
+
 	// setup db
 	db, close := app.NewOrmDb(appConfig)
 	// when main stack closes, then close db connection
@@ -43,10 +46,17 @@ func main() {
 
 	// setup app-server
 	appServer := app.NewServer(appConfig, r)
+	appServer.WithPostStartCallback(func() {
+		// start prometheus server
+		appPrometheus.Start()
+	})
 
 	// setup app-worker
 	appWorker := app.NewWorker(appConfig)
 	appWorker.WithPostStartCallback(func() {
+		// start prometheus server
+		appPrometheus.Start()
+
 		// register individual workers to the app-worker
 		appWorker.RegisterWorkers(
 			pendingTransactionWorker,
