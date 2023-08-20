@@ -46,11 +46,10 @@ func NewHttpHandler(
 	// create transaction
 	r.POST("/transaction", s.CreateTransaction)
 
-	// to create topup
-	r.POST("/topup", s.CreateTopup)
-
-	// to get balance
-	r.GET("/balance", s.GetBalance)
+	// balance group
+	balanceGroup := r.Group("/balance")
+	balanceGroup.GET("", s.GetBalance)
+	balanceGroup.POST("/add", s.AddBalance)
 
 	// to do health-check
 	r.GET("/health", s.HealthCheck)

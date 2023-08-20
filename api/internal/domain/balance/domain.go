@@ -182,7 +182,7 @@ func (d *domain) Add(ctx context.Context, in *model.AddBalanceParam) error {
 		Id:            ksuid.New(),
 		UserId:        balance.UserId,
 		Type:          model.LedgerTypeIn,
-		Description:   "topup",
+		Description:   in.Description,
 		Amount:        in.Amount,
 		BalanceAfter:  newBalance.Amount,
 		BalanceBefore: balance.Amount,

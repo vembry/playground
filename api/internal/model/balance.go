@@ -30,8 +30,9 @@ type WithdrawBalanceParam struct {
 
 // AddBalanceParam contain fields to execute balance addition
 type AddBalanceParam struct {
-	UserId ksuid.KSUID `json:"user_id"`
-	Amount float64     `json:"amount"`
+	UserId      ksuid.KSUID `json:"user_id"`
+	Description string      `json:"description"`
+	Amount      float64     `json:"amount"`
 }
 
 // BalanceResponse contain fields of balance detail expose to public
