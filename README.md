@@ -25,8 +25,8 @@
    3. prometheus, to get metrics from `api` and `api-worker`
 
 ## setup
+Run the following command which will start everything
 > make start
-This will start everything.
 
 ## links
 - [grafana](http://localhost:10000)
