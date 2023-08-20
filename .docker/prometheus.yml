@@ -15,8 +15,8 @@ scrape_configs:
     static_configs:
       - targets: # add service that provides prometheus metrics
           - prometheus:9090
-          - api:80
-          - api-worker:80
+          - api:81
+          - api-worker:81
 
   - job_name: "docker"
     metrics_path: /metrics
