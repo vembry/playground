@@ -9,9 +9,17 @@ x-default:
         memory: 16m # defaulted memory limit to 16mb
   restart: unless-stopped
 
+x-deps:
+  &deps
+  deploy:
+    resources:
+      limits:
+        memory: 256m # defaulted memory limit to 16mb
+  restart: unless-stopped
+
 services:
   postgres:
-    <<: *default
+    <<: *deps
     image: postgres:latest
     container_name: postgres
     ports:
@@ -27,13 +35,9 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 512m # override postgres' memory limit
   
   redis:
-    <<: *default
+    <<: *deps
     image: redis:6.2-alpine
     container_name: redis
     command: redis-server --requirepass local
@@ -96,6 +100,7 @@ services:
       api:
         condition: service_healthy
     network_mode: host
+    restart: no
     environment:
       - API_HOST=http://localhost
 
@@ -110,6 +115,7 @@ services:
       - REDIS_URL=redis://:local@redis:6379/0
 
   grafana:
+    <<: *deps
     image: grafana/grafana
     container_name: grafana
     restart: unless-stopped
@@ -124,6 +130,7 @@ services:
       - ./.docker/grafana/provisioning:/etc/grafana/provisioning
 
   prometheus:
+    <<: *deps
     image: prom/prometheus
     container_name: prometheus
     restart: unless-stopped
@@ -143,9 +150,9 @@ services:
   # ref: https://github.com/google/cadvisor/issues/3187
   # this is basically to scrape docker stats' "metrics"
   cadvisor:
+    <<: *deps
     image: gcr.io/cadvisor/cadvisor:v0.47.1
     container_name: cadvisor
-    restart: unless-stopped
     privileged: true # stops oom warning
     platform: linux/aarch64 # m1/m2 mac
     devices:
