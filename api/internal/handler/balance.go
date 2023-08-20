@@ -33,6 +33,7 @@ func (s *handler) GetBalance(c *gin.Context) {
 			Status:  false,
 			Message: "found error on getting active balance",
 		})
+		return
 	}
 
 	c.JSON(200, map[string]interface{}{

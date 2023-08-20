@@ -47,6 +47,7 @@ func (s *handler) CreateTransaction(ctx *gin.Context) {
 			Status:  false,
 			Message: "found error on creating transaction entry",
 		})
+		return
 	}
 
 	ctx.JSON(200, model.CommonResponse{
