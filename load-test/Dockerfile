@@ -1,5 +1,5 @@
 # Use the official k6 image as the base image
-FROM loadimpact/k6:latest
+FROM grafana/k6:latest
 
 # Set the working directory inside the container
 WORKDIR /scripts
