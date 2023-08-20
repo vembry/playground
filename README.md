@@ -8,7 +8,7 @@
 1. setup starting balance at 10K
 2. create multiple transaction entries that will exhaust the balance
    1. we're gonna use `grafana/k6` to replicate huge intakes
-   2. entries will consist of both credit addition and deduction.
+   2. entries will consist of both credit addition and transaction creation(withdrawal)
 
 ## expected outcome
 1. remaining credits shouldnt be negative

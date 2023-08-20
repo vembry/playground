@@ -148,7 +148,7 @@ services:
       ]
       
   # ref: https://github.com/google/cadvisor/issues/3187
-  # this is basically to scrape docker stats' "metrics"
+  # this is to scrape docker stats' "metrics"
   cadvisor:
     <<: *deps
     image: gcr.io/cadvisor/cadvisor:v0.47.1
