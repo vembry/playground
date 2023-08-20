@@ -4,7 +4,7 @@ const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal";
 
 export const options = {
   vus: 20,
-  duration: "10s",
+  duration: "30s",
 };
 
 // list of available user-ids
@@ -53,9 +53,11 @@ export default function () {
   if (out.payload.amount < payload.amount) {
     // do topup
     const topupPayload = {
-      amount: Math.floor(Math.random() * 1000)
+      user_id: userId,
+      description: `reason #${Date.now()}`,
+      amount: Math.floor(Math.random() * 10) * 10000
     }
-    http.post(`${host}/topup`, JSON.stringify(topupPayload), params)
+    http.post(`${host}/balance/add`, JSON.stringify(topupPayload), params)
   }
 
   // create transaction
