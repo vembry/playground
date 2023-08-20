@@ -106,7 +106,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "container_memory_usage_bytes{name=~\"$container_name\"}",
+          "expr": "container_memory_working_set_bytes{name=~\"$container_name\"}",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -237,8 +237,8 @@
       {
         "current": {
           "selected": true,
-          "text": ["api", "api-worker"],
-          "value": ["api", "api-worker"]
+          "text": ["postgres", "postgres-slave"],
+          "value": ["postgres", "postgres-slave"]
         },
         "datasource": {
           "type": "prometheus",
@@ -264,7 +264,7 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
