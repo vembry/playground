@@ -1,5 +1,8 @@
 -- CREATE DATABASE credit;
 
+-- config `work_mem` for `credit` db
+alter database credit set work_mem = '64MB';
+
 -- create users table
 CREATE TABLE public.users (
     id CHAR(27) PRIMARY KEY,
