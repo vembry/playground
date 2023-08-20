@@ -1,10 +1,19 @@
 version: '3.8'
 
+# default configs
+x-default:
+  &default
+  deploy:
+    resources:
+      limits:
+        memory: 16m # defaulted memory limit to 16mb
+  restart: unless-stopped
+
 services:
   postgres:
+    <<: *default
     image: postgres:latest
     container_name: postgres
-    restart: always
     ports:
       - 5432:5432
     environment:
@@ -18,11 +27,15 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m # override postgres' memory limit
   
   redis:
+    <<: *default
     image: redis:6.2-alpine
     container_name: redis
-    restart: always
     command: redis-server --requirepass local
     ports:
       - '6379:6379'
@@ -30,15 +43,14 @@ services:
       test: [ "CMD-SHELL", "redis-cli ping" ]
 
   api:
+    <<: *default
     build:
       context: ./api
     x-develop:
       watch:
         - action: rebuild
           path: ./api
-          # target: 
     image: credits-api:local
-    restart: unless-stopped
     container_name: api 
     command: /api serve
     depends_on:
@@ -53,6 +65,7 @@ services:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
 
   api-worker:
+    <<: *default
     build:
       context: ./api
     x-develop:
@@ -60,7 +73,6 @@ services:
         - action: rebuild
           path: ./api
     image: credits-api:local
-    restart: unless-stopped
     container_name: api-worker 
     command: /api work
     depends_on:
@@ -69,12 +81,17 @@ services:
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
+    deploy:
+      resources:
+        limits:
+          memory: 32m # override memory limit, otherwise api-worker will ate more cpu
  
   load-test:
     build:
       context: ./load-test
     image: credits-load-test:local
     container_name: load-test
+    command: run create-transaction.ts
     depends_on:
       api:
         condition: service_healthy
@@ -83,6 +100,7 @@ services:
       - API_HOST=http://localhost
 
   asynq-mon:
+    <<: *default
     container_name: asynq-mon
     image: hibiken/asynqmon
     platform: linux/amd64
@@ -91,12 +109,55 @@ services:
     environment:
       - REDIS_URL=redis://:local@redis:6379/0
 
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana 
-  #   ports:
-  #     - "8091:3000"
-  #   environment:
-  #     GF_AUTH_ANONYMOUS_ENABLED: true
-  #     GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
-  #     GF_AUTH_DISABLE_LOGIN_FORM: true
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_LOG_LEVEL: debug
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: true
+    ports:
+      - '10000:3000'
+    volumes:
+      - 'grafana:/var/lib/grafana'
+      - ./.docker/grafana/provisioning:/etc/grafana/provisioning
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    pull_policy: missing
+    ports:
+      - 10001:9090
+    volumes:
+      - ./.docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      [
+        "--config.file=/etc/prometheus/prometheus.yml",
+        "--storage.tsdb.path=/prometheus",
+        "--web.console.libraries=/etc/prometheus/console_libraries",
+        "--web.console.templates=/etc/prometheus/consoles"
+      ]
+      
+  # ref: https://github.com/google/cadvisor/issues/3187
+  # this is basically to scrape docker stats' "metrics"
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true # stops oom warning
+    platform: linux/aarch64 # m1/m2 mac
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+
+volumes:
+  grafana: {}
