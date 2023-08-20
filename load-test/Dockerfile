@@ -7,5 +7,5 @@ WORKDIR /scripts
 # Copy your k6 script(s) into the container
 COPY ./src/ ./
 
-# Run the k6 script when the container starts
-CMD ["run", "create-transaction.ts"]
+# # Run the k6 script when the container starts
+# CMD ["run", "create-transaction.ts"]
