@@ -22,7 +22,6 @@ type workerProvider interface {
 	ConnectToQueue()
 	DisconnectFromQueue() error
 	Enqueue(ctx context.Context, task *asynq.Task, taskOptions ...asynq.Option) (*asynq.TaskInfo, error)
-	RegisterWorkers(handlers ...WorkerHandler) error
 	GetPostStartCallback() func()
 }
 

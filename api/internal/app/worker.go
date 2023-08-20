@@ -32,11 +32,6 @@ func NewWorker(cfg *EnvConfig) *Worker {
 		log.Fatalf("failed to convert redis-opt to redis-client-opt. err=%v", err)
 	}
 
-	mux := asynq.NewServeMux()
-	mux.Use(func(h asynq.Handler) asynq.Handler {
-		return logging(h)
-	})
-
 	return &Worker{
 		redisConn: &r,
 		mux:       asynq.NewServeMux(),
@@ -47,16 +42,6 @@ func NewWorker(cfg *EnvConfig) *Worker {
 // WithPostStartCallback inject callback to the post start callback
 func (w *Worker) WithPostStartCallback(callback func()) {
 	w.postStartCallback = callback
-}
-
-// Logging is the middleware that log-out the asynchrounous background task.
-func logging(h asynq.Handler) asynq.Handler {
-	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
-		log.Printf("processing '%s' background task with '%s'...", t.Type(), string(t.Payload()))
-		err := h.ProcessTask(ctx, t)
-		log.Printf("processed '%s' background task...", t.Type())
-		return err
-	})
 }
 
 // Start is to start worker
@@ -86,24 +71,30 @@ func (w *Worker) Shutdown() error {
 	return nil
 }
 
-// RegisterWorkers is to register individual workers into the app-worker
-func (w *Worker) RegisterWorkers(workers ...cmd.WorkerHandler) error {
-	if w.server == nil {
-		return fmt.Errorf("missing worker's initialization")
-	}
-
+// WithWorkers is to register individual workers into the worker
+func (w *Worker) WithWorkers(workers ...cmd.WorkerHandler) {
 	if len(workers) == 0 {
-		return fmt.Errorf("missing worker")
+		log.Fatal("missing worker")
 	}
 
+	// setup worker's handlers
 	for _, worker := range workers {
-		_worker := worker
-		w.mux.HandleFunc(worker.Type(), func(ctx context.Context, task *asynq.Task) error {
-			return _worker.Perform(ctx, task)
-		})
+		worker := worker
+		w.mux.HandleFunc(worker.Type(), worker.Perform)
+	}
+}
+
+// WithMiddleware is to register middlewares to the worker
+func (w *Worker) WithMiddleware(middlewares ...func(h asynq.Handler) asynq.Handler) {
+	if len(middlewares) == 0 {
+		return
 	}
 
-	return nil
+	// setup worker's middlewares
+	for _, middleware := range middlewares {
+		middleware := middleware
+		w.mux.Use(middleware)
+	}
 }
 
 // Enqueue is to enqueue task into the worker

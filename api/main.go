@@ -24,8 +24,8 @@ func main() {
 	// setup app-cache
 	appCache := app.NewCache(appConfig)
 
-	// setup app-prometheus
-	appPrometheus := app.NewPrometheus(appConfig)
+	// setup app-metric
+	appMetric := app.NewMetric(appConfig)
 
 	// setup db
 	db, close := app.NewOrmDb(appConfig)
@@ -42,26 +42,33 @@ func main() {
 	addBalanceWorker := worker.NewAddBalance(balance)
 
 	// setup server's http-handler
-	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker)
+	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker, appMetric)
 
 	// setup app-server
 	appServer := app.NewServer(appConfig, r)
 	appServer.WithPostStartCallback(func() {
-		// start prometheus server
-		appPrometheus.Start()
+		// start metric server
+		appMetric.Start()
 	})
 
 	// setup app-worker
 	appWorker := app.NewWorker(appConfig)
+	appWorker.WithMiddleware(
+		appMetric.AsynqTask,
+	)
+	appWorker.WithWorkers(
+		pendingTransactionWorker,
+		addBalanceWorker,
+	)
 	appWorker.WithPostStartCallback(func() {
-		// start prometheus server
-		appPrometheus.Start()
+		// start metric server
+		appMetric.Start()
 
-		// register individual workers to the app-worker
-		appWorker.RegisterWorkers(
-			pendingTransactionWorker,
-			addBalanceWorker,
-		)
+		// // register individual workers to the app-worker
+		// appWorker.RegisterWorkers(
+		// 	pendingTransactionWorker,
+		// 	addBalanceWorker,
+		// )
 	})
 
 	// register individual queues + respective priority to the app-worker

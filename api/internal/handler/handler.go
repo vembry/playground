@@ -25,6 +25,11 @@ type addBalanceHandlerProvider interface {
 	Enqueue(ctx context.Context, in *model.AddBalanceParam) error
 }
 
+// requestMetricProvider is the spec for request metric aggregator(?)
+type requestMetricProvider interface {
+	GinRequest(*gin.Context)
+}
+
 // GenericResponse contains fields returned to api requester
 type GenericResponse struct {
 	Status  bool   `json:"status"`
@@ -36,12 +41,15 @@ func NewHttpHandler(
 	transactionDomain transactionProvider,
 	balanceDomain balanceProvider,
 	addBalanceHandler addBalanceHandlerProvider,
+	requestMetric requestMetricProvider,
 ) http.Handler {
 
 	gin.SetMode(gin.ReleaseMode)
 	s := newHandler(transactionDomain, balanceDomain, addBalanceHandler)
 
 	r := gin.Default()
+
+	r.Use(requestMetric.GinRequest)
 
 	// create transaction
 	r.POST("/transaction", s.CreateTransaction)
