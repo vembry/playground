@@ -4,7 +4,7 @@ const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal";
 
 export const options = {
   vus: 20,
-  duration: "30s",
+  duration: "5m",
 };
 
 // list of available user-ids
