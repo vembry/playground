@@ -14,7 +14,7 @@ x-deps:
   deploy:
     resources:
       limits:
-        memory: 256m # defaulted memory limit to 16mb
+        memory: 256m # defaulted memory limit to 256mb
   restart: unless-stopped
 
 services:
@@ -60,6 +60,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports: 
       - 80:80
     environment:
@@ -82,6 +84,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
@@ -91,6 +95,7 @@ services:
           memory: 32m # override memory limit, otherwise api-worker will ate more cpu
  
   load-test:
+    <<: *deps
     build:
       context: ./load-test
     image: credits-load-test:local
