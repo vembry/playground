@@ -73,8 +73,8 @@ func main() {
 
 	// register individual queues + respective priority to the app-worker
 	appWorker.RegisterQueues(map[string]int{
-		pendingTransactionWorker.Queue(): 1,
-		addBalanceWorker.Queue():         2,
+		pendingTransactionWorker.Queue(): 3,
+		addBalanceWorker.Queue():         7,
 	})
 
 	// plug missing dependecies to transaction domain
