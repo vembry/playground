@@ -237,7 +237,7 @@
       },
       "id": 5,
       "panels": [],
-      "title": "api",
+      "title": "app-go",
       "type": "row"
     },
     {
@@ -507,7 +507,7 @@
       },
       "id": 7,
       "panels": [],
-      "title": "api-worker",
+      "title": "app-go-worker",
       "type": "row"
     },
     {
@@ -776,8 +776,8 @@
       {
         "current": {
           "selected": true,
-          "text": ["api", "api-worker"],
-          "value": ["api", "api-worker"]
+          "text": ["app-go", "app-go-worker"],
+          "value": ["app-go", "app-go-worker"]
         },
         "datasource": {
           "type": "prometheus",

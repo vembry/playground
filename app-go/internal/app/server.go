@@ -41,10 +41,7 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	s.server.Shutdown(ctx)
-
-	return s.server.Shutdown(context.Background())
+	return s.server.Shutdown(ctx)
 }
 
 // GetAddress is to get server address

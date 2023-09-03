@@ -2,14 +2,15 @@ package main
 
 import (
 	"embed"
+	"log"
 	"os"
 
-	"api/internal/app"
-	balanceDomain "api/internal/domain/balance"
-	mutexDomain "api/internal/domain/mutex"
-	transactionDomain "api/internal/domain/transaction"
-	"api/internal/handler"
-	"api/internal/worker"
+	"app-go/internal/app"
+	balanceDomain "app-go/internal/domain/balance"
+	mutexDomain "app-go/internal/domain/mutex"
+	transactionDomain "app-go/internal/domain/transaction"
+	"app-go/internal/handler"
+	"app-go/internal/worker"
 )
 
 var (
@@ -28,14 +29,22 @@ func main() {
 	appMetric := app.NewMetric(appConfig)
 
 	// setup db
-	db, close := app.NewOrmDb(appConfig)
+	appDb, closeCallback := app.NewOrmDb(appConfig)
 	// when main stack closes, then close db connection
-	defer close()
+	defer closeCallback()
+
+	db, err := appDb.DB()
+	if err != nil {
+		log.Fatalf("found error on getting db instance. err=%v", err)
+	}
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	db.SetMaxOpenConns(100)
 
 	// setup domain
 	mutex := mutexDomain.New(appCache.GetClient())
-	balance := balanceDomain.New(db, mutex)
-	transaction := transactionDomain.New(db)
+	balance := balanceDomain.New(appDb, mutex)
+	transaction := transactionDomain.New(appDb)
 
 	// initiate individual worker
 	pendingTransactionWorker := worker.NewPendingTransaction(transaction)

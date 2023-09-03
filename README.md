@@ -22,7 +22,7 @@
 4. visualize the observability metrics from the experiment, using:
    1. grafana, to visualize
    2. cadvisor, to scrap metrics from the containers
-   3. prometheus, to get metrics from `api` and `api-worker`
+   3. prometheus, to get metrics from `app-go` and `app-go-worker`
 
 ## setup
 Run the following command which will start everything
@@ -30,4 +30,4 @@ Run the following command which will start everything
 
 ## links
 - [grafana](http://localhost:10000)
-   - [dashboard](http://localhost:10000/d/f744f256-9d10-4e29-9dd0-c4ea6f8d7dd2/dashboard?orgId=1&var-container_name=api-worker&var-container_name=api&from=now-5m&to=now&refresh=5s) in works
+   - [dashboard](http://localhost:10000/d/f744f256-9d10-4e29-9dd0-c4ea6f8d7dd2/dashboard?orgId=1&var-container_name=app-go-worker&var-container_name=app-go&from=now-5m&to=now&refresh=5s) in works

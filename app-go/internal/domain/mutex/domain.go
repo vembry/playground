@@ -1,7 +1,7 @@
 package mutex
 
 import (
-	"api/internal/model"
+	"app-go/internal/model"
 	"context"
 	"fmt"
 

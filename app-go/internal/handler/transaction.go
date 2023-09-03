@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"api/internal/model"
+	"app-go/internal/model"
 	"fmt"
 	"log"
 

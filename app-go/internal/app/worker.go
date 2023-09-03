@@ -1,7 +1,7 @@
 package app
 
 import (
-	"api/cmd"
+	"app-go/cmd"
 	"context"
 	"fmt"
 	"log"

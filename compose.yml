@@ -46,17 +46,17 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping" ]
 
-  api:
+  app-go:
     <<: *default
     build:
-      context: ./api
+      context: ./app-go
     x-develop:
       watch:
         - action: rebuild
-          path: ./api
-    image: credits-api:local
-    container_name: api 
-    command: /api serve
+          path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go 
+    command: /app-go serve
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,17 +70,17 @@ services:
     healthcheck:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
 
-  api-worker:
+  app-go-worker:
     <<: *default
     build:
-      context: ./api
+      context: ./app-go
     x-develop:
       watch:
         - action: rebuild
-          path: ./api
-    image: credits-api:local
-    container_name: api-worker 
-    command: /api work
+          path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go-worker 
+    command: /app-go work
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 32m # override memory limit, otherwise api-worker will ate more cpu
+          memory: 32m # override memory limit, otherwise app-go-worker will ate more cpu
  
   load-test:
     <<: *deps
@@ -102,7 +102,7 @@ services:
     container_name: load-test
     command: run create-transaction.ts
     depends_on:
-      api:
+      app-go:
         condition: service_healthy
     network_mode: host
     restart: no

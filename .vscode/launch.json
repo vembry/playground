@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "api work",
+      "name": "app-go work",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/api",
+      "program": "${workspaceFolder}/app-go",
       "args": ["work"]
     }
   ]

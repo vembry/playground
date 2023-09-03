@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"api/internal/model"
+	"app-go/internal/model"
 	"context"
 	"encoding/json"
 	"errors"
