@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/segmentio/ksuid"
-	"gorm.io/gorm"
 )
 
 // domain is balance's domain instance
@@ -29,6 +28,7 @@ type ledgerRepoProvider interface {
 // balanceRepoProvider is the spec of balance's repository
 type balanceRepoProvider interface {
 	Get(ctx context.Context, userId ksuid.KSUID) (*model.Balance, error)
+	GetFromMaster(ctx context.Context, userId ksuid.KSUID) (*model.Balance, error)
 	Update(ctx context.Context, balance *model.Balance) error
 }
 
@@ -39,7 +39,7 @@ type mutexProvider interface {
 }
 
 // New is to initialize balance domain instance.
-func New(db *gorm.DB, mutex mutexProvider) *domain {
+func New(db *model.DB, mutex mutexProvider) *domain {
 	ledgerRepo := repository.NewLedger(db)
 	balanceRepo := repository.NewBalance(db)
 
@@ -133,9 +133,14 @@ func (d *domain) GetLock(ctx context.Context, userId ksuid.KSUID) (*model.Balanc
 
 	//  lock balance
 	mutexRes, err := d.mutex.Acquire(ctx, fmt.Sprintf("balanceLocker.%s", balance.Id))
-	_ = mutexRes
 	if err != nil {
 		return nil, nil, model.ErrBalanceLocked, nil
+	}
+
+	// quick fix to deal with replication-locker racing condition
+	balance, err = d.balanceRepo.GetFromMaster(ctx, userId)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("found error on getting balance by userId. userId=%s. err=%w", userId, err)
 	}
 
 	return balance, func(_ctx context.Context) {

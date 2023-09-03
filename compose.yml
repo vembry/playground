@@ -20,14 +20,18 @@ x-deps:
 services:
   postgres:
     <<: *deps
-    image: postgres:latest
+    image: 'bitnami/postgresql:latest'
     container_name: postgres
     ports:
       - 5432:5432
     environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: replicator
       POSTGRES_DB: credit
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
+      POSTGRESQL_WORK_MEM: 64MB
     volumes:
       - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
@@ -35,6 +39,29 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
+  
+  postgres-slave:
+    <<: *deps
+    image: 'bitnami/postgresql:latest'
+    container_name: postgres-slave
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: replicator
+      POSTGRES_DB: credit
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRESQL_MASTER_HOST: postgres
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      POSTGRESQL_MASTER_USER: local
+      POSTGRESQL_MASTER_PASSWORD: local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres -U local"]
   
   redis:
     <<: *deps
@@ -60,12 +87,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-slave:
+        condition: service_healthy
       redis:
         condition: service_healthy
     ports: 
       - 80:80
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      SLAVE_DB_CONN: host=postgres-slave user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
     healthcheck:
       test: [ "CMD", "/wget", "--quiet", "--output-document=-", "http://0.0.0.0:80/health" ]
@@ -84,10 +114,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-slave:
+        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      SLAVE_DB_CONN: host=postgres-slave user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
     deploy:
       resources:

@@ -31,3 +31,24 @@ Run the following command which will start everything
 ## links
 - [grafana](http://localhost:10000)
    - [dashboard](http://localhost:10000/d/f744f256-9d10-4e29-9dd0-c4ea6f8d7dd2/dashboard?orgId=1&var-container_name=app-go-worker&var-container_name=app-go&from=now-5m&to=now&refresh=5s) in works
+
+## process
+```
+sequenceDiagram
+    actor u as User
+    participant app as App
+
+    u->>+app: check balance
+    app->>-u: return current balance
+    Note over u,app: we will validate whether<br/>balance is enough
+
+    alt balance is not enough
+        u->>+app: add balance
+        app->>-u: return ok
+    end
+
+    u->>+app: create transaction
+    app->>app: process data
+    app->>-u: return ok
+
+```

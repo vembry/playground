@@ -15,6 +15,7 @@ type EnvConfig struct {
 	HttpAddress           string `env:"HTTP_ADDRESS"`
 	PrometheusHttpAddress string `env:"PROMETHEUS_HTTP_ADDRESS"`
 	DBConn                string `env:"DB_CONN"`
+	SlaveDBConn           string `env:"SLAVE_DB_CONN"`
 	RedisUri              string `env:"REDIS_URI"`
 }
 

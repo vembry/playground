@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"log"
 	"os"
 
 	"app-go/internal/app"
@@ -32,14 +31,6 @@ func main() {
 	appDb, closeCallback := app.NewOrmDb(appConfig)
 	// when main stack closes, then close db connection
 	defer closeCallback()
-
-	db, err := appDb.DB()
-	if err != nil {
-		log.Fatalf("found error on getting db instance. err=%v", err)
-	}
-
-	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	db.SetMaxOpenConns(100)
 
 	// setup domain
 	mutex := mutexDomain.New(appCache.GetClient())

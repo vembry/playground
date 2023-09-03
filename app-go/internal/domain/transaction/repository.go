@@ -12,11 +12,11 @@ import (
 
 // repository is transaction's repository instance
 type repository struct {
-	db *gorm.DB
+	db *model.DB
 }
 
 // newRepository is to initialize transactions repository instance.
-func newRepository(db *gorm.DB) *repository {
+func newRepository(db *model.DB) *repository {
 	return &repository{
 		db: db,
 	}
@@ -24,14 +24,14 @@ func newRepository(db *gorm.DB) *repository {
 
 // Create is to create an entry to the `transactions` table
 func (r *repository) Create(ctx context.Context, in *model.Transaction) error {
-	res := r.db.Create(in)
+	res := r.db.Master.Create(in)
 	return res.Error
 }
 
 // Get is to get a single data from `transactions` table by transactionId
 func (r *repository) Get(ctx context.Context, transactionId ksuid.KSUID) (*model.Transaction, error) {
 	var out model.Transaction
-	res := r.db.WithContext(ctx).Table("transactions").First(&out, "id = ?", transactionId.String())
+	res := r.db.Slave.WithContext(ctx).Table("transactions").First(&out, "id = ?", transactionId.String())
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -44,7 +44,7 @@ func (r *repository) Get(ctx context.Context, transactionId ksuid.KSUID) (*model
 
 // Update is to update existing transaction data
 func (r *repository) Update(ctx context.Context, in *model.Transaction) error {
-	res := r.db.WithContext(ctx).Table("transactions").Save(in)
+	res := r.db.Master.WithContext(ctx).Table("transactions").Save(in)
 	if res.Error != nil {
 		return fmt.Errorf("found error on updating transaction to db. err=%w", res.Error)
 	}

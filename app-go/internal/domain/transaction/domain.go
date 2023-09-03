@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/segmentio/ksuid"
-	"gorm.io/gorm"
 )
 
 // domain is transaction's domain instance
@@ -38,7 +37,7 @@ type pendingTransactionHandlerProvider interface {
 }
 
 // New is to initialize transaction domain instance.
-func New(db *gorm.DB) *domain {
+func New(db *model.DB) *domain {
 	repo := newRepository(db)
 	return &domain{
 		transactionRepo: repo,
