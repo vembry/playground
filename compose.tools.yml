@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  load-test:
+    build:
+      context: ./load-test
+    image: credits-load-test:local
+    container_name: load-test
+    command: run create-transaction.ts
+    depends_on:
+      app-go:
+        condition: service_healthy
+    network_mode: host
+    restart: no
+    environment:
+      - API_HOST=http://localhost
