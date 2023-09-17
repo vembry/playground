@@ -21,7 +21,7 @@ type Worker struct {
 }
 
 // NewServer is to setup app-server
-func NewWorker(cfg *EnvConfig) *Worker {
+func NewWorker(cfg *EnvConfig, queues map[string]int) *Worker {
 	redisConnOpt, err := asynq.ParseRedisURI(cfg.RedisUri)
 	if err != nil {
 		log.Fatalf("failed to parse redis-uri. err=%v", err)
@@ -35,7 +35,7 @@ func NewWorker(cfg *EnvConfig) *Worker {
 	return &Worker{
 		redisConn: &r,
 		mux:       asynq.NewServeMux(),
-		queues:    make(map[string]int),
+		queues:    queues, // RegisterQueues is to register individual queues and it's respective priorities
 	}
 }
 
@@ -105,11 +105,6 @@ func (w *Worker) Enqueue(ctx context.Context, task *asynq.Task, taskOptions ...a
 	}
 
 	return taksInfo, nil
-}
-
-// RegisterQueues is to register individual queues and it's respective priorities
-func (w *Worker) RegisterQueues(queues map[string]int) {
-	w.queues = queues
 }
 
 // ConnectToQueue establishes the connection to the Connection queue.

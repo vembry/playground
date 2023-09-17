@@ -61,7 +61,10 @@ func main() {
 	})
 
 	// setup app-worker
-	appWorker := app.NewWorker(appConfig)
+	appWorker := app.NewWorker(appConfig, map[string]int{
+		pendingTransactionWorker.Queue(): 3,
+		addBalanceWorker.Queue():         7,
+	})
 	appWorker.WithMiddleware(
 		appMetric.AsynqTask,
 	)
@@ -78,12 +81,6 @@ func main() {
 		// 	pendingTransactionWorker,
 		// 	addBalanceWorker,
 		// )
-	})
-
-	// register individual queues + respective priority to the app-worker
-	appWorker.RegisterQueues(map[string]int{
-		pendingTransactionWorker.Queue(): 3,
-		addBalanceWorker.Queue():         7,
 	})
 
 	// plug missing dependecies to transaction domain
