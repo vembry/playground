@@ -50,16 +50,6 @@ func main() {
 	pendingTransactionWorker := worker.NewPendingTransaction(transaction)
 	addBalanceWorker := worker.NewAddBalance(balance)
 
-	// setup server's http-handler
-	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker, appMetric)
-
-	// setup app-server
-	appServer := app.NewServer(appConfig, r)
-	appServer.WithPostStartCallback(func() {
-		// start metric server
-		appMetric.Start()
-	})
-
 	// setup app-worker
 	appWorker := app.NewWorker(appConfig, map[string]int{
 		pendingTransactionWorker.Queue(): 3,
@@ -90,6 +80,29 @@ func main() {
 	// plug missing worker to worker-handlers
 	pendingTransactionWorker.WithWorker(appWorker)
 	addBalanceWorker.WithWorker(appWorker)
+
+	// setup server's http-handler
+	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker, appMetric)
+
+	// setup app-server
+	appServer := app.NewServer(appConfig, r)
+	appServer.WithPostStartCallback(func() {
+		appWorker.ConnectToQueue()
+
+		go func() {
+			// temporary fix for running prometheus' metric
+			// server. ran it on another go routine as this
+			// metric server will block/hold the line
+
+			// start metric server
+			appMetric.Start()
+		}()
+	})
+	appServer.WithPostShutdownCallback(func() {
+		if err := appWorker.DisconnectFromQueue(); err != nil {
+			log.Printf("found error on disconnecting from queue. err=%v", err)
+		}
+	})
 
 	// setup app-cli
 	appCli := app.NewCli(appServer, appWorker)

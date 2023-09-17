@@ -19,10 +19,8 @@ type WorkerHandler interface {
 type workerProvider interface {
 	Start() error
 	Shutdown() error
-	ConnectToQueue()
-	DisconnectFromQueue() error
-	Enqueue(ctx context.Context, task *asynq.Task, taskOptions ...asynq.Option) (*asynq.TaskInfo, error)
-	GetPostStartCallback() func()
+	PostStartCallback()
+	PostShutdownCallback()
 }
 
 // NewWork is to initiate cli command of 'work'
@@ -37,9 +35,8 @@ func NewWork(worker workerProvider) *cobra.Command {
 				log.Fatalf("found error on starting worker. err=%v", err)
 			}
 
-			if postStartCallback := worker.GetPostStartCallback(); postStartCallback != nil {
-				postStartCallback()
-			}
+			// run post-start callback
+			worker.PostStartCallback()
 
 			common.WatchForExitSignal()
 
@@ -47,6 +44,9 @@ func NewWork(worker workerProvider) *cobra.Command {
 			if err := worker.Shutdown(); err != nil {
 				log.Printf("found error on shutting down server. err=%v", err)
 			}
+
+			// run post-shutdown callback
+			worker.PostShutdownCallback()
 		},
 	}
 }

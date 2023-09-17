@@ -12,12 +12,13 @@ import (
 
 // Worker contain the config of app-worker
 type Worker struct {
-	redisConn         *asynq.RedisClientOpt
-	mux               *asynq.ServeMux
-	server            *asynq.Server
-	client            *asynq.Client
-	queues            map[string]int
-	postStartCallback func()
+	redisConn            *asynq.RedisClientOpt
+	mux                  *asynq.ServeMux
+	server               *asynq.Server
+	client               *asynq.Client
+	queues               map[string]int
+	postStartCallback    func()
+	postShutdownCallback func()
 }
 
 // NewServer is to setup app-server
@@ -124,4 +125,24 @@ func (w *Worker) DisconnectFromQueue() error {
 // GetPostStartCallback is to return post-start's callback
 func (w *Worker) GetPostStartCallback() func() {
 	return w.postStartCallback
+}
+
+// PostStartCallback executes callback on post-start
+func (s *Worker) PostStartCallback() {
+	if s.postStartCallback != nil {
+		s.postStartCallback()
+	}
+}
+
+// WithPostShutdownCallback is to inject callback on post-shutdown
+func (s *Worker) WithPostShutdownCallback(callback func()) {
+	s.postShutdownCallback = callback
+}
+
+// PostShutdownCallback executes callback on post-shutdown
+func (s *Worker) PostShutdownCallback() {
+	// do post-shutdown
+	if s.postShutdownCallback != nil {
+		s.postShutdownCallback()
+	}
 }

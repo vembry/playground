@@ -8,9 +8,10 @@ import (
 
 // Server contain the config of app-server
 type Server struct {
-	httpAddress       string
-	server            *http.Server
-	postStartCallback func()
+	httpAddress          string
+	server               *http.Server
+	postStartCallback    func()
+	postShutdownCallback func()
 }
 
 // NewServer is to setup app-server
@@ -49,12 +50,28 @@ func (s *Server) GetAddress() string {
 	return s.httpAddress
 }
 
-// PostStartCallback is execute functionality needed to run post start
+// WithPostStartCallback is to inject callback on post-start
 func (s *Server) WithPostStartCallback(callback func()) {
 	s.postStartCallback = callback
 }
 
-// WithPostStartCallback inject callback to the post start callback
-func (s *Server) GetPostStartCallback() func() {
-	return s.postStartCallback
+// PostStartCallback executes callback on post-start
+func (s *Server) PostStartCallback() {
+	// return s.postStartCallback
+	if s.postStartCallback != nil {
+		s.postStartCallback()
+	}
+}
+
+// WithPostShutdownCallback is to inject callback on post-shutdown
+func (s *Server) WithPostShutdownCallback(callback func()) {
+	s.postShutdownCallback = callback
+}
+
+// PostShutdownCallback executes callback on post-shutdown
+func (s *Server) PostShutdownCallback() {
+	// do post-shutdown
+	if s.postShutdownCallback != nil {
+		s.postShutdownCallback()
+	}
 }
