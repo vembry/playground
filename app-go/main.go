@@ -63,14 +63,10 @@ func main() {
 		addBalanceWorker,
 	)
 	appWorker.WithPostStartCallback(func() {
-		// start metric server
-		appMetric.Start()
-
-		// // register individual workers to the app-worker
-		// appWorker.RegisterWorkers(
-		// 	pendingTransactionWorker,
-		// 	addBalanceWorker,
-		// )
+		appMetric.StartServer()
+	})
+	appWorker.WithPostShutdownCallback(func() {
+		appMetric.ShutdownServer()
 	})
 
 	// plug missing dependecies to transaction domain
@@ -88,20 +84,13 @@ func main() {
 	appServer := app.NewServer(appConfig, r)
 	appServer.WithPostStartCallback(func() {
 		appWorker.ConnectToQueue()
-
-		go func() {
-			// temporary fix for running prometheus' metric
-			// server. ran it on another go routine as this
-			// metric server will block/hold the line
-
-			// start metric server
-			appMetric.Start()
-		}()
+		appMetric.StartServer()
 	})
 	appServer.WithPostShutdownCallback(func() {
 		if err := appWorker.DisconnectFromQueue(); err != nil {
 			log.Printf("found error on disconnecting from queue. err=%v", err)
 		}
+		appMetric.ShutdownServer()
 	})
 
 	// setup app-cli

@@ -47,6 +47,9 @@ func (w *Worker) WithPostStartCallback(callback func()) {
 
 // Start is to start worker
 func (w *Worker) Start() error {
+	// establish connection to the queue
+	w.ConnectToQueue()
+
 	// establish the worker
 	w.server = asynq.NewServer(w.redisConn, asynq.Config{
 		Concurrency:     10,
@@ -54,16 +57,13 @@ func (w *Worker) Start() error {
 		ShutdownTimeout: 10 * time.Second,
 	})
 
-	// establish connection to the queue
-	w.client = asynq.NewClient(w.redisConn)
-
 	return w.server.Start(w.mux)
 }
 
 // Shutdown is to shutdown worker gracefully
 func (w *Worker) Shutdown() error {
 	// close connection to the queue
-	w.client.Close()
+	w.DisconnectFromQueue()
 
 	// signals worker to stop picking up queues
 	w.server.Stop()
