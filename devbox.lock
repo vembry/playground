@@ -1,0 +1,17 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "go@1.20.8": {
+      "last_modified": "2023-09-17T10:54:49Z",
+      "resolved": "github:NixOS/nixpkgs/5148520bfab61f99fd25fb9ff7bfbb50dad3c9db#go",
+      "source": "devbox-search",
+      "version": "1.20.8"
+    },
+    "jdk@19.0.2+7": {
+      "last_modified": "2023-09-17T10:54:49Z",
+      "resolved": "github:NixOS/nixpkgs/5148520bfab61f99fd25fb9ff7bfbb50dad3c9db#jdk",
+      "source": "devbox-search",
+      "version": "19.0.2+7"
+    }
+  }
+}
