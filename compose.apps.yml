@@ -6,7 +6,7 @@ x-default:
   deploy:
     resources:
       limits:
-        memory: 16m # defaulted memory limit to 16mb
+        memory: 32m # defaulted memory limit to 16mb
   restart: unless-stopped
 
 services:
@@ -53,8 +53,4 @@ services:
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
-    deploy:
-      resources:
-        limits:
-          memory: 32m # override memory limit, otherwise app-go-worker will ate more cpu
  

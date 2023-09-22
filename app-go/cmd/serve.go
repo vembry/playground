@@ -10,7 +10,8 @@ import (
 // serverProvider contain the spec of a 'server'
 type serverProvider interface {
 	Start() error
-	GetPostStartCallback() func()
+	PostStartCallback()
+	PostShutdownCallback()
 	Shutdown() error
 	GetAddress() string
 }
@@ -26,15 +27,8 @@ func NewServe(server serverProvider, worker workerProvider) *cobra.Command {
 				server.Start()
 			}()
 
-			// had to do this, otherwise worker's handler
-			// wont be able to enqueue task to worker
-			if worker != nil {
-				worker.ConnectToQueue()
-			}
-
-			if postStartCallback := server.GetPostStartCallback(); postStartCallback != nil {
-				postStartCallback()
-			}
+			// run post-start callback
+			server.PostStartCallback()
 
 			common.WatchForExitSignal()
 
@@ -43,12 +37,8 @@ func NewServe(server serverProvider, worker workerProvider) *cobra.Command {
 				log.Printf("found error on shutting down server. err=%v", err)
 			}
 
-			// had to do this, because of prior worker.ConnectToQueue
-			if worker != nil {
-				if err := worker.DisconnectFromQueue(); err != nil {
-					log.Printf("found error on disconnecting from queue. err=%v", err)
-				}
-			}
+			// run post-shutdown callback
+			server.PostShutdownCallback()
 		},
 	}
 }

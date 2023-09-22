@@ -1,7 +1,6 @@
 package app
 
 import (
-	"app-go/common"
 	"context"
 	"log"
 	"net/http"
@@ -44,13 +43,16 @@ func NewMetric(cfg *EnvConfig) *metric {
 }
 
 // Start is to initiate metric provider to be scraped by prometheus
-func (m *metric) Start() {
+func (m *metric) StartServer() {
 	go func() {
 		if err := m.server.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("failed to start. err=%v", err)
 		}
 	}()
-	common.WatchForExitSignal()
+}
+
+// ShutdownServer is to shutdown metric provider
+func (m *metric) ShutdownServer() {
 	m.server.Shutdown(context.Background())
 }
 

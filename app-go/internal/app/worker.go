@@ -12,16 +12,17 @@ import (
 
 // Worker contain the config of app-worker
 type Worker struct {
-	redisConn         *asynq.RedisClientOpt
-	mux               *asynq.ServeMux
-	server            *asynq.Server
-	client            *asynq.Client
-	queues            map[string]int
-	postStartCallback func()
+	redisConn            *asynq.RedisClientOpt
+	mux                  *asynq.ServeMux
+	server               *asynq.Server
+	client               *asynq.Client
+	queues               map[string]int
+	postStartCallback    func()
+	postShutdownCallback func()
 }
 
 // NewServer is to setup app-server
-func NewWorker(cfg *EnvConfig) *Worker {
+func NewWorker(cfg *EnvConfig, queues map[string]int) *Worker {
 	redisConnOpt, err := asynq.ParseRedisURI(cfg.RedisUri)
 	if err != nil {
 		log.Fatalf("failed to parse redis-uri. err=%v", err)
@@ -35,7 +36,7 @@ func NewWorker(cfg *EnvConfig) *Worker {
 	return &Worker{
 		redisConn: &r,
 		mux:       asynq.NewServeMux(),
-		queues:    make(map[string]int),
+		queues:    queues, // RegisterQueues is to register individual queues and it's respective priorities
 	}
 }
 
@@ -46,6 +47,9 @@ func (w *Worker) WithPostStartCallback(callback func()) {
 
 // Start is to start worker
 func (w *Worker) Start() error {
+	// establish connection to the queue
+	w.ConnectToQueue()
+
 	// establish the worker
 	w.server = asynq.NewServer(w.redisConn, asynq.Config{
 		Concurrency:     10,
@@ -53,16 +57,13 @@ func (w *Worker) Start() error {
 		ShutdownTimeout: 10 * time.Second,
 	})
 
-	// establish connection to the queue
-	w.client = asynq.NewClient(w.redisConn)
-
 	return w.server.Start(w.mux)
 }
 
 // Shutdown is to shutdown worker gracefully
 func (w *Worker) Shutdown() error {
 	// close connection to the queue
-	w.client.Close()
+	w.DisconnectFromQueue()
 
 	// signals worker to stop picking up queues
 	w.server.Stop()
@@ -107,11 +108,6 @@ func (w *Worker) Enqueue(ctx context.Context, task *asynq.Task, taskOptions ...a
 	return taksInfo, nil
 }
 
-// RegisterQueues is to register individual queues and it's respective priorities
-func (w *Worker) RegisterQueues(queues map[string]int) {
-	w.queues = queues
-}
-
 // ConnectToQueue establishes the connection to the Connection queue.
 func (w *Worker) ConnectToQueue() {
 	w.client = asynq.NewClient(w.redisConn)
@@ -129,4 +125,24 @@ func (w *Worker) DisconnectFromQueue() error {
 // GetPostStartCallback is to return post-start's callback
 func (w *Worker) GetPostStartCallback() func() {
 	return w.postStartCallback
+}
+
+// PostStartCallback executes callback on post-start
+func (s *Worker) PostStartCallback() {
+	if s.postStartCallback != nil {
+		s.postStartCallback()
+	}
+}
+
+// WithPostShutdownCallback is to inject callback on post-shutdown
+func (s *Worker) WithPostShutdownCallback(callback func()) {
+	s.postShutdownCallback = callback
+}
+
+// PostShutdownCallback executes callback on post-shutdown
+func (s *Worker) PostShutdownCallback() {
+	// do post-shutdown
+	if s.postShutdownCallback != nil {
+		s.postShutdownCallback()
+	}
 }

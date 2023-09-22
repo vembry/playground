@@ -6,10 +6,10 @@ start:
 	make up
 
 up:
-	docker compose -f "compose.deps.yml" -f "compose.apps.yml" up -d --build
+	docker compose -f "compose.deps.yml" -f "compose.apps.yml" -f "compose.tools.yml" up -d --build
 
 down:
-	docker compose -f "compose.deps.yml" -f "compose.apps.yml" down
+	docker compose -f "compose.deps.yml" -f "compose.apps.yml" -f "compose.tools.yml" down
 	(echo "y" | docker volume prune)
 
 watch:

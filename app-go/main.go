@@ -50,18 +50,11 @@ func main() {
 	pendingTransactionWorker := worker.NewPendingTransaction(transaction)
 	addBalanceWorker := worker.NewAddBalance(balance)
 
-	// setup server's http-handler
-	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker, appMetric)
-
-	// setup app-server
-	appServer := app.NewServer(appConfig, r)
-	appServer.WithPostStartCallback(func() {
-		// start metric server
-		appMetric.Start()
-	})
-
 	// setup app-worker
-	appWorker := app.NewWorker(appConfig)
+	appWorker := app.NewWorker(appConfig, map[string]int{
+		pendingTransactionWorker.Queue(): 3,
+		addBalanceWorker.Queue():         7,
+	})
 	appWorker.WithMiddleware(
 		appMetric.AsynqTask,
 	)
@@ -70,20 +63,10 @@ func main() {
 		addBalanceWorker,
 	)
 	appWorker.WithPostStartCallback(func() {
-		// start metric server
-		appMetric.Start()
-
-		// // register individual workers to the app-worker
-		// appWorker.RegisterWorkers(
-		// 	pendingTransactionWorker,
-		// 	addBalanceWorker,
-		// )
+		appMetric.StartServer()
 	})
-
-	// register individual queues + respective priority to the app-worker
-	appWorker.RegisterQueues(map[string]int{
-		pendingTransactionWorker.Queue(): 3,
-		addBalanceWorker.Queue():         7,
+	appWorker.WithPostShutdownCallback(func() {
+		appMetric.ShutdownServer()
 	})
 
 	// plug missing dependecies to transaction domain
@@ -93,6 +76,22 @@ func main() {
 	// plug missing worker to worker-handlers
 	pendingTransactionWorker.WithWorker(appWorker)
 	addBalanceWorker.WithWorker(appWorker)
+
+	// setup server's http-handler
+	r := handler.NewHttpHandler(transaction, balance, addBalanceWorker, appMetric)
+
+	// setup app-server
+	appServer := app.NewServer(appConfig, r)
+	appServer.WithPostStartCallback(func() {
+		appWorker.ConnectToQueue()
+		appMetric.StartServer()
+	})
+	appServer.WithPostShutdownCallback(func() {
+		if err := appWorker.DisconnectFromQueue(); err != nil {
+			log.Printf("found error on disconnecting from queue. err=%v", err)
+		}
+		appMetric.ShutdownServer()
+	})
 
 	// setup app-cli
 	appCli := app.NewCli(appServer, appWorker)
