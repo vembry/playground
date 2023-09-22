@@ -1,7 +1,7 @@
 package app
 
 import (
-	"app-go/cmd"
+	"app/cmd"
 
 	"github.com/spf13/cobra"
 )

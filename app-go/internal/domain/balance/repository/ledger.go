@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"app-go/internal/model"
+	"app/internal/model"
 	"context"
 	"fmt"
 

@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"app-go/internal/model"
+	"app/internal/model"
 	"context"
 	"errors"
 	"fmt"

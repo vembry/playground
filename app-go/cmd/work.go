@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"app-go/common"
+	"app/common"
 	"context"
 	"log"
 

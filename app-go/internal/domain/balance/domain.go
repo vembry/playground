@@ -1,8 +1,8 @@
 package transaction
 
 import (
-	"app-go/internal/domain/balance/repository"
-	"app-go/internal/model"
+	"app/internal/domain/balance/repository"
+	"app/internal/model"
 	"context"
 	"encoding/json"
 	"fmt"

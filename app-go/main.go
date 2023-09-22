@@ -5,12 +5,12 @@ import (
 	"log"
 	"os"
 
-	"app-go/internal/app"
-	balanceDomain "app-go/internal/domain/balance"
-	mutexDomain "app-go/internal/domain/mutex"
-	transactionDomain "app-go/internal/domain/transaction"
-	"app-go/internal/handler"
-	"app-go/internal/worker"
+	"app/internal/app"
+	balanceDomain "app/internal/domain/balance"
+	mutexDomain "app/internal/domain/mutex"
+	transactionDomain "app/internal/domain/transaction"
+	"app/internal/handler"
+	"app/internal/worker"
 )
 
 var (

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"app-go/internal/model"
+	"app/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
