@@ -1,7 +1,13 @@
-version: '3.8'
+version: "3.8"
 
-x-deps:
-  &deps
+# default configs
+x-default: &default
+  deploy:
+    resources:
+      limits:
+        memory: 32m # defaulted memory limit to 16mb
+  restart: unless-stopped
+x-deps: &deps
   deploy:
     resources:
       limits:
@@ -26,16 +32,16 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
-  
+
   redis:
     <<: *deps
     image: redis:6.2-alpine
     container_name: redis
     command: redis-server --requirepass local
     ports:
-      - '6379:6379'
+      - "6379:6379"
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping" ]
+      test: ["CMD-SHELL", "redis-cli ping"]
 
   asynq-mon:
     <<: *deps
@@ -58,7 +64,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
       GF_AUTH_DISABLE_LOGIN_FORM: true
     ports:
-      - '10000:3000'
+      - "10000:3000"
     volumes:
       - ./.docker/grafana/provisioning:/etc/grafana/provisioning
 
@@ -77,9 +83,9 @@ services:
         "--config.file=/etc/prometheus/prometheus.yml",
         "--storage.tsdb.path=/prometheus",
         "--web.console.libraries=/etc/prometheus/console_libraries",
-        "--web.console.templates=/etc/prometheus/consoles"
+        "--web.console.templates=/etc/prometheus/consoles",
       ]
-      
+
   # ref: https://github.com/google/cadvisor/issues/3187
   # this is to scrape docker stats' "metrics"
   cadvisor:
@@ -97,3 +103,68 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+
+  load-test:
+    build:
+      context: ./load-test
+    image: credits-load-test:local
+    container_name: load-test
+    command: run create-transaction.ts
+    depends_on:
+      app-go:
+        condition: service_healthy
+    network_mode: host
+    restart: no
+    environment:
+      - API_HOST=http://localhost
+
+  app-go:
+    <<: *default
+    build:
+      context: ./app-go
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go
+    command: /app-go serve
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - 80:80
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
+
+  app-go-worker:
+    <<: *default
+    build:
+      context: ./app-go
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go-worker
+    command: /app-go work
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
