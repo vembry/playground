@@ -16,10 +16,10 @@ type server struct {
 func newServer(h *handler) *server {
 	r := gin.Default()
 
-	r.POST("balance/open", func(ctx *gin.Context) {})
-	r.POST("balance/:balance_id/withdraw", func(ctx *gin.Context) {})
-	r.POST("balance/:balance_id/deposit", func(ctx *gin.Context) {})
-	r.POST("balance/:balance_id/transfer", func(ctx *gin.Context) {})
+	r.POST("balance/open", h.Open)
+	r.POST("balance/:balance_id/deposit", h.Deposit)
+	r.POST("balance/:balance_id/withdraw", h.Withdraw)
+	r.POST("balance/:balance_id/transfer", h.Withdraw)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", r.Handler())

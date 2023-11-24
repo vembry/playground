@@ -1,8 +1,16 @@
 package model
 
-import "github.com/segmentio/ksuid"
+import (
+	"time"
+
+	"github.com/segmentio/ksuid"
+)
 
 type Balance struct {
+	Id        ksuid.KSUID `json:"id" gorm:"column:id"`
+	Amount    float64     `json:"amount" gorm:"column:amount"`
+	CreatedAt time.Time   `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt time.Time   `json:"updated_at" gorm:"column:updated_at"`
 }
 
 type DepositParam struct {

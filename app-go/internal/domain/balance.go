@@ -29,7 +29,9 @@ func NewBalance(
 }
 
 func (d *balance) Open(ctx context.Context) (*model.Balance, error) {
-	return nil, nil
+	return d.balanceRepository.Create(ctx, &model.Balance{
+		Amount: float64(0),
+	})
 }
 
 func (d *balance) Deposit(ctx context.Context, in *model.DepositParam) error {
