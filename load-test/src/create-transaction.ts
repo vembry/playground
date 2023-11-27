@@ -1,6 +1,8 @@
 import http from "k6/http";
 
-const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal:8080";
+const host = __ENV.API_HOST
+  ? __ENV.API_HOST
+  : "http://host.docker.internal:8080";
 
 export const options = {
   vus: 1,
@@ -51,6 +53,12 @@ const balanceIds = [
   "2TWlRnR3C0hopS7NkcwyjIOq5Kd",
 ];
 
+const requestParams = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
+
 export default function () {
   // pick balance id at random
   const balanceId = balanceIds[Math.floor(Math.random() * balanceIds.length)];
@@ -59,19 +67,33 @@ export default function () {
   const getBalanceRes = http.get(`${host}/balance/${balanceId}`);
   const out = getBalanceRes.json();
 
-  const payload = {
-    amount: Math.floor(Math.random() * 1000),
-  };
+  const trxAmount = Math.floor(Math.random() * 1000);
 
+  if (out["object"]["amount"] < trxAmount) {
+    const topupAmount = Math.floor(Math.random() * 10) * 10000 + 1000;
 
-  if (out['object']['amount'] < payload.amount) {
     // do topup
     const topupPayload = {
-      amount: Math.floor(Math.random() * 10) * 10000,
+      amount: topupAmount,
     };
-    http.post(`${host}/balance/${balanceId}/deposit`, JSON.stringify(topupPayload));
+    http.post(
+      `${host}/balance/${balanceId}/deposit`,
+      JSON.stringify(topupPayload),
+      requestParams
+    );
   }
 
-  // create transaction
-  http.post(`${host}/balance/${balanceId}/withdraw`, JSON.stringify(payload));
+  // let balanceIdTo = balanceIds[Math.floor(Math.random() * balanceIds.length)];
+  // while (balanceIdTo == balanceId) {
+  //   balanceIdTo = balanceIds[Math.floor(Math.random() * balanceIds.length)];
+  // }
+
+  // create withdrawal
+  http.post(
+    `${host}/balance/${balanceId}/withdraw`,
+    JSON.stringify({
+      amount: trxAmount,
+    }),
+    requestParams
+  );
 }
