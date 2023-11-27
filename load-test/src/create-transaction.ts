@@ -1,14 +1,34 @@
-import http, { get } from "k6/http";
+import http from "k6/http";
 
-const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal";
+const host = __ENV.API_HOST ? __ENV.API_HOST : "http://host.docker.internal:8080";
 
 export const options = {
-  vus: 20,
-  duration: "5m",
+  vus: 1,
+  duration: "1s",
 };
 
 // list of available user-ids
-const userIds = [
+const balanceIds = [
+  "2TeSprhp2cN6nEIcayZsjjvnlsK",
+  "2TeSppzLaJaxldlzMOkqYO37vqw",
+  "2TeSprCLB0tF6HsJT9eCb1IBht0",
+  "2TeSps1ECSPx2IRrWMKEd6oHvSJ",
+  "2TeSpqL5Cq3t0rNJ4RDcR4ky029",
+  "2TeSpo6Okj6BedA62PUO3nRYADm",
+  "2TeSprwUG0oLfgGbIIObipgf5be",
+  "2TeSpqi0vPnYFf82cdBCE4Gaxjx",
+  "2TeSppFijPxu2bIKpRLhLy3ye4j",
+  "2TeSpnNHCn0Yq0vJddsv0dcSviy",
+  "2TeSpsBbTYE5ZBe3zpO1HDRf44o",
+  "2TeSprmZUc7HGpqlm7bUi6RB9lu",
+  "2TeSpqKkgW9pz15PaqR8ZIS0Wjh",
+  "2TeSpqfWmsmNLffPB4fhErgYRiC",
+  "2TeSpnH3d9Hr9zPyNpoBrzdd8fx",
+  "2TeSpsz6jeis3vJHCoSfFrnGPVl",
+  "2TeSptEF7KEwZ9cdlowOH4HSmbR",
+  "2TeSpsvjaufyDq78BwcFFZ6ibfi",
+  "2TeSpsFLvMYhPU3CpC21wgyOcS5",
+  "2TeSpmhKLpqgNXTNOvh3JPLkbjy",
   "2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga",
   "2TWlPVmPjhonQ2DpOFt09O990th",
   "2TWlPdYWFbP3iXPMIKVRmdZ3ozC",
@@ -32,34 +52,26 @@ const userIds = [
 ];
 
 export default function () {
-  // pick user id at random
-  const userId = userIds[Math.floor(Math.random() * userIds.length)];
-  const params = {
-    headers: {
-      "Content-Type": "application/json",
-      "x-user-id": userId,
-    },
-  };
+  // pick balance id at random
+  const balanceId = balanceIds[Math.floor(Math.random() * balanceIds.length)];
+
+  // get balance
+  const getBalanceRes = http.get(`${host}/balance/${balanceId}`);
+  const out = getBalanceRes.json();
 
   const payload = {
     amount: Math.floor(Math.random() * 1000),
-    description: `testing-${Date.now()}`,
   };
 
-  // get balance
-  const getBalanceRes = http.get(`${host}/balance`, params);
-  const out = getBalanceRes.json();
 
-  if (out.payload.amount < payload.amount) {
+  if (out['object']['amount'] < payload.amount) {
     // do topup
     const topupPayload = {
-      user_id: userId,
-      description: `reason #${Date.now()}`,
-      amount: Math.floor(Math.random() * 10) * 10000
-    }
-    http.post(`${host}/balance/add`, JSON.stringify(topupPayload), params)
+      amount: Math.floor(Math.random() * 10) * 10000,
+    };
+    http.post(`${host}/balance/${balanceId}/deposit`, JSON.stringify(topupPayload));
   }
 
   // create transaction
-  http.post(`${host}/transaction`, JSON.stringify(payload), params);
+  http.post(`${host}/balance/${balanceId}/withdraw`, JSON.stringify(payload));
 }
