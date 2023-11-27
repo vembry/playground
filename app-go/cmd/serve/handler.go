@@ -22,11 +22,12 @@ func newHandler(balanceDomain domain.IBalance) *handler {
 func (h *handler) Open(c *gin.Context) {
 	balance, err := h.balanceDomain.Open(c)
 	if err != nil {
-		c.JSON(400, model.BaseResponse[struct{}]{
+		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
 		})
+		return
 	}
-	c.JSON(200, model.BaseResponse[*model.Balance]{
+	c.JSON(200, BaseResponse[*model.Balance]{
 		Object: balance,
 	})
 }
@@ -40,34 +41,89 @@ func (h *handler) Get(c *gin.Context) {
 	// call service
 	balance, err := h.balanceDomain.Get(c, balanceId)
 	if err != nil {
-		c.JSON(400, model.BaseResponse[struct{}]{
+		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
 		})
+		return
 	}
 
 	// return
-	c.JSON(200, model.BaseResponse[*model.Balance]{
+	c.JSON(200, BaseResponse[*model.Balance]{
 		Object: balance,
 	})
 }
 
 // Withdraw attempts to withdraw balance
 func (h *handler) Withdraw(c *gin.Context) {
-	c.JSON(200, model.BaseResponse[string]{
-		Object: "ok",
+	var in *model.WithdrawParam
+	if err := c.ShouldBind(&in); err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+
+	balanceIdRaw := c.Param("balance_id")
+	in.BalanceId, _ = ksuid.Parse(balanceIdRaw)
+
+	withdrawal, err := h.balanceDomain.Withdraw(c, in)
+	if err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+	c.JSON(200, BaseResponse[*model.Withdrawal]{
+		Object: withdrawal,
 	})
 }
 
 // Deposit attempts to deposit balance
 func (h *handler) Deposit(c *gin.Context) {
-	c.JSON(200, model.BaseResponse[string]{
-		Object: "ok",
+	var in *model.DepositParam
+	if err := c.ShouldBind(&in); err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+
+	balanceIdRaw := c.Param("balance_id")
+	in.BalanceId, _ = ksuid.Parse(balanceIdRaw)
+
+	deposit, err := h.balanceDomain.Deposit(c, in)
+	if err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+	c.JSON(200, BaseResponse[*model.Deposit]{
+		Object: deposit,
 	})
 }
 
 // Transfer attempts to send balance from a balance id to another balance id
 func (h *handler) Transfer(c *gin.Context) {
-	c.JSON(200, model.BaseResponse[string]{
-		Object: "ok",
+	var in *model.TransferParam
+	if err := c.ShouldBind(&in); err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+
+	balanceIdRaw := c.Param("balance_id")
+	in.BalanceIdFrom, _ = ksuid.Parse(balanceIdRaw)
+
+	transfer, err := h.balanceDomain.Transfer(c, in)
+	if err != nil {
+		c.JSON(400, BaseResponse[struct{}]{
+			Error: err.Error(),
+		})
+		return
+	}
+	c.JSON(200, BaseResponse[*model.Transfer]{
+		Object: transfer,
 	})
 }

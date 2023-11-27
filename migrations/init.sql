@@ -72,18 +72,40 @@ CREATE TABLE public.ledgers (
     amount NUMERIC(15, 2),
     balance_after NUMERIC(15, 2),
     balance_before NUMERIC(15, 2),
-    created_at TIMESTAMP DEFAULT current_timestamp
+    created_at TIMESTAMP DEFAULT current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp
 );
 
+
+-- create deposits table
+CREATE TABLE deposits (
+    id CHAR(27) PRIMARY KEY,
+    balance_id CHAR(27) NOT NULL REFERENCES balances,
+    "status" generic_status,
+    amount NUMERIC(15, 2),
+    created_at TIMESTAMP DEFAULT current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp
+);
+
+-- create withdrawals table
+CREATE TABLE withdrawals (
+    id CHAR(27) PRIMARY KEY,
+    balance_id CHAR(27) NOT NULL REFERENCES balances,
+    "status" generic_status,
+    amount NUMERIC(15, 2),
+    created_at TIMESTAMP DEFAULT current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp
+);
 
 -- create transfers table
 CREATE TABLE transfers (
     id CHAR(27) PRIMARY KEY,
-    "status" generic_status,
     balance_id_from CHAR(27) NOT NULL REFERENCES balances,
     balance_id_to CHAR(27) NOT NULL REFERENCES balances,
+    "status" generic_status,
     amount NUMERIC(15, 2),
-    created_at TIMESTAMP DEFAULT current_timestamp
+    created_at TIMESTAMP DEFAULT current_timestamp,
+    updated_at TIMESTAMP DEFAULT current_timestamp
 );
 
 -- index transactions' status

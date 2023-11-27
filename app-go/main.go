@@ -26,10 +26,18 @@ func main() {
 
 	// setup repository(s)
 	balanceRepository := postgres.NewBalance(db)
-	ledgerRepository := postgres.NewLedger(db)
+	// ledgerRepository := postgres.NewLedger(db)
+	depositRepository := postgres.NewDeposit(db)
+	withdrawalRepository := postgres.NewWithdrawal(db)
+	transferRepository := postgres.NewTransfer(db)
 
 	// setup domain(s)
-	balanceDomain := domain.NewBalance(balanceRepository, ledgerRepository)
+	balanceDomain := domain.NewBalance(
+		balanceRepository,
+		depositRepository,
+		withdrawalRepository,
+		transferRepository,
+	)
 
 	// initiate CLI(s)
 	cli := &cobra.Command{}

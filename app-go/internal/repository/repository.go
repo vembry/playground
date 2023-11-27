@@ -16,3 +16,13 @@ type IBalance interface {
 type ILedger interface {
 	Create(ctx context.Context, entry *model.Ledger) (*model.Ledger, error)
 }
+
+type IDeposit interface {
+	Create(ctx context.Context, entry *model.Deposit) (*model.Deposit, error)
+}
+type IWithdrawal interface {
+	Create(ctx context.Context, entry *model.Withdrawal) (*model.Withdrawal, error)
+}
+type ITransfer interface {
+	Create(ctx context.Context, entry *model.Transfer) (*model.Transfer, error)
+}
