@@ -19,26 +19,26 @@ var (
 
 func main() {
 	// setup config
-	appConfig := app.NewConfig(embedFS)
+	config := app.NewConfig(embedFS)
 
-	appDb, closer := app.NewOrmDb(appConfig)
+	db, closer := app.NewOrmDb(config)
 	defer closer() // close connection when main.go closes
 
 	// setup repository(s)
-	balanceRepository := postgres.NewBalance(appDb)
-	ledgerRepository := postgres.NewLedger(appDb)
+	balanceRepository := postgres.NewBalance(db)
+	ledgerRepository := postgres.NewLedger(db)
 
 	// setup domain(s)
 	balanceDomain := domain.NewBalance(balanceRepository, ledgerRepository)
 
 	// initiate CLI(s)
-	appCli := &cobra.Command{}
-	appCli.AddCommand(
-		servecmd.New(appConfig, balanceDomain),
+	cli := &cobra.Command{}
+	cli.AddCommand(
+		servecmd.New(config, balanceDomain),
 		workcmd.New(),
 	)
 
-	if err := appCli.Execute(); err != nil {
+	if err := cli.Execute(); err != nil {
 		log.Fatalf("found error on executing app's cli. err=%v", err)
 	}
 }

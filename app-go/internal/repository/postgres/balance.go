@@ -36,6 +36,18 @@ func (r *balance) Create(ctx context.Context, entry *model.Balance) (*model.Bala
 	return entry, nil
 }
 
+func (r *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, error) {
+	var out *model.Balance
+	// insert to table
+	if err := r.db.Table("balances").Where("id = ?", balanceId).Find(&out).Error; err != nil {
+		if err.(*pgconn.PgError).Code == "23505" {
+			return nil, fmt.Errorf("balance exists")
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
 func (r *balance) Update(ctx context.Context, in *model.Balance) (*model.Balance, error) {
 	in.UpdatedAt = time.Now().UTC()
 

@@ -17,9 +17,10 @@ func newServer(h *handler) *server {
 	r := gin.Default()
 
 	r.POST("balance/open", h.Open)
+	r.GET("balance/:balance_id", h.Get)
 	r.POST("balance/:balance_id/deposit", h.Deposit)
 	r.POST("balance/:balance_id/withdraw", h.Withdraw)
-	r.POST("balance/:balance_id/transfer", h.Withdraw)
+	r.POST("balance/:balance_id/transfer", h.Transfer)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", r.Handler())
