@@ -18,6 +18,7 @@ func New(
 		Short: "start server",
 		Long:  "start server long",
 		Run: func(cmd *cobra.Command, args []string) {
+			log.Printf("starting server...")
 			h := newHandler(balanceDomain)
 			s := newServer(h)
 
@@ -25,8 +26,8 @@ func New(
 			s.Start()
 
 			// await
-			log.Printf("awaiting sigterm...")
 			common.WatchForExitSignal()
+			log.Printf("shutting down server...")
 
 			// stop server gracefully
 			s.Stop()

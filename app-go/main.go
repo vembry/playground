@@ -1,11 +1,12 @@
 package main
 
 import (
-	servecmd "app/cmd/serve"
-	workcmd "app/cmd/work"
+	cmdserve "app/cmd/serve"
+	cmdwork "app/cmd/work"
 	"app/internal/app"
 	"app/internal/domain"
 	"app/internal/repository/postgres"
+	workerkafka "app/internal/worker/kafka"
 	"embed"
 	"log"
 
@@ -39,11 +40,13 @@ func main() {
 		transferRepository,
 	)
 
+	withdrawalWorker := workerkafka.NewWithdrawal()
+
 	// initiate CLI(s)
 	cli := &cobra.Command{}
 	cli.AddCommand(
-		servecmd.New(config, balanceDomain),
-		workcmd.New(),
+		cmdserve.New(config, balanceDomain),
+		cmdwork.New(withdrawalWorker),
 	)
 
 	if err := cli.Execute(); err != nil {
