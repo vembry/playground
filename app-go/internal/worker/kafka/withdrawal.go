@@ -14,11 +14,12 @@ type withdrawal struct {
 
 func NewWithdrawal() *withdrawal {
 	r := kafkago.NewReader(kafkago.ReaderConfig{
-		Brokers:  []string{"kafka-broker:9092"},
-		Topic:    "topic",
-		GroupID:  "consumer-group",
+		Brokers:  []string{"localhost:9093"},
+		Topic:    "withdrawal",
+		GroupID:  "app-go",
 		MaxBytes: 10e6, // 10MB
 	})
+
 	return &withdrawal{
 		reader: r,
 	}
@@ -34,7 +35,7 @@ func (w *withdrawal) Start() {
 		msg, err := w.reader.ReadMessage(context.Background())
 		if err != nil {
 			fmt.Printf("Error reading message: %v\n", err)
-			break
+			// break
 		}
 
 		fmt.Printf("Received message: %s\n", msg.Value)
