@@ -20,32 +20,42 @@ var (
 
 func main() {
 	// setup config
-	config := app.NewConfig(embedFS)
+	appConfig := app.NewConfig(embedFS)
 
-	db, closer := app.NewOrmDb(config)
+	// setup app-cache
+	appCache := app.NewCache(appConfig)
+
+	appDb, closer := app.NewOrmDb(appConfig)
 	defer closer() // close connection when main.go closes
 
 	// setup repository(s)
-	balanceRepository := postgres.NewBalance(db)
-	// ledgerRepository := postgres.NewLedger(db)
-	depositRepository := postgres.NewDeposit(db)
-	withdrawalRepository := postgres.NewWithdrawal(db)
-	transferRepository := postgres.NewTransfer(db)
+	balanceRepository := postgres.NewBalance(appDb)
+	// ledgerRepository := postgres.NewLedger(appDb)
+	depositRepository := postgres.NewDeposit(appDb)
+	withdrawalRepository := postgres.NewWithdrawal(appDb)
+	transferRepository := postgres.NewTransfer(appDb)
+
+	// setup worker
+	withdrawalWorker := workerkafka.NewWithdrawal(appConfig)
 
 	// setup domain(s)
+	mutexDomain := domain.NewMutex(appCache.GetClient())
 	balanceDomain := domain.NewBalance(
 		balanceRepository,
 		depositRepository,
 		withdrawalRepository,
 		transferRepository,
+		withdrawalWorker,
+		mutexDomain,
 	)
 
-	withdrawalWorker := workerkafka.NewWithdrawal()
+	// inject missing dependencies
+	withdrawalWorker.InjectDep(balanceDomain)
 
 	// initiate CLI(s)
 	cli := &cobra.Command{}
 	cli.AddCommand(
-		cmdserve.New(config, balanceDomain),
+		cmdserve.New(appConfig, balanceDomain),
 		cmdwork.New(withdrawalWorker),
 	)
 

@@ -5,7 +5,7 @@ alter database credit set work_mem = '64MB';
 
 
 -- construct generic_status enum
-CREATE TYPE generic_status AS ENUM ('pending','success','failed');
+CREATE TYPE generic_status AS ENUM ('pending','completed','failed');
 
 -- create balances table
 CREATE TABLE public.balances (

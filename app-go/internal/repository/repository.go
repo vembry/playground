@@ -8,8 +8,8 @@ import (
 )
 
 type IBalance interface {
-	Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, error)
 	Create(ctx context.Context, entry *model.Balance) (*model.Balance, error)
+	Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, error)
 	Update(ctx context.Context, in *model.Balance) (*model.Balance, error)
 }
 
@@ -22,6 +22,8 @@ type IDeposit interface {
 }
 type IWithdrawal interface {
 	Create(ctx context.Context, entry *model.Withdrawal) (*model.Withdrawal, error)
+	Get(ctx context.Context, withdrawalId ksuid.KSUID) (*model.Withdrawal, error)
+	Update(ctx context.Context, in *model.Withdrawal) (*model.Withdrawal, error)
 }
 type ITransfer interface {
 	Create(ctx context.Context, entry *model.Transfer) (*model.Transfer, error)
