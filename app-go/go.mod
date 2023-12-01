@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/jackc/pgconn v1.14.1
+	github.com/segmentio/kafka-go v0.4.46
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/spf13/cobra v1.8.0
@@ -41,7 +42,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	github.com/segmentio/kafka-go v0.4.46 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
