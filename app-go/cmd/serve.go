@@ -8,6 +8,7 @@ import (
 )
 
 type IServer interface {
+	Name() string
 	Start()
 	Stop()
 }
@@ -21,11 +22,10 @@ func NewServe(
 		Long:  "start server long",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Printf("starting server...")
-			// h := newHandler(balanceDomain)
-			// s := newServer(metric, h)
 
 			// start servers
 			for i := range servers {
+				log.Printf("starting %s", servers[i].Name())
 				servers[i].Start()
 			}
 

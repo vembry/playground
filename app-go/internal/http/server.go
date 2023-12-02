@@ -1,7 +1,6 @@
 package http
 
 import (
-	"app/internal/app"
 	"app/internal/domain"
 	"context"
 	"log"
@@ -15,8 +14,16 @@ type server struct {
 	httpserver *http.Server
 }
 
+func (s *server) Name() string {
+	return "httpserver"
+}
+
+type IMetric interface {
+	RecordInbound(route string, method string, statusCode string, duration time.Duration)
+}
+
 func NewServer(
-	metric *app.Metric,
+	metric IMetric,
 	balanceDomain domain.IBalance,
 ) *server {
 
@@ -43,9 +50,6 @@ func NewServer(
 }
 
 func (s *server) Start() {
-	log.Print("starting server...")
-
-	log.Print("starting http server...")
 	go func() {
 		if err := s.httpserver.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("found error on starting http server. err=%v", err)

@@ -1,14 +1,13 @@
 package http
 
 import (
-	"app/internal/app"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func inboundMetric(metric *app.Metric) func(*gin.Context) {
+func inboundMetric(metric IMetric) func(*gin.Context) {
 	return func(c *gin.Context) {
 		// initiate time
 		start := time.Now()
