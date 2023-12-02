@@ -51,7 +51,11 @@ func main() {
 	// inject missing dependencies
 	withdrawalWorker.InjectDep(balanceDomain)
 
-	httpserver := internalhttp.NewServer(appMetric, balanceDomain)
+	httpserver := internalhttp.NewServer(
+		appConfig.HttpAddress,
+		appMetric,
+		balanceDomain,
+	)
 
 	// initiate CLI(s)
 	cli := &cobra.Command{}

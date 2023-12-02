@@ -18,6 +18,13 @@ func newHandler(balanceDomain domain.IBalance) *handler {
 	}
 }
 
+// HealthCheck is handle incoming health-check request.
+func (s *handler) HealthCheck(c *gin.Context) {
+	c.JSON(200, BaseResponse[struct{}]{
+		Object: struct{}{},
+	})
+}
+
 // Open opens new balance. Basically creates new balance entry
 func (h *handler) Open(c *gin.Context) {
 	balance, err := h.balanceDomain.Open(c)

@@ -23,6 +23,7 @@ type IMetric interface {
 }
 
 func NewServer(
+	httpaddress string,
 	metric IMetric,
 	balanceDomain domain.IBalance,
 ) *server {
@@ -38,12 +39,15 @@ func NewServer(
 	r.POST("balance/:balance_id/withdraw", h.Withdraw)
 	r.POST("balance/:balance_id/transfer", h.Transfer)
 
+	// to do health-check
+	r.GET("/health", h.HealthCheck)
+
 	mux := http.NewServeMux()
 	mux.Handle("/", r.Handler())
 
 	return &server{
 		httpserver: &http.Server{
-			Addr:    ":8080",
+			Addr:    httpaddress,
 			Handler: mux,
 		},
 	}
