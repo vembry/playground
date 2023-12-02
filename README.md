@@ -1,24 +1,23 @@
 # credits-management
 
 ## context
-1. This is an *experiment* of "How to handle credits ledger"
+1. This is an *experiment* of "How to manage credits"
 2. credit = balance = available funds
 
 ## scenario
-1. setup starting balance at 10K
-2. create multiple transaction entries that will exhaust the balance
-   1. we're gonna use `grafana/k6` to replicate huge intakes
-   2. entries will consist of both credit addition and transaction creation(withdrawal)
+1. prepared x amount as the transacting balance
+2. check whether current active balance is enough
+3. withdraw money
 
 ## expected outcome
 1. remaining credits shouldnt be negative
-2. final balance on ledger should always be `in` > `out`
+2. accumulated balance on ledger should always be `in` > `out`
 2. nothing went brokey
 
 ## learning points
-1. learn how to make credit-ledger doesnt go kaboom when theres huge intake of transactions
-2. learn how to utilize docker for service orchestration(?)
-3. learn how to load test using `grafana/k6`
+1. learn how to make credits doesnt go kaboom when theres huge transaction intake
+2. learn how to utilize docker for service orchestration
+3. learn how to load test using `grafana/k6`, which we'll be using to run the scenario + replicate huge intake process
 4. visualize the observability metrics from the experiment, using:
    1. grafana, to visualize
    2. cadvisor, to scrap metrics from the containers

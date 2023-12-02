@@ -1,0 +1,202 @@
+version: "3.8"
+
+# default configs
+x-default: &default
+  deploy:
+    resources:
+      limits:
+        memory: 32m # defaulted memory limit to 16mb
+  restart: unless-stopped
+x-deps: &deps
+  deploy:
+    resources:
+      limits:
+        memory: 256m # defaulted memory limit to 256mb
+  restart: unless-stopped
+
+services:
+  postgres:
+    <<: *deps
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: credit
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres -U local"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+
+  # redis:
+  #   <<: *deps
+  #   image: redis:6.2-alpine
+  #   command: redis-server --requirepass local
+  #   ports:
+  #     - "6379:6379"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "redis-cli ping"]
+
+  grafana:
+    <<: *deps
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_LOG_LEVEL: debug
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: true
+    ports:
+      - "10000:3000"
+    volumes:
+      - ./.docker/grafana/provisioning:/etc/grafana/provisioning
+
+  prometheus:
+    <<: *deps
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    pull_policy: missing
+    ports:
+      - 10001:9090
+    volumes:
+      - ./.docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      [
+        "--config.file=/etc/prometheus/prometheus.yml",
+        "--storage.tsdb.path=/prometheus",
+        "--web.console.libraries=/etc/prometheus/console_libraries",
+        "--web.console.templates=/etc/prometheus/consoles",
+      ]
+
+  # ref: https://github.com/google/cadvisor/issues/3187
+  # this is to scrape docker stats' "metrics"
+  cadvisor:
+    <<: *deps
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    privileged: true # stops oom warning
+    platform: linux/aarch64 # m1/m2 mac
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"  # External listener port
+    # healthcheck:
+    #   test: kafka-topics --bootstrap-server kafka:9093 --list
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 10002:8080
+    depends_on:
+      - kafka
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  load-test:
+    build:
+      context: ./load-test
+    image: credits-load-test:local
+    container_name: load-test
+    command: run create-transaction.ts
+    depends_on:
+      app-go:
+        condition: service_healthy
+    network_mode: host
+    restart: no
+    environment:
+      - API_HOST=http://localhost
+
+  app-go:
+    <<: *default
+    build:
+      context: ./app-go
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go
+    command: /app-go serve
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+      # kafka:
+      #   condition: service_healthy
+    ports:
+      - 80:80
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
+      KAFKA_BROKER: kafka:9093
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
+
+  # app-go-worker:
+  #   <<: *default
+  #   build:
+  #     context: ./app-go
+  #   x-develop:
+  #     watch:
+  #       - action: rebuild
+  #         path: ./app-go
+  #   image: credits-app-go:local
+  #   container_name: app-go-worker
+  #   command: /app-go work
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+  #     REDIS_URI: redis://:local@redis:6379/0
+  #     KAFKA_BROKER: kafka:9093

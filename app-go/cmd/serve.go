@@ -1,44 +1,43 @@
 package cmd
 
 import (
-	"app-go/common"
+	"app/common"
 	"log"
 
 	"github.com/spf13/cobra"
 )
 
-// serverProvider contain the spec of a 'server'
-type serverProvider interface {
-	Start() error
-	PostStartCallback()
-	PostShutdownCallback()
-	Shutdown() error
-	GetAddress() string
+type IServer interface {
+	Name() string
+	Start()
+	Stop()
 }
 
-// NewServe is to initiate cli command of 'serve'
-func NewServe(server serverProvider, worker workerProvider) *cobra.Command {
+func NewServe(
+	servers ...IServer,
+) *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",
-		Short: "Run app's http server",
+		Short: "start server",
+		Long:  "start server long",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
-				log.Printf("* Starting the server at %s...", server.GetAddress())
-				server.Start()
-			}()
+			log.Printf("starting servers...")
 
-			// run post-start callback
-			server.PostStartCallback()
-
-			common.WatchForExitSignal()
-
-			log.Print("* Shutting down the server...")
-			if err := server.Shutdown(); err != nil {
-				log.Printf("found error on shutting down server. err=%v", err)
+			// start servers
+			for i := range servers {
+				log.Printf("starting %s server", servers[i].Name())
+				servers[i].Start()
 			}
 
-			// run post-shutdown callback
-			server.PostShutdownCallback()
+			// await
+			common.WatchForExitSignal()
+			log.Printf("shutting down server...")
+
+			// stop servers gracefully
+			for i := range servers {
+				log.Printf("shutting down %s server", servers[i].Name())
+				servers[i].Stop()
+			}
 		},
 	}
 }

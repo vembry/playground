@@ -6,10 +6,10 @@ start:
 	make up
 
 up:
-	docker compose -f "compose.deps.yml" -f "compose.apps.yml" -f "compose.tools.yml" up -d --build
+	docker compose -f "compose.yml" up -d --build --remove-orphans
 
 down:
-	docker compose -f "compose.deps.yml" -f "compose.apps.yml" -f "compose.tools.yml" down
+	docker compose -f "compose.yml" down
 	(echo "y" | docker volume prune)
 
 watch:
