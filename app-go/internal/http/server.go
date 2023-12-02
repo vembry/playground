@@ -1,6 +1,8 @@
-package serve
+package http
 
 import (
+	"app/internal/app"
+	"app/internal/domain"
 	"context"
 	"log"
 	"net/http"
@@ -13,8 +15,15 @@ type server struct {
 	httpserver *http.Server
 }
 
-func newServer(h *handler) *server {
+func NewServer(
+	metric *app.Metric,
+	balanceDomain domain.IBalance,
+) *server {
+
+	h := newHandler(balanceDomain)
+
 	r := gin.Default()
+	r.Use(inboundMetric(metric))
 
 	r.POST("balance/open", h.Open)
 	r.GET("balance/:balance_id", h.Get)

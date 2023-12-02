@@ -1,4 +1,4 @@
-package serve
+package http
 
 type BaseResponse[C any] struct {
 	Error  string `json:"error"`

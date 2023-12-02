@@ -1,4 +1,4 @@
-package serve
+package http
 
 import (
 	"app/internal/domain"

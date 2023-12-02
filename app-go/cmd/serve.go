@@ -1,17 +1,19 @@
-package serve
+package cmd
 
 import (
 	"app/common"
-	"app/internal/app"
-	"app/internal/domain"
 	"log"
 
 	"github.com/spf13/cobra"
 )
 
-func New(
-	cfg *app.EnvConfig,
-	balanceDomain domain.IBalance,
+type IServer interface {
+	Start()
+	Stop()
+}
+
+func NewServe(
+	servers ...IServer,
 ) *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",
@@ -19,18 +21,22 @@ func New(
 		Long:  "start server long",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Printf("starting server...")
-			h := newHandler(balanceDomain)
-			s := newServer(h)
+			// h := newHandler(balanceDomain)
+			// s := newServer(metric, h)
 
-			// start server
-			s.Start()
+			// start servers
+			for i := range servers {
+				servers[i].Start()
+			}
 
 			// await
 			common.WatchForExitSignal()
 			log.Printf("shutting down server...")
 
-			// stop server gracefully
-			s.Stop()
+			// stop servers gracefully
+			for i := range servers {
+				servers[i].Stop()
+			}
 		},
 	}
 }

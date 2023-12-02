@@ -1,10 +1,10 @@
 package main
 
 import (
-	cmdserve "app/cmd/serve"
-	cmdwork "app/cmd/work"
+	"app/cmd"
 	"app/internal/app"
 	"app/internal/domain"
+	internalhttp "app/internal/http"
 	"app/internal/repository/postgres"
 	workerkafka "app/internal/worker/kafka"
 	"embed"
@@ -22,9 +22,10 @@ func main() {
 	// setup config
 	appConfig := app.NewConfig(embedFS)
 
-	// setup app-cache
-	appCache := app.NewCache(appConfig)
+	// setup app metric
+	appMetric := app.NewMetric(appConfig)
 
+	// setup db
 	appDb, closer := app.NewOrmDb(appConfig)
 	defer closer() // close connection when main.go closes
 
@@ -39,24 +40,27 @@ func main() {
 	withdrawalWorker := workerkafka.NewWithdrawal(appConfig)
 
 	// setup domain(s)
-	mutexDomain := domain.NewMutex(appCache.GetClient())
 	balanceDomain := domain.NewBalance(
 		balanceRepository,
 		depositRepository,
 		withdrawalRepository,
 		transferRepository,
 		withdrawalWorker,
-		mutexDomain,
 	)
 
 	// inject missing dependencies
 	withdrawalWorker.InjectDep(balanceDomain)
 
+	httpserver := internalhttp.NewServer(appMetric, balanceDomain)
+
 	// initiate CLI(s)
 	cli := &cobra.Command{}
 	cli.AddCommand(
-		cmdserve.New(appConfig, balanceDomain),
-		cmdwork.New(withdrawalWorker),
+		cmd.NewServe(
+			httpserver,
+			appMetric,
+		),
+		cmd.NewWork(withdrawalWorker),
 	)
 
 	if err := cli.Execute(); err != nil {
