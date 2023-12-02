@@ -15,7 +15,7 @@ type server struct {
 }
 
 func (s *server) Name() string {
-	return "httpserver"
+	return "http"
 }
 
 type IMetric interface {
@@ -57,8 +57,6 @@ func (s *server) Start() {
 	}()
 }
 func (s *server) Stop() {
-	log.Print("stopping server...")
-
 	// context for stop timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

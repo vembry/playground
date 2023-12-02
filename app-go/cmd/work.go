@@ -21,7 +21,7 @@ func NewWork(workers ...IWorker) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Printf("starting worker...")
 			for i := range workers {
-				log.Printf("starting %s", workers[i].Name())
+				log.Printf("starting %s worker", workers[i].Name())
 				workers[i].Start()
 			}
 
@@ -29,6 +29,7 @@ func NewWork(workers ...IWorker) *cobra.Command {
 			log.Printf("shutting down worker...")
 
 			for i := range workers {
+				log.Printf("shutting down %s worker", workers[i].Name())
 				workers[i].Stop()
 			}
 		},

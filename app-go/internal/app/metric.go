@@ -17,7 +17,7 @@ type metric struct {
 }
 
 func (m *metric) Name() string {
-	return "httpserver"
+	return "metric"
 }
 
 func NewMetric(cfg *EnvConfig) *metric {

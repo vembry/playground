@@ -21,11 +21,11 @@ func NewServe(
 		Short: "start server",
 		Long:  "start server long",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Printf("starting server...")
+			log.Printf("starting servers...")
 
 			// start servers
 			for i := range servers {
-				log.Printf("starting %s", servers[i].Name())
+				log.Printf("starting %s server", servers[i].Name())
 				servers[i].Start()
 			}
 
@@ -35,6 +35,7 @@ func NewServe(
 
 			// stop servers gracefully
 			for i := range servers {
+				log.Printf("shutting down %s server", servers[i].Name())
 				servers[i].Stop()
 			}
 		},
