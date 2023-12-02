@@ -32,6 +32,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -45,6 +46,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -143,6 +145,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -156,6 +159,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -252,6 +256,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -265,6 +270,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -294,7 +300,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "reqps"
         },
         "overrides": []
       },
@@ -323,9 +330,9 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "editorMode": "builder",
+          "editorMode": "code",
           "exemplar": false,
-          "expr": "irate(http_request_latency_milliseconds_count[$intervalx])",
+          "expr": "rate(http_request_latency_milliseconds_count[$__rate_interval])",
           "instant": false,
           "legendFormat": "{{route}} - {{status_code}}",
           "range": true,
@@ -347,6 +354,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -360,6 +368,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -456,13 +465,14 @@
                 "value": 90
               }
             ]
-          }
+          },
+          "unit": "ms"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 2,
+        "w": 24,
         "x": 0,
         "y": 25
       },
@@ -477,9 +487,10 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "10.2.1",
       "targets": [
         {
           "datasource": {
@@ -487,9 +498,11 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum(rate(http_request_latency_milliseconds_bucket[$__range])) by (le))",
+          "exemplar": false,
+          "expr": "histogram_quantile(0.90, sum(rate(http_request_latency_milliseconds_bucket[$__range])) by (le, method, route))",
+          "format": "time_series",
           "instant": false,
-          "legendFormat": "{{label_name}}",
+          "legendFormat": "{{method}} - {{route}}",
           "range": true,
           "refId": "A"
         }
@@ -521,6 +534,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -534,6 +548,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -615,6 +630,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -628,6 +644,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -746,9 +763,10 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "10.2.1",
       "targets": [
         {
           "datasource": {
@@ -769,15 +787,14 @@
   ],
   "refresh": "5s",
   "schemaVersion": 38,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": ["app-go", "app-go-worker"],
-          "value": ["app-go", "app-go-worker"]
+          "text": ["app-go"],
+          "value": ["app-go"]
         },
         "datasource": {
           "type": "prometheus",
@@ -886,6 +903,6 @@
   "timezone": "",
   "title": "Dashboard",
   "uid": "f744f256-9d10-4e29-9dd0-c4ea6f8d7dd2",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

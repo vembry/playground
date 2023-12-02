@@ -26,7 +26,7 @@ func NewMetric(cfg *EnvConfig) *metric {
 		httpRequestLatency: promauto.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "http_request_latency_milliseconds",
 			Help:    "Histogram for Latency of requests in milliseconds.",
-			Buckets: []float64{100, 200, 300, 500, 700, 1000, 1500, 2000, 5000, 10000},
+			Buckets: []float64{1, 5, 10, 50, 100, 250, 500, 750, 1000},
 		}, []string{"route", "method", "status_code"}),
 	}
 }

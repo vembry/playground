@@ -65,11 +65,11 @@ func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model
 		return nil, err
 	}
 
-	// publish for worker
-	err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
-	if err != nil {
-		return nil, err
-	}
+	// // publish for worker
+	// err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return withdrawal, nil
 }

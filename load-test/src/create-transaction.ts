@@ -2,11 +2,11 @@ import http from "k6/http";
 
 const host = __ENV.API_HOST
   ? __ENV.API_HOST
-  : "http://host.docker.internal:8080";
+  : "http://host.docker.internal";
 
 export const options = {
-  vus: 1,
-  duration: "1s",
+  vus: 10,
+  duration: "5m",
 };
 
 // list of available user-ids
