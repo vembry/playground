@@ -6,7 +6,7 @@ import (
 	"app/internal/domain"
 	internalhttp "app/internal/http"
 	"app/internal/repository/postgres"
-	workerkafka "app/internal/worker/kafka"
+	workerasynq "app/internal/worker/asynq"
 	"embed"
 	"log"
 
@@ -36,8 +36,14 @@ func main() {
 	withdrawalRepository := postgres.NewWithdrawal(appDb)
 	transferRepository := postgres.NewTransfer(appDb)
 
-	// setup worker
-	withdrawalWorker := workerkafka.NewWithdrawal(appConfig)
+	// setup asynq worker
+	workerAsynq := workerasynq.New(appConfig.RedisUri)
+
+	// setup individual asynq workers
+	withdrawalWorker := workerasynq.NewWithdrawal(workerAsynq.GetClient())
+
+	// register individual-workers to the asynq
+	workerAsynq.RegisterWorker(withdrawalWorker)
 
 	// setup domain(s)
 	balanceDomain := domain.NewBalance(
@@ -48,8 +54,8 @@ func main() {
 		withdrawalWorker,
 	)
 
-	// inject missing dependencies
-	withdrawalWorker.InjectDep(balanceDomain)
+	// inject missing deps
+	withdrawalWorker.InjectDeps(balanceDomain)
 
 	httpserver := internalhttp.NewServer(
 		appConfig.HttpAddress,
@@ -64,7 +70,7 @@ func main() {
 			httpserver,
 			appMetric,
 		),
-		cmd.NewWork(withdrawalWorker),
+		cmd.NewWork(workerAsynq),
 	)
 
 	if err := cli.Execute(); err != nil {

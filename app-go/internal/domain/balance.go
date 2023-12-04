@@ -3,6 +3,7 @@ package domain
 import (
 	"app/internal/model"
 	"app/internal/repository"
+	"app/internal/worker"
 	"context"
 
 	"github.com/segmentio/ksuid"
@@ -25,7 +26,7 @@ type balance struct {
 	depositRepository    repository.IDeposit
 	withdrawalRepository repository.IWithdrawal
 	transferRepository   repository.ITransfer
-	withdrawalProducer   IWithdrawalProducer
+	withdrawalProducer   worker.IWithdrawalProducer
 }
 
 func NewBalance(
@@ -33,7 +34,7 @@ func NewBalance(
 	depositRepository repository.IDeposit,
 	withdrawalRepository repository.IWithdrawal,
 	transferRepository repository.ITransfer,
-	withdrawalProducer IWithdrawalProducer,
+	withdrawalProducer worker.IWithdrawalProducer,
 ) *balance {
 	return &balance{
 		balanceRepository:    balanceRepository,
@@ -65,11 +66,11 @@ func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model
 		return nil, err
 	}
 
-	// // publish for worker
-	// err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// publish for worker
+	err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
+	if err != nil {
+		return nil, err
+	}
 
 	return withdrawal, nil
 }

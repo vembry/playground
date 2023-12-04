@@ -30,7 +30,9 @@ func NewServer(
 
 	h := newHandler(balanceDomain)
 
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
 	r.Use(inboundMetric(metric))
 
 	r.POST("balance/open", h.Open)
