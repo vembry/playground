@@ -19,6 +19,8 @@ type ILedger interface {
 
 type IDeposit interface {
 	Create(ctx context.Context, entry *model.Deposit) (*model.Deposit, error)
+	Get(ctx context.Context, depositId ksuid.KSUID) (*model.Deposit, error)
+	Update(ctx context.Context, in *model.Deposit) (*model.Deposit, error)
 }
 type IWithdrawal interface {
 	Create(ctx context.Context, entry *model.Withdrawal) (*model.Withdrawal, error)
@@ -27,4 +29,6 @@ type IWithdrawal interface {
 }
 type ITransfer interface {
 	Create(ctx context.Context, entry *model.Transfer) (*model.Transfer, error)
+	Get(ctx context.Context, transferId ksuid.KSUID) (*model.Transfer, error)
+	Update(ctx context.Context, in *model.Transfer) (*model.Transfer, error)
 }

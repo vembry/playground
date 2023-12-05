@@ -17,10 +17,6 @@ type IBalance interface {
 	Transfer(ctx context.Context, in *model.TransferParam) (*model.Transfer, error)
 }
 
-type IWithdrawalProducer interface {
-	Produce(ctx context.Context, withdrawalId ksuid.KSUID) error
-}
-
 type balance struct {
 	balanceRepository    repository.IBalance
 	depositRepository    repository.IDeposit
@@ -73,42 +69,6 @@ func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model
 	}
 
 	return withdrawal, nil
-}
-
-func (d *balance) ProcessWithdraw(ctx context.Context, withdrawId ksuid.KSUID) error {
-	// get withdraw
-	withdrawal, err := d.withdrawalRepository.Get(ctx, withdrawId)
-	if err != nil {
-		return err
-	}
-
-	balance, err := d.Get(ctx, withdrawal.BalanceId)
-	if err != nil {
-		return nil
-	}
-
-	if balance.Amount > withdrawal.Amount {
-		// deduct balance
-		balance.Amount -= withdrawal.Amount
-
-		// update balance
-		_, err = d.balanceRepository.Update(ctx, balance)
-		if err != nil {
-			return err
-		}
-
-		withdrawal.Status = model.StatusCompleted
-	} else {
-		withdrawal.Status = model.StatusFailed
-	}
-
-	// update withdrawal
-	_, err = d.withdrawalRepository.Update(ctx, withdrawal)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (d *balance) Transfer(ctx context.Context, in *model.TransferParam) (*model.Transfer, error) {

@@ -8,8 +8,8 @@ import (
 )
 
 type withdrawal struct {
-	client            *asynq.Client
-	withdrawProcessor IWithdrawProcessor
+	client        *asynq.Client
+	balanceDomain IWithdrawProcessor
 }
 
 func NewWithdrawal(client *asynq.Client) *withdrawal {
@@ -30,8 +30,8 @@ type IWithdrawProcessor interface {
 	ProcessWithdraw(ctx context.Context, withdrawId ksuid.KSUID) error
 }
 
-func (w *withdrawal) InjectDeps(withdrawProcessor IWithdrawProcessor) {
-	w.withdrawProcessor = withdrawProcessor
+func (w *withdrawal) InjectDeps(balanceDomain IWithdrawProcessor) {
+	w.balanceDomain = balanceDomain
 }
 
 func (w *withdrawal) Produce(ctx context.Context, withdrawalId ksuid.KSUID) error {
@@ -47,5 +47,5 @@ func (w *withdrawal) Produce(ctx context.Context, withdrawalId ksuid.KSUID) erro
 
 func (w *withdrawal) Handle(ctx context.Context, task *asynq.Task) error {
 	id, _ := ksuid.Parse(string(task.Payload()))
-	return w.withdrawProcessor.ProcessWithdraw(ctx, id)
+	return w.balanceDomain.ProcessWithdraw(ctx, id)
 }
