@@ -30,32 +30,43 @@ func main() {
 	defer closer() // close connection when main.go closes
 
 	// setup repository(s)
-	balanceRepository := postgres.NewBalance(appDb)
-	// ledgerRepository := postgres.NewLedger(appDb)
-	depositRepository := postgres.NewDeposit(appDb)
-	withdrawalRepository := postgres.NewWithdrawal(appDb)
-	transferRepository := postgres.NewTransfer(appDb)
+	balanceRepo := postgres.NewBalance(appDb)
+	ledgerRepo := postgres.NewLedger(appDb)
+	depositRepo := postgres.NewDeposit(appDb)
+	withdrawalRepo := postgres.NewWithdrawal(appDb)
+	transferRepo := postgres.NewTransfer(appDb)
 
 	// setup asynq worker
 	workerAsynq := workerasynq.New(appConfig.RedisUri)
 
 	// setup individual asynq workers
 	withdrawalWorker := workerasynq.NewWithdrawal(workerAsynq.GetClient())
+	depositWorker := workerasynq.NewDeposit(workerAsynq.GetClient())
+	transferWorker := workerasynq.NewTransfer(workerAsynq.GetClient())
 
 	// register individual-workers to the asynq
-	workerAsynq.RegisterWorker(withdrawalWorker)
+	workerAsynq.RegisterWorker(
+		withdrawalWorker,
+		depositWorker,
+		transferWorker,
+	)
 
 	// setup domain(s)
 	balanceDomain := domain.NewBalance(
-		balanceRepository,
-		depositRepository,
-		withdrawalRepository,
-		transferRepository,
+		balanceRepo,
+		depositRepo,
+		withdrawalRepo,
+		transferRepo,
+		depositWorker,
 		withdrawalWorker,
+		transferWorker,
+		ledgerRepo,
 	)
 
 	// inject missing deps
 	withdrawalWorker.InjectDeps(balanceDomain)
+	depositWorker.InjectDeps(balanceDomain)
+	transferWorker.InjectDeps(balanceDomain)
 
 	httpserver := internalhttp.NewServer(
 		appConfig.HttpAddress,

@@ -66,7 +66,6 @@ CREATE TYPE ledger_entry_type AS ENUM ('in','out');
 -- create ledgers table
 CREATE TABLE public.ledgers (
     id CHAR(27) PRIMARY KEY,
-    ledger_id_parent CHAR(27) NOT NULL REFERENCES ledgers,
     balance_id CHAR(27) NOT NULL REFERENCES balances,
     "type" ledger_entry_type,
     amount NUMERIC(15, 2),

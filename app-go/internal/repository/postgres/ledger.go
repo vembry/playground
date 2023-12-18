@@ -4,6 +4,7 @@ import (
 	"app/internal/model"
 	"context"
 
+	"github.com/segmentio/ksuid"
 	"gorm.io/gorm"
 )
 
@@ -18,5 +19,9 @@ func NewLedger(db *gorm.DB) *ledger {
 }
 
 func (r *ledger) Create(ctx context.Context, entry *model.Ledger) (*model.Ledger, error) {
-	return nil, nil
+	entry.Id = ksuid.New()
+	if err := r.db.Table("ledgers").Create(entry).WithContext(ctx).Error; err != nil {
+		return nil, err
+	}
+	return entry, nil
 }
