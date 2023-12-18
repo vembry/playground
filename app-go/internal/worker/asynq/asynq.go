@@ -56,9 +56,6 @@ func (w *asynqx) RegisterWorker(consumers ...IConsumer) {
 		)
 	}
 }
-func (w *asynqx) RegisterQueues(queuePriorities map[string]int) {
-	w.queuePriorities = queuePriorities
-}
 
 func (w *asynqx) Start() {
 	w.server = asynq.NewServer(
