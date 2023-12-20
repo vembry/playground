@@ -13,7 +13,7 @@ type IWorker interface {
 	Stop()
 }
 
-func NewWork(workers ...IWorker) *cobra.Command {
+func NewWork(metricServer IServer, workers ...IWorker) *cobra.Command {
 	return &cobra.Command{
 		Use:   "work",
 		Short: "start worker",
@@ -25,6 +25,8 @@ func NewWork(workers ...IWorker) *cobra.Command {
 				workers[i].Start()
 			}
 
+			metricServer.Start()
+
 			common.WatchForExitSignal()
 			log.Printf("shutting down worker...")
 
@@ -32,6 +34,7 @@ func NewWork(workers ...IWorker) *cobra.Command {
 				log.Printf("shutting down %s worker", workers[i].Name())
 				workers[i].Stop()
 			}
+			metricServer.Stop()
 		},
 	}
 }
