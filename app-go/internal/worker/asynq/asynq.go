@@ -16,11 +16,24 @@ type asynqx struct {
 	queuePriorities map[string]int
 }
 
+func logging(h asynq.Handler) asynq.Handler {
+	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
+		log.Printf("processing task=%s. payload=%s", t.Type(), string(t.Payload()))
+		err := h.ProcessTask(ctx, t)
+		log.Printf("processed task=%s. payload=%s", t.Type(), string(t.Payload()))
+
+		return err
+	})
+}
+
 func New(redisUri string) *asynqx {
 	opt, _ := asynq.ParseRedisURI(redisUri)
 	redisOpt := opt.(asynq.RedisClientOpt)
 
 	mux := asynq.NewServeMux()
+
+	// middleware
+	mux.Use(logging)
 
 	return &asynqx{
 		mux:             mux,
