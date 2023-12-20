@@ -92,71 +92,67 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 
-  # load-test:
-  #   build:
-  #     context: ./load-test
-  #   image: credits-load-test:local
-  #   container_name: load-test
-  #   command: run create-transaction.ts
-  #   depends_on:
-  #     app-go:
-  #       condition: service_healthy
-  #   network_mode: host
-  #   restart: no
-  #   environment:
-  #     - API_HOST=http://localhost
+  load-test:
+    build:
+      context: ./load-test
+    image: credits-load-test:local
+    container_name: load-test
+    command: run create-transaction.ts
+    depends_on:
+      app-go:
+        condition: service_healthy
+    network_mode: host
+    restart: no
+    environment:
+      - API_HOST=http://localhost:8080
 
-  # app-go:
-  #   <<: *default
-  #   build:
-  #     context: ./app-go
-  #   x-develop:
-  #     watch:
-  #       - action: rebuild
-  #         path: ./app-go
-  #   image: credits-app-go:local
-  #   container_name: app-go
-  #   command: /app-go serve
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     # redis:
-  #     #   condition: service_healthy
-  #     # kafka:
-  #     #   condition: service_healthy
-  #   ports:
-  #     - 80:80
-  #   environment:
-  #     DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
-  #     REDIS_URI: redis://:local@redis:6379/0
-  #     KAFKA_BROKER: kafka:9093
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "/wget",
-  #         "--quiet",
-  #         "--output-document=-",
-  #         "http://0.0.0.0:80/health",
-  #       ]
+  app-go:
+    <<: *default
+    build:
+      context: ./app-go
+    # x-develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go
+    command: /app-go serve
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:8080/health",
+        ]
 
-  # app-go-worker:
-  #   <<: *default
-  #   build:
-  #     context: ./app-go
-  #   x-develop:
-  #     watch:
-  #       - action: rebuild
-  #         path: ./app-go
-  #   image: credits-app-go:local
-  #   container_name: app-go-worker
-  #   command: /app-go work
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   environment:
-  #     DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
-  #     REDIS_URI: redis://:local@redis:6379/0
-  #     KAFKA_BROKER: kafka:9093
+  app-go-worker:
+    <<: *default
+    build:
+      context: ./app-go
+    # x-develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./app-go
+    image: credits-app-go:local
+    container_name: app-go-worker
+    command: /app-go work
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
