@@ -5,7 +5,6 @@ import (
 	"app/internal/repository"
 	"app/internal/worker"
 	"context"
-	"log"
 
 	"github.com/segmentio/ksuid"
 )
@@ -95,10 +94,7 @@ func (d *balance) Deposit(ctx context.Context, in *model.DepositParam) (*model.D
 	}
 
 	// produce task for worker
-	err = d.depositProducer.Produce(ctx, deposit.Id)
-	if err != nil {
-		log.Printf("error on producing deposit task. depositId=%s. err=%v", deposit.Id, err)
-	}
+	d.depositProducer.Produce(ctx, deposit.Id)
 
 	return deposit, nil
 }
@@ -111,10 +107,7 @@ func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model
 	}
 
 	// produce task for worker
-	err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
-	if err != nil {
-		log.Printf("error on producing withdrawal task. withdrawalId=%s. err=%v", withdrawal.Id, err)
-	}
+	d.withdrawalProducer.Produce(ctx, withdrawal.Id)
 
 	return withdrawal, nil
 }
@@ -126,10 +119,7 @@ func (d *balance) Transfer(ctx context.Context, in *model.TransferParam) (*model
 	}
 
 	// produce task for worker
-	err = d.transferProducer.Produce(ctx, transfer.Id)
-	if err != nil {
-		log.Printf("error on producing transfer task. transferId=%s. err=%v", transfer.Id, err)
-	}
+	d.transferProducer.Produce(ctx, transfer.Id)
 
 	return transfer, nil
 }
