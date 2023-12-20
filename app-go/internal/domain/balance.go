@@ -27,6 +27,7 @@ type balance struct {
 	withdrawalProducer worker.IWithdrawalProducer
 	transferProducer   worker.ITransferProducer
 	ledgerRepo         repository.ILedger
+	lockerRepo         repository.ILocker
 }
 
 func NewBalance(
@@ -38,6 +39,7 @@ func NewBalance(
 	withdrawalProducer worker.IWithdrawalProducer,
 	transferProducer worker.ITransferProducer,
 	ledgerRepo repository.ILedger,
+	lockerRepo repository.ILocker,
 ) *balance {
 	return &balance{
 		balanceRepo:        balanceRepo,
@@ -48,6 +50,7 @@ func NewBalance(
 		withdrawalProducer: withdrawalProducer,
 		transferProducer:   transferProducer,
 		ledgerRepo:         ledgerRepo,
+		lockerRepo:         lockerRepo,
 	}
 }
 
@@ -61,16 +64,40 @@ func (d *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balanc
 	return d.balanceRepo.Get(ctx, balanceId)
 }
 
+func (d *balance) GetLock(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, func(context.Context), error) {
+	var err error
+
+	unlocker, err := d.lockerRepo.AcquireLock(ctx, balanceId.String())
+	defer func() {
+		if err != nil && unlocker != nil {
+			unlocker(ctx)
+		}
+	}()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	balance, err := d.Get(ctx, balanceId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return balance, func(_ctx context.Context) {
+		unlocker(_ctx)
+	}, nil
+}
+
 func (d *balance) Deposit(ctx context.Context, in *model.DepositParam) (*model.Deposit, error) {
 	deposit, err := d.depositRepo.Create(ctx, &model.Deposit{BalanceId: in.BalanceId, Amount: in.Amount, Status: model.StatusPending})
 	if err != nil {
 		return nil, err
 	}
 
-	// publish for worker
+	// produce task for worker
 	err = d.depositProducer.Produce(ctx, deposit.Id)
 	if err != nil {
-		log.Printf("error on producing deposit task. err=%v", err)
+		log.Printf("error on producing deposit task. depositId=%s. err=%v", deposit.Id, err)
 	}
 
 	return deposit, nil
@@ -83,10 +110,10 @@ func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model
 		return nil, err
 	}
 
-	// publish for worker
+	// produce task for worker
 	err = d.withdrawalProducer.Produce(ctx, withdrawal.Id)
 	if err != nil {
-		log.Printf("error on producing withdrawal task. err=%v", err)
+		log.Printf("error on producing withdrawal task. withdrawalId=%s. err=%v", withdrawal.Id, err)
 	}
 
 	return withdrawal, nil
@@ -98,10 +125,10 @@ func (d *balance) Transfer(ctx context.Context, in *model.TransferParam) (*model
 		return nil, err
 	}
 
-	// publish for worker
+	// produce task for worker
 	err = d.transferProducer.Produce(ctx, transfer.Id)
 	if err != nil {
-		log.Printf("error on producing transfer task. err=%v", err)
+		log.Printf("error on producing transfer task. transferId=%s. err=%v", transfer.Id, err)
 	}
 
 	return transfer, nil

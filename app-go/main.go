@@ -6,10 +6,12 @@ import (
 	"app/internal/domain"
 	internalhttp "app/internal/http"
 	"app/internal/repository/postgres"
+	repoRedis "app/internal/repository/redis"
 	workerasynq "app/internal/worker/asynq"
 	"embed"
 	"log"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +27,14 @@ func main() {
 	// setup app metric
 	appMetric := app.NewMetric(appConfig)
 
+	// setup cache
+	cacheOpts, err := redis.ParseURL(appConfig.RedisUri)
+	if err != nil {
+		log.Fatalf("failed to parse redis url. err=%v", err)
+	}
+	cache := redis.NewClient(cacheOpts)
+	defer cache.Close()
+
 	// setup db
 	appDb, closer := app.NewOrmDb(appConfig)
 	defer closer() // close connection when main.go closes
@@ -35,6 +45,7 @@ func main() {
 	depositRepo := postgres.NewDeposit(appDb)
 	withdrawalRepo := postgres.NewWithdrawal(appDb)
 	transferRepo := postgres.NewTransfer(appDb)
+	lockerRepo := repoRedis.NewLocker(cache)
 
 	// setup asynq worker
 	workerAsynq := workerasynq.New(appConfig.RedisUri)
@@ -61,6 +72,7 @@ func main() {
 		withdrawalWorker,
 		transferWorker,
 		ledgerRepo,
+		lockerRepo,
 	)
 
 	// inject missing deps
