@@ -2,6 +2,7 @@ package asynq
 
 import (
 	"context"
+	"log"
 
 	"github.com/hibiken/asynq"
 	"github.com/segmentio/ksuid"
@@ -42,6 +43,9 @@ func (w *withdrawal) Produce(ctx context.Context, withdrawalId ksuid.KSUID) erro
 	)
 
 	_, err := w.client.EnqueueContext(ctx, task)
+	if err != nil {
+		log.Printf("error on producing '%s' task. payload=%s", w.Path(), string(payload))
+	}
 	return err
 }
 
