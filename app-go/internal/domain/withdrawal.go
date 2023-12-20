@@ -14,9 +14,19 @@ func (d *balance) ProcessWithdraw(ctx context.Context, withdrawId ksuid.KSUID) e
 		return err
 	}
 
-	// get balance
-	balance, err := d.Get(ctx, withdrawal.BalanceId)
+	// validate state
+	if withdrawal == nil || withdrawal.Status != model.StatusPending {
+		return nil
+	}
+
+	// get balance lock
+	balance, unlocker, err := d.GetLock(ctx, withdrawal.BalanceId)
+	if unlocker != nil {
+		defer unlocker(ctx)
+	}
 	if err != nil {
+		// produce task for worker
+		d.withdrawalProducer.Produce(ctx, withdrawId)
 		return nil
 	}
 

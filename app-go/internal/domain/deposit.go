@@ -7,16 +7,26 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func (d *balance) ProcessDeposit(ctx context.Context, withdrawId ksuid.KSUID) error {
+func (d *balance) ProcessDeposit(ctx context.Context, depositId ksuid.KSUID) error {
 	// get deposit data
-	deposit, err := d.depositRepo.Get(ctx, withdrawId)
+	deposit, err := d.depositRepo.Get(ctx, depositId)
 	if err != nil {
 		return err
 	}
 
-	// get balance
-	balance, err := d.Get(ctx, deposit.BalanceId)
+	// validate state
+	if deposit == nil || deposit.Status != model.StatusPending {
+		return nil
+	}
+
+	// get balance lock
+	balance, unlocker, err := d.GetLock(ctx, deposit.BalanceId)
+	if unlocker != nil {
+		defer unlocker(ctx)
+	}
 	if err != nil {
+		// produce task for worker
+		d.depositProducer.Produce(ctx, depositId)
 		return nil
 	}
 

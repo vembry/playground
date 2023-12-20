@@ -7,15 +7,26 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func (d *balance) ProcessTransfer(ctx context.Context, withdrawId ksuid.KSUID) error {
+func (d *balance) ProcessTransfer(ctx context.Context, transferId ksuid.KSUID) error {
 	// get withdraw
-	transfer, err := d.transferRepo.Get(ctx, withdrawId)
+	transfer, err := d.transferRepo.Get(ctx, transferId)
 	if err != nil {
 		return err
 	}
 
-	balanceFrom, err := d.Get(ctx, transfer.BalanceIdFrom)
+	// validate state
+	if transfer == nil || transfer.Status != model.StatusPending {
+		return nil
+	}
+
+	// get balance-from lock
+	balanceFrom, unlockerFrom, err := d.GetLock(ctx, transfer.BalanceIdFrom)
+	if unlockerFrom != nil {
+		defer unlockerFrom(ctx)
+	}
 	if err != nil {
+		// produce task for worker
+		d.transferProducer.Produce(ctx, transferId)
 		return nil
 	}
 
@@ -31,8 +42,14 @@ func (d *balance) ProcessTransfer(ctx context.Context, withdrawId ksuid.KSUID) e
 	}
 
 	if balanceFrom.Amount > transfer.Amount {
-		balanceTo, err := d.Get(ctx, transfer.BalanceIdTo)
+		// get balance-to lock
+		balanceTo, unlockerTo, err := d.GetLock(ctx, transfer.BalanceIdTo)
+		if unlockerTo != nil {
+			defer unlockerTo(ctx)
+		}
 		if err != nil {
+			// produce task for worker
+			d.transferProducer.Produce(ctx, transferId)
 			return nil
 		}
 
