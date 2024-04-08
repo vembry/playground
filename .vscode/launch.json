@@ -19,6 +19,13 @@
       "mode": "auto",
       "program": "${workspaceFolder}/app-go",
       "args": ["serve"]
+    },
+    {
+      "name": "load-test-go",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/load-test-go",
     }
   ]
 }
