@@ -5,7 +5,7 @@ const host = __ENV.API_HOST
   : "http://host.docker.internal:8080";
 
 export const options = {
-  vus: 7,
+  vus: 5,
   duration: "1m",
 };
 
