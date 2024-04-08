@@ -1,7 +1,6 @@
 {
   "packages": [
-    "go@1.20.8",
-    "jdk@19.0.2+7"
+    "go@1.20.8"
   ],
   "shell": {
     "init_hook": [
