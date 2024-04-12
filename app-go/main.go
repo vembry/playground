@@ -24,6 +24,9 @@ func main() {
 	// setup config
 	appConfig := app.NewConfig(embedFS)
 
+	tracerShutdownHandler := app.NewTracer()
+	defer tracerShutdownHandler()
+
 	// setup app metric
 	appMetric := app.NewMetric(appConfig)
 

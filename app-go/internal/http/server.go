@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 type server struct {
@@ -33,7 +34,10 @@ func NewServer(
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	r.Use(inboundMetric(metric))
+	r.Use(
+		inboundMetric(metric),
+		otelgin.Middleware("app-go"),
+	)
 
 	r.POST("balance/open", h.Open)
 	r.GET("balance/:balance_id", h.Get)
