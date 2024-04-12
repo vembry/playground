@@ -1,0 +1,67 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4418
+        grpc:
+          endpoint: 0.0.0.0:4417
+
+ingester:
+  trace_idle_period: 10s
+  max_block_bytes: 1_000_000
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    compaction_window: 1h
+    max_block_bytes: 100_000_000
+    block_retention: 1h
+    compacted_block_retention: 10m
+
+storage:
+  trace:
+    backend: local
+    block:
+      bloom_filter_false_positive: .05
+    wal:
+      path: /tmp/tempo/wal
+      # encoding: none
+    local:
+      path: /tmp/tempo/blocks
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+# Metrics-generator configuration block
+metrics_generator:
+  processor:
+    service_graphs:
+      dimensions: # this config was meant for additional, but if not defined, wont generate the graph wtf
+        - http.method
+        - http.target
+        - http.status_code
+        - service.name
+    span_metrics:
+      enable_target_info: true
+  registry:
+    collection_interval: 5s # Create new metrics every 5s.
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://monitoring-prometheus:9090/api/v1/write
+        send_exemplars: true
+  metrics_ingestion_time_range_slack: 10s
+  traces_storage:
+    path: /tmp/tempo/generator/traces
+
+overrides:
+  metrics_generator_processors:
+    - service-graphs
+    - span-metrics
+    - local-blocks

@@ -59,7 +59,7 @@ services:
   monitoring-prometheus:
     <<: *deps
     image: prom/prometheus
-    container_name: prometheus
+    container_name: monitoring-prometheus
     restart: unless-stopped
     pull_policy: missing
     ports:
@@ -73,6 +73,23 @@ services:
         "--web.console.libraries=/etc/prometheus/console_libraries",
         "--web.console.templates=/etc/prometheus/consoles",
       ]
+
+  monitoring-otel-collector:
+    <<: *deps
+    image: otel/opentelemetry-collector-contrib
+    container_name: monitoring-otel-collector
+    volumes:
+      - ./.docker/otel-collector.yml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 10002:4317 # OTLP gRPC receiver
+
+  monitoring-tempo:
+    <<: *deps
+    container_name: monitoring-tempo
+    image: docker.io/grafana/tempo:main-13885de
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./.docker/tempo.yml:/etc/tempo.yml
 
   # ref: https://github.com/google/cadvisor/issues/3187
   # this is to scrape docker stats' "metrics"
@@ -127,6 +144,7 @@ services:
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
     healthcheck:
       test:
         [
@@ -156,3 +174,4 @@ services:
     environment:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
