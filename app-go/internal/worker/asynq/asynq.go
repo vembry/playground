@@ -2,10 +2,12 @@ package asynq
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/hibiken/asynq"
+	"go.opentelemetry.io/otel"
 )
 
 type asynqx struct {
@@ -26,6 +28,17 @@ func logging(h asynq.Handler) asynq.Handler {
 	})
 }
 
+func tracer(h asynq.Handler) asynq.Handler {
+	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
+		tracer := otel.GetTracerProvider().Tracer("redis-worker")
+
+		ctx, span := tracer.Start(ctx, fmt.Sprintf("worker.redis.%s", t.Type()))
+		defer span.End()
+
+		return h.ProcessTask(ctx, t)
+	})
+}
+
 func New(redisUri string) *asynqx {
 	opt, _ := asynq.ParseRedisURI(redisUri)
 	redisOpt := opt.(asynq.RedisClientOpt)
@@ -34,6 +47,7 @@ func New(redisUri string) *asynqx {
 
 	// middleware
 	mux.Use(logging)
+	mux.Use(tracer)
 
 	return &asynqx{
 		mux:             mux,
