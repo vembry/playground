@@ -22,7 +22,7 @@ func NewDeposit(db *gorm.DB) *deposit {
 func (r *deposit) Create(ctx context.Context, entry *model.Deposit) (*model.Deposit, error) {
 	entry.Id = ksuid.New()
 
-	if err := r.db.Table("deposits").Create(entry).WithContext(ctx).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("deposits").Create(entry).Error; err != nil {
 		return nil, err
 	}
 	return entry, nil
@@ -30,7 +30,7 @@ func (r *deposit) Create(ctx context.Context, entry *model.Deposit) (*model.Depo
 
 func (r *deposit) Get(ctx context.Context, depositId ksuid.KSUID) (*model.Deposit, error) {
 	var out *model.Deposit
-	err := r.db.Table("deposits").Where("id = ?", depositId).Find(&out).Error
+	err := r.db.WithContext(ctx).Table("deposits").Where("id = ?", depositId).Find(&out).Error
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (r *deposit) Get(ctx context.Context, depositId ksuid.KSUID) (*model.Deposi
 
 func (r *deposit) Update(ctx context.Context, in *model.Deposit) (*model.Deposit, error) {
 	in.UpdatedAt = time.Now().UTC()
-	if err := r.db.Table("deposits").Save(in).Where("id = ?", in.Id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("deposits").Save(in).Where("id = ?", in.Id).Error; err != nil {
 		return nil, err
 	}
 

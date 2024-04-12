@@ -18,6 +18,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.25.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.5
+	gorm.io/plugin/opentelemetry v0.1.4
 )
 
 require (

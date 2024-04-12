@@ -39,7 +39,7 @@ func (r *balance) Create(ctx context.Context, entry *model.Balance) (*model.Bala
 func (r *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, error) {
 	var out *model.Balance
 	// insert to table
-	if err := r.db.Table("balances").Where("id = ?", balanceId).Find(&out).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("balances").Where("id = ?", balanceId).Find(&out).Error; err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -48,7 +48,7 @@ func (r *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balanc
 func (r *balance) Update(ctx context.Context, in *model.Balance) (*model.Balance, error) {
 	in.UpdatedAt = time.Now().UTC()
 
-	if err := r.db.Table("balances").Save(in).Where("id = ?", in.Id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("balances").Save(in).Where("id = ?", in.Id).Error; err != nil {
 		return nil, err
 	}
 

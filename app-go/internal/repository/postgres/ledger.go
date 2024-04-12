@@ -20,7 +20,7 @@ func NewLedger(db *gorm.DB) *ledger {
 
 func (r *ledger) Create(ctx context.Context, entry *model.Ledger) (*model.Ledger, error) {
 	entry.Id = ksuid.New()
-	if err := r.db.Table("ledgers").Create(entry).WithContext(ctx).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("ledgers").Create(entry).Error; err != nil {
 		return nil, err
 	}
 	return entry, nil
