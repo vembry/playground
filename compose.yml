@@ -56,7 +56,7 @@ services:
     volumes:
       - ./.docker/grafana/provisioning:/etc/grafana/provisioning
 
-  prometheus:
+  monitoring-prometheus:
     <<: *deps
     image: prom/prometheus
     container_name: prometheus

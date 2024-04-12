@@ -14,7 +14,7 @@ scrape_configs:
   - job_name: "containers"
     static_configs:
       - targets: # add service that provides prometheus metrics
-          - prometheus:9090
+          - monitoring-prometheus:9090
           - app-go:81
           - app-go-worker:81
 
