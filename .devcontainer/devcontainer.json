@@ -13,7 +13,8 @@
     "vscode": {
       "settings": {},
       "extensions": [
-        "golang.go"
+        "golang.go",
+        "eamodio.gitlens"
       ]
     }
   },
