@@ -12,7 +12,9 @@
   "customizations": {
     "vscode": {
       "settings": {},
-      "extensions": []
+      "extensions": [
+        "golang.go"
+      ]
     }
   },
   "containerEnv": {
