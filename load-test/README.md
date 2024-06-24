@@ -1,1 +1,0 @@
-K6 doesnt require package.json etc for it to function. I left this here for development intellisense purposes(ref: [K6 Intellisense](https://k6.io/docs/misc/intellisense/)).
