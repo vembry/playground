@@ -25,7 +25,7 @@ services:
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
     volumes:
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d postgres -U local"]
       interval: 1s
@@ -54,7 +54,7 @@ services:
     ports:
       - "10000:3000"
     volumes:
-      - ./.docker/grafana/provisioning:/etc/grafana/provisioning
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/.docker/grafana/provisioning:/etc/grafana/provisioning
 
   monitoring-prometheus:
     <<: *deps
@@ -65,7 +65,7 @@ services:
     ports:
       - 10001:9090
     volumes:
-      - ./.docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/.docker/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       [
         "--config.file=/etc/prometheus/prometheus.yml",
@@ -109,19 +109,19 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 
-  load-test:
-    build:
-      context: ./load-test
-    image: credits-load-test:local
-    container_name: load-test
-    command: run create-transaction.ts
-    depends_on:
-      app-go:
-        condition: service_healthy
-    network_mode: host
-    restart: no
-    environment:
-      - API_HOST=http://localhost:8080
+  # load-test:
+  #   build:
+  #     context: ./load-test
+  #   image: credits-load-test:local
+  #   container_name: load-test
+  #   command: run create-transaction.ts
+  #   depends_on:
+  #     app-go:
+  #       condition: service_healthy
+  #   network_mode: host
+  #   restart: no
+  #   environment:
+  #     - API_HOST=http://localhost:8080
 
   app-go:
     <<: *default

@@ -20,7 +20,7 @@
     "GODEBUG": "asyncpreemptoff=1"
   },
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/go/bin:/workspaces/${localWorkspaceFolderBasename}/tools/scripts/zsh",
+    "PATH": "${containerEnv:PATH}:/go/bin",
     "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
     "LOCAL_USER_PATH": "${localEnv:HOME}${localEnv:USERPROFILE}"
   },
