@@ -1,0 +1,35 @@
+{
+  "name": "credits-management",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.22",
+      "golangciLintVersion": "1.57.2"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": []
+    }
+  },
+  "containerEnv": {
+    "CGO_ENABLED": "0",
+    "GODEBUG": "asyncpreemptoff=1"
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/go/bin:/workspaces/${localWorkspaceFolderBasename}/tools/scripts/zsh",
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+    "LOCAL_USER_PATH": "${localEnv:HOME}${localEnv:USERPROFILE}"
+  },
+  "postStartCommand": {},
+  "postCreateCommand": {},
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly",
+    "type=bind,source=${localEnv:HOME}/.aws,target=/root/.aws",
+    "type=bind,source=${localEnv:HOME}/go/pkg/mod,target=/go/pkg/mod,consistency=cached"
+  ],
+  "remoteUser": "root"
+}
