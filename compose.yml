@@ -3,7 +3,7 @@ x-default: &default
   deploy:
     resources:
       limits:
-        memory: 32m # defaulted memory limit to 16mb
+        memory: 512m # defaulted memory limit to 512mb
   restart: unless-stopped
 x-deps: &deps
   deploy:
