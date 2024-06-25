@@ -24,7 +24,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -104,7 +104,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -119,7 +119,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "container_spec_memory_limit_bytes{name=~\"$container_name\"}",
@@ -136,7 +136,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -217,7 +217,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "builder",
           "expr": "irate(container_cpu_usage_seconds_total{name=~\"$container_name\", cpu=\"total\"}[$intervalx]) * 100",
@@ -247,7 +247,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -328,7 +328,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -345,7 +345,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -427,7 +427,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "builder",
           "exemplar": false,
@@ -445,7 +445,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -495,7 +495,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -526,7 +526,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -605,7 +605,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "builder",
           "expr": "irate(worker_latency_milliseconds_count[$intervalx])",
@@ -621,7 +621,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -703,7 +703,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "builder",
           "exemplar": false,
@@ -722,7 +722,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -771,7 +771,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.90, sum(rate(worker_latency_milliseconds_bucket[$__range])) by (le))",
@@ -798,7 +798,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "prometheus"
         },
         "definition": "label_values(container_tasks_state,name)",
         "hide": 0,
