@@ -96,7 +96,7 @@ func main() {
 			httpserver,
 			appMetric,
 		),
-		cmd.NewWork(workerAsynq),
+		cmd.NewWork(appMetric, workerAsynq),
 	)
 
 	if err := cli.Execute(); err != nil {
