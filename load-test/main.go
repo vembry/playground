@@ -133,7 +133,7 @@ func main() {
 			// get balance
 			bal, err := GetBalance(ctx, balanceId)
 			if err != nil {
-				logger.ErrorContext(ctx, "got error on get-balance. err=%v", slog.Any("error", err))
+				logger.ErrorContext(ctx, "got error on get-balance", slog.Any("error", err))
 				continue
 			}
 			if bal == nil {
@@ -148,7 +148,7 @@ func main() {
 				depositAmount := 100 + rand.Float64()*10000
 				err := Deposit(ctx, balanceId, depositAmount)
 				if err != nil {
-					logger.ErrorContext(ctx, "got error on deposit. err=%v", slog.Any("error", err))
+					logger.ErrorContext(ctx, "got error on deposit", slog.Any("error", err))
 					continue
 				}
 			}
@@ -156,7 +156,7 @@ func main() {
 			// exec withdrawal
 			err = Withdraw(ctx, balanceId, amount)
 			if err != nil {
-				logger.ErrorContext(ctx, "got error on withdrawal. err=%v", slog.Any("error", err))
+				logger.ErrorContext(ctx, "got error on withdrawal", slog.Any("error", err))
 				continue
 			}
 		}
@@ -180,13 +180,11 @@ func Deposit(ctx context.Context, balanceId string, amount float64) error {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("error on http request. error=%w", err)
-		return err
+		return fmt.Errorf("error on http request. error=%w", err)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Printf("depositing balance '%s' return non 200", balanceId)
-		return err
+		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
 	}
 
 	// rawbody, err := io.ReadAll(res.Body)
@@ -244,13 +242,11 @@ func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("error on http request. error=%w", err)
-		return err
+		return fmt.Errorf("error on http request. error=%w", err)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Printf("depositing balance '%s' return non 200", balanceId)
-		return err
+		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
 	}
 
 	// rawbody, err := io.ReadAll(res.Body)
