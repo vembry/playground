@@ -2,5 +2,5 @@ go 1.22
 
 use (
 	./app-go
-	./load-test-go
+	./load-test
 )
