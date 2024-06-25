@@ -21,11 +21,11 @@
       "args": ["serve"]
     },
     {
-      "name": "load-test-go",
+      "name": "load-test",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/load-test-go",
+      "program": "${workspaceFolder}/load-test",
     }
   ]
 }

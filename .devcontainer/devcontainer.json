@@ -14,7 +14,8 @@
       "settings": {},
       "extensions": [
         "golang.go",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode"
       ]
     }
   },
