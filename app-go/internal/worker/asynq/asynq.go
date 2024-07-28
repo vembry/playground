@@ -71,7 +71,7 @@ func (w *asynqx) Name() string {
 	return "asynq"
 }
 
-func (w *asynqx) RegisterWorker(consumers ...IConsumer) {
+func (w *asynqx) RegisterWorkers(consumers ...IConsumer) {
 	for i := range consumers {
 		// assign queue-priority
 		w.queuePriorities[consumers[i].Path()] = consumers[i].Priority()

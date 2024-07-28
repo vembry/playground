@@ -50,19 +50,19 @@ func main() {
 	transferRepo := postgres.NewTransfer(appDb)
 	lockerRepo := repoRedis.NewLocker(cache)
 
-	// setup asynq worker
+	// setup asynq
 	workerAsynq := workerasynq.New(appConfig.RedisUri)
 
 	// setup individual asynq workers
-	withdrawalWorker := workerasynq.NewWithdrawal(workerAsynq.GetClient())
-	depositWorker := workerasynq.NewDeposit(workerAsynq.GetClient())
-	transferWorker := workerasynq.NewTransfer(workerAsynq.GetClient())
+	withdrawalWorkerAsynq := workerasynq.NewWithdrawal(workerAsynq.GetClient())
+	depositWorkerAsynq := workerasynq.NewDeposit(workerAsynq.GetClient())
+	transferWorkerAsynq := workerasynq.NewTransfer(workerAsynq.GetClient())
 
 	// register individual-workers to the asynq
-	workerAsynq.RegisterWorker(
-		withdrawalWorker,
-		depositWorker,
-		transferWorker,
+	workerAsynq.RegisterWorkers(
+		withdrawalWorkerAsynq,
+		depositWorkerAsynq,
+		transferWorkerAsynq,
 	)
 
 	// setup domain(s)
@@ -71,17 +71,17 @@ func main() {
 		depositRepo,
 		withdrawalRepo,
 		transferRepo,
-		depositWorker,
-		withdrawalWorker,
-		transferWorker,
+		depositWorkerAsynq,
+		withdrawalWorkerAsynq,
+		transferWorkerAsynq,
 		ledgerRepo,
 		lockerRepo,
 	)
 
 	// inject missing deps
-	withdrawalWorker.InjectDeps(balanceDomain)
-	depositWorker.InjectDeps(balanceDomain)
-	transferWorker.InjectDeps(balanceDomain)
+	withdrawalWorkerAsynq.InjectDeps(balanceDomain)
+	depositWorkerAsynq.InjectDeps(balanceDomain)
+	transferWorkerAsynq.InjectDeps(balanceDomain)
 
 	httpserver := internalhttp.NewServer(
 		appConfig.HttpAddress,
