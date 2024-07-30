@@ -14,7 +14,7 @@ func NewDummy() *cobra.Command {
 		Long:  "start dummy long",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Printf("starting dummy...")
-			rabbit.New()
+			rabbit.New("")
 		},
 	}
 }

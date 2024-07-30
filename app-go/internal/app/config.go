@@ -17,6 +17,7 @@ type EnvConfig struct {
 	DBConn                string `env:"DB_CONN"`
 	RedisUri              string `env:"REDIS_URI"`
 	KafkaBroker           string `env:"KAFKA_BROKER"`
+	RabbitUri             string `env:"RABBIT_URI"`
 }
 
 // NewConfig is to parse env
