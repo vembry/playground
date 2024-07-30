@@ -8,6 +8,7 @@ import (
 	"app/internal/repository/postgres"
 	repoRedis "app/internal/repository/redis"
 	workerasynq "app/internal/worker/asynq"
+	workerrabbit "app/internal/worker/rabbit"
 	"embed"
 	"log"
 
@@ -50,19 +51,33 @@ func main() {
 	transferRepo := postgres.NewTransfer(appDb)
 	lockerRepo := repoRedis.NewLocker(cache)
 
-	// setup asynq
-	workerAsynq := workerasynq.New(appConfig.RedisUri)
+	// setup worker
+	workerAsynq := workerasynq.New(appConfig.RedisUri) // TODO: remove
+	workerRabbit := workerrabbit.New(appConfig.RabbitUri)
 
 	// setup individual asynq workers
-	withdrawalWorkerAsynq := workerasynq.NewWithdrawal(workerAsynq.GetClient())
-	depositWorkerAsynq := workerasynq.NewDeposit(workerAsynq.GetClient())
-	transferWorkerAsynq := workerasynq.NewTransfer(workerAsynq.GetClient())
+	withdrawalWorkerAsynq := workerasynq.NewWithdrawal(workerAsynq.GetClient()) // TODO: remove
+	depositWorkerAsynq := workerasynq.NewDeposit(workerAsynq.GetClient())       // TODO: remove
+	transferWorkerAsynq := workerasynq.NewTransfer(workerAsynq.GetClient())     // TODO: remove
 
+	// TODO: remove
 	// register individual-workers to the asynq
 	workerAsynq.RegisterWorkers(
 		withdrawalWorkerAsynq,
 		depositWorkerAsynq,
 		transferWorkerAsynq,
+	)
+
+	// setup individual rabbit workers
+	transferWorkerRabbit := workerrabbit.NewTransfer(workerRabbit.GetConnection())
+	depositWorkerRabbit := workerrabbit.NewDeposit(workerRabbit.GetConnection())
+	withdrawWorkerRabbit := workerrabbit.NewWithdraw(workerRabbit.GetConnection())
+
+	// register individual-workers to the rabbit
+	workerRabbit.RegisterWorkers(
+		withdrawWorkerRabbit,
+		depositWorkerRabbit,
+		transferWorkerRabbit,
 	)
 
 	// setup domain(s)
@@ -71,17 +86,21 @@ func main() {
 		depositRepo,
 		withdrawalRepo,
 		transferRepo,
-		depositWorkerAsynq,
-		withdrawalWorkerAsynq,
-		transferWorkerAsynq,
+		depositWorkerRabbit,
+		withdrawWorkerRabbit,
+		transferWorkerRabbit,
 		ledgerRepo,
 		lockerRepo,
 	)
 
 	// inject missing deps
-	withdrawalWorkerAsynq.InjectDeps(balanceDomain)
-	depositWorkerAsynq.InjectDeps(balanceDomain)
-	transferWorkerAsynq.InjectDeps(balanceDomain)
+	withdrawalWorkerAsynq.InjectDeps(balanceDomain) // TODO: remove
+	depositWorkerAsynq.InjectDeps(balanceDomain)    // TODO: remove
+	transferWorkerAsynq.InjectDeps(balanceDomain)   // TODO: remove
+
+	withdrawWorkerRabbit.InjectDeps(balanceDomain)
+	depositWorkerRabbit.InjectDeps(balanceDomain)
+	transferWorkerRabbit.InjectDeps(balanceDomain)
 
 	httpserver := internalhttp.NewServer(
 		appConfig.HttpAddress,
@@ -96,7 +115,10 @@ func main() {
 			httpserver,
 			appMetric,
 		),
-		cmd.NewWork(appMetric, workerAsynq),
+		cmd.NewWork(
+			appMetric,
+			workerRabbit,
+		),
 		cmd.NewDummy(),
 	)
 
