@@ -40,6 +40,7 @@ services:
       test: ["CMD-SHELL", "redis-cli ping"]
 
   rabbitmq:
+    <<: *deps
     image: rabbitmq:3.13-management
     container_name: "rabbitmq"
     restart: unless-stopped
