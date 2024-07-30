@@ -97,6 +97,7 @@ func main() {
 			appMetric,
 		),
 		cmd.NewWork(appMetric, workerAsynq),
+		cmd.NewDummy(),
 	)
 
 	if err := cli.Execute(); err != nil {

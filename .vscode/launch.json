@@ -21,11 +21,22 @@
       "args": ["serve"]
     },
     {
+      "name": "app-go dummy",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/app-go",
+      "args": ["dumb"],
+      "env": {
+        "DEV_CONTAINER": "true"
+      }
+    },
+    {
       "name": "load-test",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/load-test",
+      "program": "${workspaceFolder}/load-test"
     }
   ]
 }
