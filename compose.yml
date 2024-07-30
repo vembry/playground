@@ -39,6 +39,18 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping"]
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: "rabbitmq"
+    ports:
+      - 5672:5672
+      - 15672:15672
+    # volumes:
+    #   - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+    #   - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    # networks:
+    #     - rabbitmq_go_net
+
   grafana:
     <<: *deps
     image: grafana/grafana
@@ -106,20 +118,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
-
-  # load-test:
-  #   build:
-  #     context: ./load-test
-  #   image: credits-load-test:local
-  #   container_name: load-test
-  #   command: run create-transaction.ts
-  #   depends_on:
-  #     app-go:
-  #       condition: service_healthy
-  #   network_mode: host
-  #   restart: no
-  #   environment:
-  #     - API_HOST=http://localhost:8080
 
   app-go:
     <<: *default
