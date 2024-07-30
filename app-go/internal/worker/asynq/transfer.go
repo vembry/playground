@@ -27,14 +27,6 @@ func (w *transfer) Priority() int {
 	return 1
 }
 
-type ITransferProcessor interface {
-	ProcessTransfer(ctx context.Context, withdrawId ksuid.KSUID) error
-}
-
-func (w *transfer) InjectDeps(transferProcessor ITransferProcessor) {
-	w.transferProcessor = transferProcessor
-}
-
 func (w *transfer) Produce(ctx context.Context, transferId ksuid.KSUID) error {
 	payload, _ := transferId.MarshalText()
 	task := asynq.NewTask(
@@ -47,6 +39,14 @@ func (w *transfer) Produce(ctx context.Context, transferId ksuid.KSUID) error {
 		log.Printf("error on producing '%s' task. payload=%s", w.Path(), string(payload))
 	}
 	return err
+}
+
+type ITransferProcessor interface {
+	ProcessTransfer(ctx context.Context, withdrawId ksuid.KSUID) error
+}
+
+func (w *transfer) InjectDeps(transferProcessor ITransferProcessor) {
+	w.transferProcessor = transferProcessor
 }
 
 func (w *transfer) Handle(ctx context.Context, task *asynq.Task) error {
