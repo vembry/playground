@@ -52,10 +52,12 @@ func (r *rabbit) Start() {
 
 // startConsumer is to start consumer by prepping needed preps
 func (r *rabbit) startConsumer(consumer iConsumer) {
+	ch := consumer.Channel()
+
 	// declare queue in case it is missing
 	// for now the config will be defined here
 	// until further cases
-	_, err := consumer.Channel().QueueDeclare(
+	q, err := ch.QueueDeclare(
 		consumer.Name(), // name
 		false,           // durable
 		false,           // delete when unused
@@ -68,14 +70,14 @@ func (r *rabbit) startConsumer(consumer iConsumer) {
 	}
 
 	// is this proper?
-	messageCh, err := consumer.Channel().Consume(
-		consumer.Name(), // queue
-		"",              // consumer
-		false,           // auto-ack
-		false,           // exclusive
-		false,           // no-local
-		false,           // no-wait
-		nil,             // args
+	messageCh, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
 	)
 
 	if err != nil {
@@ -83,22 +85,22 @@ func (r *rabbit) startConsumer(consumer iConsumer) {
 	}
 
 	// start consuming
-	go r.consumerConsume(consumer, messageCh)
+	go r.consumerConsume(q, consumer.Handle, messageCh)
 }
 
 // consumerConsume start the actual message consumption
-func (r *rabbit) consumerConsume(consumer iConsumer, messageCh <-chan amqp.Delivery) {
+func (r *rabbit) consumerConsume(queue amqp.Queue, handler func(context.Context, amqp.Delivery) error, messageCh <-chan amqp.Delivery) {
 	for message := range messageCh {
-		log.Printf("'%s' consuming %s", consumer.Name(), string(message.Body))
+		log.Printf("'%s' consuming %s", queue.Name, string(message.Body))
 
 		// consume incoming message
-		err := consumer.Handle(context.Background(), message)
+		err := handler(context.Background(), message)
 		if err != nil {
-			log.Printf("rabbit: failed to handle. consumer=%s. err=%v", consumer.Name(), err)
+			log.Printf("rabbit: failed to handle. consumer=%s. err=%v", queue.Name, err)
 
 			err = message.Reject(true)
 			if err != nil {
-				log.Printf("rabbit: failed to reject. consumer=%s. err=%v", consumer.Name(), err)
+				log.Printf("rabbit: failed to reject. consumer=%s. err=%v", queue.Name, err)
 			}
 		} else {
 			message.Ack(true)
