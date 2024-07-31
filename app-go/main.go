@@ -7,7 +7,6 @@ import (
 	internalhttp "app/internal/http"
 	"app/internal/repository/postgres"
 	repoRedis "app/internal/repository/redis"
-	workerasynq "app/internal/worker/asynq"
 	workerrabbit "app/internal/worker/rabbit"
 	"embed"
 	"log"
@@ -52,21 +51,7 @@ func main() {
 	lockerRepo := repoRedis.NewLocker(cache)
 
 	// setup worker
-	workerAsynq := workerasynq.New(appConfig.RedisUri) // TODO: remove
 	workerRabbit := workerrabbit.New(appConfig.RabbitUri)
-
-	// setup individual asynq workers
-	withdrawalWorkerAsynq := workerasynq.NewWithdrawal(workerAsynq.GetClient()) // TODO: remove
-	depositWorkerAsynq := workerasynq.NewDeposit(workerAsynq.GetClient())       // TODO: remove
-	transferWorkerAsynq := workerasynq.NewTransfer(workerAsynq.GetClient())     // TODO: remove
-
-	// TODO: remove
-	// register individual-workers to the asynq
-	workerAsynq.RegisterWorkers(
-		withdrawalWorkerAsynq,
-		depositWorkerAsynq,
-		transferWorkerAsynq,
-	)
 
 	// setup individual rabbit workers
 	transferWorkerRabbit := workerrabbit.NewTransfer(workerRabbit.GetConnection())
@@ -92,11 +77,6 @@ func main() {
 		ledgerRepo,
 		lockerRepo,
 	)
-
-	// inject missing deps
-	withdrawalWorkerAsynq.InjectDeps(balanceDomain) // TODO: remove
-	depositWorkerAsynq.InjectDeps(balanceDomain)    // TODO: remove
-	transferWorkerAsynq.InjectDeps(balanceDomain)   // TODO: remove
 
 	withdrawWorkerRabbit.InjectDeps(balanceDomain)
 	depositWorkerRabbit.InjectDeps(balanceDomain)

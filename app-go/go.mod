@@ -5,9 +5,9 @@ go 1.22
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redsync/redsync/v4 v4.11.0
-	github.com/hibiken/asynq v0.24.1
 	github.com/jackc/pgconn v1.14.1
 	github.com/prometheus/client_golang v1.17.0
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sethvargo/go-envconfig v0.9.0
@@ -38,7 +38,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -62,10 +61,7 @@ require (
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
@@ -78,7 +74,6 @@ require (
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	google.golang.org/grpc v1.63.0 // indirect
