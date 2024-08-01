@@ -46,7 +46,7 @@ func (h *handler) Get(c *gin.Context) {
 	balanceId, _ := ksuid.Parse(balanceIdRaw)
 
 	// call service
-	balance, err := h.balanceDomain.Get(c, balanceId)
+	balance, err := h.balanceDomain.Get(c.Request.Context(), balanceId)
 	if err != nil {
 		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
@@ -73,7 +73,7 @@ func (h *handler) Withdraw(c *gin.Context) {
 	balanceIdRaw := c.Param("balance_id")
 	in.BalanceId, _ = ksuid.Parse(balanceIdRaw)
 
-	withdrawal, err := h.balanceDomain.Withdraw(c, &in)
+	withdrawal, err := h.balanceDomain.Withdraw(c.Request.Context(), &in)
 	if err != nil {
 		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
@@ -98,7 +98,7 @@ func (h *handler) Deposit(c *gin.Context) {
 	balanceIdRaw := c.Param("balance_id")
 	in.BalanceId, _ = ksuid.Parse(balanceIdRaw)
 
-	deposit, err := h.balanceDomain.Deposit(c, &in)
+	deposit, err := h.balanceDomain.Deposit(c.Request.Context(), &in)
 	if err != nil {
 		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
@@ -123,7 +123,7 @@ func (h *handler) Transfer(c *gin.Context) {
 	balanceIdRaw := c.Param("balance_id")
 	in.BalanceIdFrom, _ = ksuid.Parse(balanceIdRaw)
 
-	transfer, err := h.balanceDomain.Transfer(c, &in)
+	transfer, err := h.balanceDomain.Transfer(c.Request.Context(), &in)
 	if err != nil {
 		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
