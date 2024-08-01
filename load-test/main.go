@@ -6,17 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"load-test-go/tester"
 	"log/slog"
 	"math/rand/v2"
 	"net/http"
 	"os"
 	"time"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -34,49 +31,6 @@ type balance struct {
 
 const AppHost string = "http://host.docker.internal:8080"
 
-var balanceIds []string = []string{
-	"2TeSprhp2cN6nEIcayZsjjvnlsK",
-	"2TeSppzLaJaxldlzMOkqYO37vqw",
-	"2TeSprCLB0tF6HsJT9eCb1IBht0",
-	"2TeSps1ECSPx2IRrWMKEd6oHvSJ",
-	"2TeSpqL5Cq3t0rNJ4RDcR4ky029",
-	"2TeSpo6Okj6BedA62PUO3nRYADm",
-	"2TeSprwUG0oLfgGbIIObipgf5be",
-	"2TeSpqi0vPnYFf82cdBCE4Gaxjx",
-	"2TeSppFijPxu2bIKpRLhLy3ye4j",
-	"2TeSpnNHCn0Yq0vJddsv0dcSviy",
-	"2TeSpsBbTYE5ZBe3zpO1HDRf44o",
-	// "2TeSprmZUc7HGpqlm7bUi6RB9lu",
-	// "2TeSpqKkgW9pz15PaqR8ZIS0Wjh",
-	// "2TeSpqfWmsmNLffPB4fhErgYRiC",
-	// "2TeSpnH3d9Hr9zPyNpoBrzdd8fx",
-	// "2TeSpsz6jeis3vJHCoSfFrnGPVl",
-	// "2TeSptEF7KEwZ9cdlowOH4HSmbR",
-	// "2TeSpsvjaufyDq78BwcFFZ6ibfi",
-	// "2TeSpsFLvMYhPU3CpC21wgyOcS5",
-	// "2TeSpmhKLpqgNXTNOvh3JPLkbjy",
-	// "2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga",
-	// "2TWlPVmPjhonQ2DpOFt09O990th",
-	// "2TWlPdYWFbP3iXPMIKVRmdZ3ozC",
-	// "2TWlPkjd1YcRDCBDQk11nygVDpe",
-	// "2TWlPw3U64nhEtzeazP5ELd7q4c",
-	// "2TWlQ2JWBetv9MUkFsLPd4zhLa4",
-	// "2TWlQ83iEHKIOtvMCfSnBwM2sEB",
-	// "2TWlQJsEhRIW8XpeGGz2u75phWN",
-	// "2TWlQRnYNr5ViFi0wLTatYImXz5",
-	// "2TWlQYYZVIC566T3XFVldQckPsB",
-	// "2TWlQcFLvqE67A2qbZpWAdSJiZL",
-	// "2TWlQjcMepYBrRJRRzwgXWLA0gX",
-	// "2TWlQvGoGcHxUa4iod28bMsfW7e",
-	// "2TWlR5WFe7VUVMSxhgpEmfqlAAX",
-	// "2TWlR8ifwogFmktTwET0Eb2s4PE",
-	// "2TWlRFfCwsZo903aTO7xSRCYQIU",
-	// "2TWlRRtrVofuy7C1ZzcWIICVEME",
-	// "2TWlRZBGQlbQe34dVNU3GhQKshe",
-	// "2TWlRedfruxmFYvYLJur7oGesXY",
-	// "2TWlRnR3C0hopS7NkcwyjIOq5Kd",
-}
-
 type traceHandler struct {
 	slog.Handler
 }
@@ -92,77 +46,121 @@ func (h *traceHandler) Handle(ctx context.Context, r slog.Record) error {
 	return h.Handler.Handle(ctx, r)
 }
 
+type parameter struct {
+	BalanceIds []string
+}
+
 func main() {
+	shutdownHandler := newTelemetry()
+	defer shutdownHandler()
 
-	// exporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
-	// if err != nil {
-	// 	log.Fatalf("error initiating trace. err=%v", err)
-	// }
+	params := initiateParameter()
 
-	tp := sdktrace.NewTracerProvider(
-		// sdktrace.WithBatcher(exporter),
-		sdktrace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("load-test"),
-		)),
+	handler := slog.NewJSONHandler(os.Stdout, nil)
+	customHandler := &traceHandler{Handler: handler}
+	logger := slog.New(customHandler)
+
+	// setup load tester
+	t := tester.New(
+		tester.Config{
+			Logger:   logger,
+			Duration: 1 * time.Minute,
+		},
+		params,
 	)
-	otel.SetTracerProvider(tp)
 
-	defer (func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Fatalf("Error shutting down tracer provider: %v", err)
+	logger.Info("starting")
+
+	// run load tester
+	t.Do(func(ctx context.Context, logger *slog.Logger, parameter parameter) {
+
+		// choose balance id
+		i := randRange(0, len(parameter.BalanceIds)-1)
+		balanceId := parameter.BalanceIds[i]
+
+		// get balance
+		bal, err := GetBalance(ctx, balanceId)
+		if err != nil {
+			logger.ErrorContext(ctx, "got error on get-balance", slog.Any("error", err))
+			return
 		}
-	})()
+		if bal == nil {
+			logger.ErrorContext(ctx, "get-balance return nil")
+			return
+		}
 
-	tracer := otel.Tracer("load-test-tracer")
+		amount := rand.Float64() * 1000
 
-	end := time.Now().Add(1 * time.Minute)
-	fmt.Println("starting")
-
-	for time.Now().Before(end) {
-		for _, balanceId := range balanceIds {
-			ctx, span := tracer.Start(context.Background(), "main")
-			defer span.End()
-
-			handler := slog.NewJSONHandler(os.Stdout, nil)
-			customHandler := &traceHandler{Handler: handler}
-			logger := slog.New(customHandler)
-
-			// logger.InfoContext(ctx, "starting for", slog.String("balanceId", balanceId))
-
-			// get balance
-			bal, err := GetBalance(ctx, balanceId)
+		// deposit money when needed
+		if bal.Amount < amount {
+			depositAmount := 100 + rand.Float64()*10000
+			err := Deposit(ctx, balanceId, depositAmount)
 			if err != nil {
-				logger.ErrorContext(ctx, "got error on get-balance", slog.Any("error", err))
-				continue
-			}
-			if bal == nil {
-				logger.ErrorContext(ctx, "get-balance return nil")
-				continue
-			}
-
-			amount := rand.Float64() * 1000
-
-			// deposit money when needed
-			if bal.Amount < amount {
-				depositAmount := 100 + rand.Float64()*10000
-				err := Deposit(ctx, balanceId, depositAmount)
-				if err != nil {
-					logger.ErrorContext(ctx, "got error on deposit", slog.Any("error", err))
-					continue
-				}
-			}
-
-			// exec withdrawal
-			err = Withdraw(ctx, balanceId, amount)
-			if err != nil {
-				logger.ErrorContext(ctx, "got error on withdrawal", slog.Any("error", err))
-				continue
+				logger.ErrorContext(ctx, "got error on deposit", slog.Any("error", err))
+				return
 			}
 		}
+
+		// exec withdrawal
+		err = Withdraw(ctx, balanceId, amount)
+		if err != nil {
+			logger.ErrorContext(ctx, "got error on withdrawal", slog.Any("error", err))
+			return
+		}
+	})
+
+	logger.Info("finished")
+}
+
+func randRange(min, max int) int {
+	return rand.IntN(max-min) + min
+}
+
+func initiateParameter() parameter {
+	return parameter{
+		BalanceIds: []string{
+			"2TeSprhp2cN6nEIcayZsjjvnlsK",
+			"2TeSppzLaJaxldlzMOkqYO37vqw",
+			"2TeSprCLB0tF6HsJT9eCb1IBht0",
+			"2TeSps1ECSPx2IRrWMKEd6oHvSJ",
+			"2TeSpqL5Cq3t0rNJ4RDcR4ky029",
+			"2TeSpo6Okj6BedA62PUO3nRYADm",
+			"2TeSprwUG0oLfgGbIIObipgf5be",
+			"2TeSpqi0vPnYFf82cdBCE4Gaxjx",
+			"2TeSppFijPxu2bIKpRLhLy3ye4j",
+			"2TeSpnNHCn0Yq0vJddsv0dcSviy",
+			"2TeSpsBbTYE5ZBe3zpO1HDRf44o",
+			// "2TeSprmZUc7HGpqlm7bUi6RB9lu",
+			// "2TeSpqKkgW9pz15PaqR8ZIS0Wjh",
+			// "2TeSpqfWmsmNLffPB4fhErgYRiC",
+			// "2TeSpnH3d9Hr9zPyNpoBrzdd8fx",
+			// "2TeSpsz6jeis3vJHCoSfFrnGPVl",
+			// "2TeSptEF7KEwZ9cdlowOH4HSmbR",
+			// "2TeSpsvjaufyDq78BwcFFZ6ibfi",
+			// "2TeSpsFLvMYhPU3CpC21wgyOcS5",
+			// "2TeSpmhKLpqgNXTNOvh3JPLkbjy",
+			// "2TWlPQ2AhstX9PtJ5UTOE6xQ7Ga",
+			// "2TWlPVmPjhonQ2DpOFt09O990th",
+			// "2TWlPdYWFbP3iXPMIKVRmdZ3ozC",
+			// "2TWlPkjd1YcRDCBDQk11nygVDpe",
+			// "2TWlPw3U64nhEtzeazP5ELd7q4c",
+			// "2TWlQ2JWBetv9MUkFsLPd4zhLa4",
+			// "2TWlQ83iEHKIOtvMCfSnBwM2sEB",
+			// "2TWlQJsEhRIW8XpeGGz2u75phWN",
+			// "2TWlQRnYNr5ViFi0wLTatYImXz5",
+			// "2TWlQYYZVIC566T3XFVldQckPsB",
+			// "2TWlQcFLvqE67A2qbZpWAdSJiZL",
+			// "2TWlQjcMepYBrRJRRzwgXWLA0gX",
+			// "2TWlQvGoGcHxUa4iod28bMsfW7e",
+			// "2TWlR5WFe7VUVMSxhgpEmfqlAAX",
+			// "2TWlR8ifwogFmktTwET0Eb2s4PE",
+			// "2TWlRFfCwsZo903aTO7xSRCYQIU",
+			// "2TWlRRtrVofuy7C1ZzcWIICVEME",
+			// "2TWlRZBGQlbQe34dVNU3GhQKshe",
+			// "2TWlRedfruxmFYvYLJur7oGesXY",
+			// "2TWlRnR3C0hopS7NkcwyjIOq5Kd",
+		},
 	}
-
-	fmt.Println("finished")
 }
 
 func Deposit(ctx context.Context, balanceId string, amount float64) error {
@@ -178,7 +176,9 @@ func Deposit(ctx context.Context, balanceId string, amount float64) error {
 	)
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := http.DefaultClient.Do(req)
+	httpclient := &http.Client{}
+	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
+	res, err := httpclient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error on http request. error=%w", err)
 	}
@@ -186,15 +186,6 @@ func Deposit(ctx context.Context, balanceId string, amount float64) error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
 	}
-
-	// rawbody, err := io.ReadAll(res.Body)
-	// if err != nil {
-	// 	log.Printf("error on reading body. error=%v", err)
-	// 	return err
-	// }
-
-	// var out response[balance]
-	// _ = json.Unmarshal(rawbody, &out)
 
 	return nil
 }
@@ -207,7 +198,9 @@ func GetBalance(ctx context.Context, balanceId string) (*balance, error) {
 		nil,
 	)
 
-	res, err := http.DefaultClient.Do(req)
+	httpclient := &http.Client{}
+	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
+	res, err := httpclient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error on http request. error=%w", err)
 	}
@@ -240,7 +233,9 @@ func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 	)
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := http.DefaultClient.Do(req)
+	httpclient := &http.Client{}
+	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
+	res, err := httpclient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error on http request. error=%w", err)
 	}
@@ -248,15 +243,6 @@ func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
 	}
-
-	// rawbody, err := io.ReadAll(res.Body)
-	// if err != nil {
-	// 	log.Printf("error on reading body. error=%v", err)
-	// 	return err
-	// }
-
-	// var out response[balance]
-	// _ = json.Unmarshal(rawbody, &out)
 
 	return nil
 }
