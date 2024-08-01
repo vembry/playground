@@ -27,7 +27,7 @@ func (s *handler) HealthCheck(c *gin.Context) {
 
 // Open opens new balance. Basically creates new balance entry
 func (h *handler) Open(c *gin.Context) {
-	balance, err := h.balanceDomain.Open(c)
+	balance, err := h.balanceDomain.Open(c.Request.Context())
 	if err != nil {
 		c.JSON(400, BaseResponse[struct{}]{
 			Error: err.Error(),
