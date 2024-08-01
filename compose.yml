@@ -146,6 +146,7 @@ services:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_SERVICE_NAME: app-go-server
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
     healthcheck:
       test:
@@ -181,6 +182,7 @@ services:
       DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_SERVICE_NAME: app-go-worker
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
     healthcheck:
       test:
