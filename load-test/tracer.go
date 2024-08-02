@@ -17,7 +17,7 @@ func newTelemetry() func() {
 	os.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://host.docker.internal:10002")
 	os.Setenv("OTEL_EXPORTER_OTLP_TIMEOUT", "5000")
 	os.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
-	os.Setenv("OTEL_SERVICE_NAME", "load-tester")
+	os.Setenv("OTEL_SERVICE_NAME", "load-test")
 	os.Setenv("OTEL_TRACES_SAMPLER", "always_on")
 
 	ctx := context.Background()
