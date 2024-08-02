@@ -9,3 +9,9 @@ datasources:
     uid: tempo
     type: tempo
     url: http://monitoring-tempo:3100
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: "prometheus"
+      nodeGraph:
+        enabled: true
