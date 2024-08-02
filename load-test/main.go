@@ -168,17 +168,12 @@ func Deposit(ctx context.Context, balanceId string, amount float64) error {
 		"amount": amount,
 	})
 
-	req, _ := http.NewRequestWithContext(
+	res, err := otelhttp.Post(
 		ctx,
-		"POST",
 		fmt.Sprintf("%s/balance/%s/deposit", AppHost, balanceId),
+		"application/json",
 		bytes.NewBuffer(payloadRaw),
 	)
-	req.Header.Set("Content-Type", "application/json")
-
-	httpclient := &http.Client{}
-	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
-	res, err := httpclient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error on http request. error=%w", err)
 	}
@@ -191,16 +186,10 @@ func Deposit(ctx context.Context, balanceId string, amount float64) error {
 }
 
 func GetBalance(ctx context.Context, balanceId string) (*balance, error) {
-	req, _ := http.NewRequestWithContext(
+	res, err := otelhttp.Get(
 		ctx,
-		"GET",
 		fmt.Sprintf("%s/balance/%s", AppHost, balanceId),
-		nil,
 	)
-
-	httpclient := &http.Client{}
-	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
-	res, err := httpclient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error on http request. error=%w", err)
 	}
@@ -225,17 +214,12 @@ func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 		"amount": amount,
 	})
 
-	req, _ := http.NewRequestWithContext(
+	res, err := otelhttp.Post(
 		ctx,
-		"POST",
 		fmt.Sprintf("%s/balance/%s/withdraw", AppHost, balanceId),
+		"application/json",
 		bytes.NewBuffer(payloadRaw),
 	)
-	req.Header.Set("Content-Type", "application/json")
-
-	httpclient := &http.Client{}
-	httpclient.Transport = otelhttp.NewTransport(http.DefaultTransport)
-	res, err := httpclient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error on http request. error=%w", err)
 	}
