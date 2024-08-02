@@ -5,6 +5,7 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
 )
 
 type rabbit struct {
@@ -85,26 +86,35 @@ func (r *rabbit) startConsumer(consumer iConsumer) {
 	}
 
 	// start consuming
-	go r.consumerConsume(q, consumer.Handle, messageCh)
+	go r.consume(q, consumer.Handle, messageCh)
 }
 
-// consumerConsume start the actual message consumption
-func (r *rabbit) consumerConsume(queue amqp.Queue, handler func(context.Context, amqp.Delivery) error, messageCh <-chan amqp.Delivery) {
+// consume polls messages from message-channel
+func (r *rabbit) consume(queue amqp.Queue, handler func(context.Context, amqp.Delivery) error, messageCh <-chan amqp.Delivery) {
 	for message := range messageCh {
 		log.Printf("'%s' consuming %s", queue.Name, string(message.Body))
+		r.consumeMessage(queue, message, handler)
+	}
+}
 
-		// consume incoming message
-		err := handler(context.Background(), message)
+// consumeMessage consume the actual message
+func (r *rabbit) consumeMessage(queue amqp.Queue, message amqp.Delivery, handler func(context.Context, amqp.Delivery) error) {
+	ctx, span := otel.Tracer("rabbit-consumer").Start(context.Background(), "rabbit-consumer-start")
+	defer span.End()
+
+	// consume incoming message
+	err := handler(ctx, message)
+	if err != nil {
+		span.RecordError(err)
+		log.Printf("rabbit: failed to handle. consumer=%s. err=%v", queue.Name, err)
+
+		err = message.Reject(true)
 		if err != nil {
-			log.Printf("rabbit: failed to handle. consumer=%s. err=%v", queue.Name, err)
-
-			err = message.Reject(true)
-			if err != nil {
-				log.Printf("rabbit: failed to reject. consumer=%s. err=%v", queue.Name, err)
-			}
-		} else {
-			message.Ack(true)
+			span.RecordError(err)
+			log.Printf("rabbit: failed to reject. consumer=%s. err=%v", queue.Name, err)
 		}
+	} else {
+		message.Ack(true)
 	}
 }
 
