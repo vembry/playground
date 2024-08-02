@@ -40,7 +40,6 @@ func (t *tester[T]) Do(execution func(ctx context.Context, l *slog.Logger, param
 	for time.Now().Before(end) {
 		t.do(tracer, execution)
 	}
-
 }
 
 func (t *tester[T]) do(tracer trace.Tracer, execution func(ctx context.Context, l *slog.Logger, parameter T)) {

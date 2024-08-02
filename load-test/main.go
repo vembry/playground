@@ -73,10 +73,14 @@ func main() {
 
 	// run load tester
 	t.Do(func(ctx context.Context, logger *slog.Logger, parameter parameter) {
-
 		// choose balance id
 		i := randRange(0, len(parameter.BalanceIds)-1)
-		balanceId := parameter.BalanceIds[i]
+
+		var (
+			balanceId = parameter.BalanceIds[i]
+			amount    = rand.Float64() * 1000
+			err       error
+		)
 
 		// get balance
 		bal, err := GetBalance(ctx, balanceId)
@@ -88,8 +92,6 @@ func main() {
 			logger.ErrorContext(ctx, "get-balance return nil")
 			return
 		}
-
-		amount := rand.Float64() * 1000
 
 		// deposit money when needed
 		if bal.Amount < amount {
@@ -163,28 +165,6 @@ func initiateParameter() parameter {
 	}
 }
 
-func Deposit(ctx context.Context, balanceId string, amount float64) error {
-	payloadRaw, _ := json.Marshal(map[string]interface{}{
-		"amount": amount,
-	})
-
-	res, err := otelhttp.Post(
-		ctx,
-		fmt.Sprintf("%s/balance/%s/deposit", AppHost, balanceId),
-		"application/json",
-		bytes.NewBuffer(payloadRaw),
-	)
-	if err != nil {
-		return fmt.Errorf("error on http request. error=%w", err)
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
-	}
-
-	return nil
-}
-
 func GetBalance(ctx context.Context, balanceId string) (*balance, error) {
 	res, err := otelhttp.Get(
 		ctx,
@@ -193,6 +173,7 @@ func GetBalance(ctx context.Context, balanceId string) (*balance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error on http request. error=%w", err)
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("get balance '%s' return non 200", balanceId)
@@ -209,6 +190,29 @@ func GetBalance(ctx context.Context, balanceId string) (*balance, error) {
 	return &out.Object, nil
 }
 
+func Deposit(ctx context.Context, balanceId string, amount float64) error {
+	payloadRaw, _ := json.Marshal(map[string]interface{}{
+		"amount": amount,
+	})
+
+	res, err := otelhttp.Post(
+		ctx,
+		fmt.Sprintf("%s/balance/%s/deposit", AppHost, balanceId),
+		"application/json",
+		bytes.NewBuffer(payloadRaw),
+	)
+	if err != nil {
+		return fmt.Errorf("error on http request. error=%w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
+	}
+
+	return nil
+}
+
 func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 	payloadRaw, _ := json.Marshal(map[string]interface{}{
 		"amount": amount,
@@ -223,6 +227,7 @@ func Withdraw(ctx context.Context, balanceId string, amount float64) error {
 	if err != nil {
 		return fmt.Errorf("error on http request. error=%w", err)
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("depositing balance '%s' return non 200", balanceId)
