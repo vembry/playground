@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	const AppHost string = "http://host.docker.internal:8080"
 
 	// setup parameters
 	shutdownHandler := newTelemetry()
