@@ -24,18 +24,17 @@ func main() {
 			Logger:   logger,
 			Duration: 5 * time.Minute,
 		},
-		params,
 	)
 
 	logger.Info("starting")
 
 	// run load tester
-	t.Do(func(ctx context.Context, logger *slog.Logger, parameter parameter) {
+	t.Do(func(ctx context.Context, logger *slog.Logger) {
 		// choose balance id
-		i := randRange(0, len(parameter.BalanceIds)-1)
+		i := randRange(0, len(params.BalanceIds)-1)
 
 		var (
-			balanceId = parameter.BalanceIds[i]
+			balanceId = params.BalanceIds[i]
 			amount    = rand.Float64() * 1000
 			err       error
 		)

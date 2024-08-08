@@ -9,9 +9,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type tester[T any] struct {
-	parameter T
-	cfg       Config
+type tester struct {
+	cfg Config
 }
 
 // Config contain load-tester configuration
@@ -21,15 +20,14 @@ type Config struct {
 }
 
 // New initiate load-tester instance
-func New[T any](cfg Config, parameter T) *tester[T] {
-	return &tester[T]{
-		parameter: parameter,
-		cfg:       cfg,
+func New(cfg Config) *tester {
+	return &tester{
+		cfg: cfg,
 	}
 }
 
 // Do setup and execute load-tester
-func (t *tester[T]) Do(execution func(ctx context.Context, l *slog.Logger, parameter T)) {
+func (t *tester) Do(execution func(ctx context.Context, l *slog.Logger)) {
 
 	// load otel trace
 	tracer := otel.Tracer("load-test-tracer")
@@ -42,7 +40,7 @@ func (t *tester[T]) Do(execution func(ctx context.Context, l *slog.Logger, param
 	}
 }
 
-func (t *tester[T]) do(tracer trace.Tracer, execution func(ctx context.Context, l *slog.Logger, parameter T)) {
+func (t *tester) do(tracer trace.Tracer, execution func(ctx context.Context, l *slog.Logger)) {
 	// start open-telemetry
 	ctx, span := tracer.Start(
 		context.Background(),
@@ -51,5 +49,5 @@ func (t *tester[T]) do(tracer trace.Tracer, execution func(ctx context.Context, 
 	defer span.End()
 
 	// execute test script
-	execution(ctx, t.cfg.Logger, t.parameter)
+	execution(ctx, t.cfg.Logger)
 }
