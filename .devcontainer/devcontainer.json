@@ -35,5 +35,6 @@
     "type=bind,source=${localEnv:HOME}/.aws,target=/root/.aws",
     "type=bind,source=${localEnv:HOME}/go/pkg/mod,target=/go/pkg/mod,consistency=cached"
   ],
-  "remoteUser": "root"
+  "remoteUser": "root",
+  "runArgs": ["--name=credit-management-workspace"]
 }
