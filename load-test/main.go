@@ -14,19 +14,20 @@ func main() {
 	shutdownHandler := newTelemetry()
 	defer shutdownHandler()
 
+	// setup logger
 	logger := newLogger()
-
-	params := initiateParameter()
 
 	// setup load tester
 	t := tester.New(
 		tester.Config{
-			Logger:   logger,
-			Duration: 5 * time.Minute,
+			Logger:                logger,
+			Duration:              5 * time.Minute,
+			ConcurrentWorkerCount: 10,
 		},
 	)
 
-	logger.Info("starting")
+	// setup parameter for test
+	params := initiateParameter()
 
 	// run load tester
 	t.Do(func(ctx context.Context, logger *slog.Logger) {
@@ -67,8 +68,6 @@ func main() {
 			return
 		}
 	})
-
-	logger.Info("finished")
 }
 
 func randRange(min, max int) int {
