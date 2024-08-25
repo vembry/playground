@@ -1,6 +1,3 @@
-default:
-	echo "hi there!"
-
 start:	
 	make down
 	make up
@@ -12,5 +9,5 @@ down:
 	docker compose -f "compose.yml" down
 	(echo "y" | docker volume prune)
 
-watch:
+watch: # this is still in testing
 	docker compose alpha watch
