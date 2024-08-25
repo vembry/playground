@@ -23,7 +23,7 @@ services:
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
     volumes:
-      - ${LOCAL_WORKSPACE_FOLDER:-.}/migrations:/docker-entrypoint-initdb.d
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/.docker/postgres/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d postgres -U local"]
       interval: 1s
