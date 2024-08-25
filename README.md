@@ -16,7 +16,7 @@
    2. additionally I wanted to created `./app-java` just to see how it performed compared to golang one. It should contain the same spec as `./app-go`
 2. learn how to utilize docker for service orchestration
 3. ~~learn how to load test using `grafana/k6`, which we'll be using to run the scenario + replicate huge intake process~~
-   1. this go scratched because as per writing this, we cannot meddle with `grafana/k6` directly with golang
+   1. this got scratched because as per writing this, we cannot meddle with `grafana/k6` directly with golang
 4. build a simple load test library that has observabilities element built in it
 5. visualize the observability metrics from the experiment, using:
    1. `grafana`, to visualize
