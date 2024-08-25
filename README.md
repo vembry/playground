@@ -26,10 +26,10 @@
 6. utilize `rabbitmq` for message broker. I'm using this for asynchronous process.
 
 ## setup
-Run the following command 
-> make start
-
-at `./` and it will start everything
+- use vscode, reopen repo in container. Ref: [VSCode's dev-container](https://code.visualstudio.com/docs/devcontainers/containers) 
+   - This help isolate the development
+- to setup the whole thing, run the following command at `./` once inside dev-container
+   > make start
 
 ## links
 - [grafana dashboard](http://localhost:10000/d/f744f256-9d10-4e29-9dd0-c4ea6f8d7dd2/dashboard?orgId=1&var-container_name=app-go-worker&var-container_name=app-go&from=now-5m&to=now&refresh=5s) (still in work)
