@@ -6,6 +6,7 @@
 - `./.docker`, contain definitions/configuration to setup container in docker 
 - `./.vscode`, contain repo's workspace setting for vscode
 - `./app-go`, credit managements app implemented using golang
+- `./broker`, an attempt to create message-broker in golang
 - `./load-test`, contain scripts to execute load test scenarios
 
 
