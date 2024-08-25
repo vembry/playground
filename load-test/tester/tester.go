@@ -23,7 +23,7 @@ type Config struct {
 
 // New initiate load-tester instance
 func New(cfg Config) *tester {
-	// when not defined, defaulted to 1
+	// when 'ConcurrentWorkerCount' not defined, defaulted to 1
 	if cfg.ConcurrentWorkerCount == 0 {
 		cfg.ConcurrentWorkerCount = 1
 	}
@@ -93,9 +93,8 @@ func (t *tester) Do(execution func(ctx context.Context, l *slog.Logger)) {
 		for _, taskCh := range taskChannelArray {
 			looperWg.Add(1)
 
-			// enqueue task using go routine
-			// because enqueuing task to a channel
-			// has some latency
+			// enqueue task using go routine because enqueuing
+			// task to a channel directly has some latency
 			go func() {
 				counter++
 				if counter%counterCheckpoint == 0 {
