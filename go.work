@@ -1,6 +1,7 @@
-go 1.22
+go 1.22.6
 
 use (
 	./app-go
+	./broker
 	./load-test
 )
