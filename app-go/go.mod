@@ -2,7 +2,7 @@ module app
 
 go 1.22.6
 
-replace sdk v0.0.0 => ../go-sdk
+replace sdk v0.0.0 => ../sdk-go
 
 require (
 	github.com/gin-gonic/gin v1.10.0

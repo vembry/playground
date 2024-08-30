@@ -7,12 +7,12 @@ WORKDIR /home/app/app-go
 COPY ./app-go ./
 # RUN go mod download
 
-WORKDIR /home/app/go-sdk
-COPY ./go-sdk ./
+WORKDIR /home/app/sdk-go
+COPY ./sdk-go ./
 # RUN go mod download
 
 WORKDIR /home/app
-RUN go work init ./app-go ./go-sdk && go mod download 
+RUN go work init ./app-go ./sdk-go && go mod download 
 
 WORKDIR /home/app/app-go
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./bin/app-go
