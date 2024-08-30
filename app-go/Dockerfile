@@ -1,16 +1,22 @@
 # syntax=docker/dockerfile:1
 
 # Build the application from source
-FROM golang:1.22.4-alpine AS build-stage
+FROM golang:1.22.6-alpine AS build-stage
 
-WORKDIR /app
+WORKDIR /home/app/app-go
+COPY ./app-go ./
+# RUN go mod download
 
-COPY go.mod go.sum ./
-RUN go mod download
+WORKDIR /home/app/go-sdk
+COPY ./go-sdk ./
+# RUN go mod download
 
-COPY ./ ./
+WORKDIR /home/app
+RUN go work init ./app-go ./go-sdk && go mod download 
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app-go
+WORKDIR /home/app/app-go
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./bin/app-go
+
 
 # # Run the tests in the container
 # FROM build-stage AS run-test-stage
@@ -21,7 +27,7 @@ FROM gcr.io/distroless/base-debian11 AS build-release-stage
 
 WORKDIR /
 
-COPY --from=build-stage /app-go /app-go
+COPY --from=build-stage /home/app/app-go/bin/app-go /app-go
 COPY --from=gcr.io/distroless/base:debug /busybox/wget /
 
 EXPOSE 80

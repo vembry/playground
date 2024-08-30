@@ -125,12 +125,13 @@ services:
   app-go:
     <<: *default
     build:
-      context: ./app-go
+      context: .
+      dockerfile: app-go/Dockerfile
     # x-develop:
     #   watch:
     #     - action: rebuild
     #       path: ./app-go
-    image: credits-app-go:local
+    image: playground-app-go:local
     container_name: app-go
     command: /app-go serve
     depends_on:
@@ -162,12 +163,13 @@ services:
   app-go-worker:
     <<: *default
     build:
-      context: ./app-go
+      context: .
+      dockerfile: app-go/Dockerfile
     # x-develop:
     #   watch:
     #     - action: rebuild
     #       path: ./app-go
-    image: credits-app-go:local
+    image: playground-app-go:local
     container_name: app-go-worker
     command: /app-go work
     depends_on:
