@@ -1,6 +1,8 @@
 module app
 
-go 1.22
+go 1.22.6
+
+replace sdk v0.0.0 => ../go-sdk
 
 require (
 	github.com/gin-gonic/gin v1.10.0
@@ -19,6 +21,7 @@ require (
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.10
 	gorm.io/plugin/opentelemetry v0.1.4
+	sdk v0.0.0
 )
 
 require (

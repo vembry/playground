@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"app/common"
 	"log"
+	sdksignal "sdk/signal"
 
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ func NewServe(
 			}
 
 			// await
-			common.WatchForExitSignal()
+			sdksignal.WatchForExitSignal()
 			log.Printf("shutting down server...")
 
 			// stop servers gracefully

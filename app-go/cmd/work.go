@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"app/common"
 	"log"
+
+	sdksignal "sdk/signal"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ func NewWork(metricServer IServer, workers ...IWorker) *cobra.Command {
 
 			metricServer.Start()
 
-			common.WatchForExitSignal()
+			sdksignal.WatchForExitSignal()
 			log.Printf("shutting down worker...")
 
 			for i := range workers {
