@@ -32,7 +32,6 @@
   "postCreateCommand": {},
   "mounts": [
     "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly",
-    "type=bind,source=${localEnv:HOME}/.aws,target=/root/.aws",
     "type=bind,source=${localEnv:HOME}/go/pkg/mod,target=/go/pkg/mod,consistency=cached"
   ],
   "remoteUser": "root",
