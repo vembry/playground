@@ -1,5 +1,5 @@
 {
-  "name": "credits-management",
+  "name": "playground",
   "image": "mcr.microsoft.com/devcontainers/base:debian",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "features": {
