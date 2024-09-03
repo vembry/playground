@@ -1,5 +1,23 @@
 # playground
 
+```mermaid
+flowchart LR
+   load-test --> app-go
+   load-test -.-> proxy
+   proxy -.-> app-go
+   proxy -.-> app-go-1
+   proxy -.-> app-go-2
+
+   app-go -- storage --> postgres
+   app-go -- cache --> redis
+   app-go -- worker queues --> rabbitmq
+   app-go -. alternative worker queues .-> broker
+```
+note:
+1. dotted line refers to future update
+2. solid line refers to what we currently have
+
+
 ## directory briefs
 
 - `./.devcontainer`, contain dev-container definition. [reference to vscode's dev-container](https://code.visualstudio.com/docs/devcontainers/containers)
