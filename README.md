@@ -3,14 +3,18 @@
 ```mermaid
 flowchart LR
    load-test --> app-go
+   load-test -.-> app-java
    load-test -.-> proxy
+   proxy -.-> app-java
    proxy -.-> app-go
    proxy -.-> app-go-1
    proxy -.-> app-go-2
 
+   app-java -- storage --> postgres
+   app-java -- worker queues --> rabbitmq
    app-go -- storage --> postgres
-   app-go -- cache --> redis
    app-go -- worker queues --> rabbitmq
+   app-go -- cache --> redis
    app-go -. alternative worker queues .-> broker
 ```
 note:
