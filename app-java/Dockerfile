@@ -28,6 +28,7 @@ WORKDIR /home/app
 
 # Copy the built JAR file from the previous stage
 COPY --from=build-stage /home/app/build/libs/*.jar /home/app/app.jar
+COPY --from=gcr.io/distroless/base:debug /busybox/wget /
 
 # Expose the port the application runs on
 EXPOSE 80
