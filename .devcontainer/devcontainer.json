@@ -7,16 +7,17 @@
       "version": "1.22",
       "golangciLintVersion": "1.57.2"
     },
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/java:1.6.0": {
+      "version": "21.0.4",
+      "installMaven": "false",
+      "installGradle": "true"
+    }
   },
   "customizations": {
     "vscode": {
       "settings": {},
-      "extensions": [
-        "golang.go",
-        "eamodio.gitlens",
-        "esbenp.prettier-vscode"
-      ]
+      "extensions": ["golang.go", "eamodio.gitlens", "esbenp.prettier-vscode"]
     }
   },
   "containerEnv": {
