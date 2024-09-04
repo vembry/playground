@@ -17,7 +17,14 @@
   "customizations": {
     "vscode": {
       "settings": {},
-      "extensions": ["golang.go", "eamodio.gitlens", "esbenp.prettier-vscode"]
+      "extensions": [
+        "golang.go",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "vscjava.vscode-java-pack",
+        "redhat.java",
+        "bierner.markdown-mermaid"
+      ]
     }
   },
   "containerEnv": {

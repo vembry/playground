@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "AppApplication",
+      "request": "launch",
+      "mainClass": "vembry.playground.app.AppApplication",
+      "projectName": "app-java"
+    },
+    {
       "name": "app-go work",
       "type": "go",
       "request": "launch",
