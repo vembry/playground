@@ -122,7 +122,7 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 
-  app-go:
+  app-go-server:
     <<: *default
     build:
       context: .
@@ -132,7 +132,7 @@ services:
     #     - action: rebuild
     #       path: ./app-go
     image: playground-app-go:local
-    container_name: app-go
+    container_name: app-go-server
     command: /app-go serve
     depends_on:
       postgres:
@@ -187,6 +187,26 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: app-go-worker
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
+  app-java-server:
+    build:
+      context: .
+      dockerfile: app-java/Dockerfile
+    image: playground-app-java:local
+    container_name: app-java-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:80"
     healthcheck:
       test:
         [
