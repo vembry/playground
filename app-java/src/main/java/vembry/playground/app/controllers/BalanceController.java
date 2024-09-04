@@ -12,6 +12,8 @@ import vembry.playground.app.models.Balance;
 import vembry.playground.app.models.Deposit;
 import vembry.playground.app.models.DepositRequest;
 import vembry.playground.app.models.HttpResponse;
+import vembry.playground.app.models.WithdrawRequest;
+import vembry.playground.app.models.Withdrawal;
 import vembry.playground.app.services.BalanceService;
 
 @RestController
@@ -28,14 +30,16 @@ public class BalanceController {
     }
 
     @PostMapping("/{id}/deposit")
-    public Object deposit(@PathVariable String id, @RequestBody DepositRequest request) {
+    public HttpResponse<Deposit> deposit(@PathVariable String id, @RequestBody DepositRequest request) {
         request.setBalanceId(id);
         Deposit deposit = this.balanceService.deposit(request);
         return new HttpResponse<Deposit>(deposit);
     }
 
     @PostMapping("/{id}/withdraw")
-    public Object withdraw(@PathVariable String id) {
-        return id;
+    public HttpResponse<Withdrawal> withdraw(@PathVariable String id, @RequestBody WithdrawRequest request) {
+        request.setBalanceId(id);
+        Withdrawal withdrawal = this.balanceService.withdraw(request);
+        return new HttpResponse<Withdrawal>(withdrawal);
     }
 }

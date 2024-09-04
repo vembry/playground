@@ -1,12 +1,15 @@
 package vembry.playground.app.models;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -21,16 +24,17 @@ public class Withdrawal {
     String balanceId;
 
     @JsonProperty("status")
-    String status;
+    @Enumerated(EnumType.STRING)
+    Status status;
 
     @JsonProperty("amount")
     BigDecimal amount;
 
     @JsonProperty("created_at")
-    Date createdAt;
+    Instant createdAt;
 
     @JsonProperty("updated_at")
-    Date updatedAt;
+    Instant updatedAt;
 
     public Withdrawal() {
     }
@@ -39,7 +43,8 @@ public class Withdrawal {
         this.id = Ksuid.newKsuid().toString();
         this.balanceId = balanceId;
         this.amount = amount;
-        this.status = "pending";
+        this.status = Status.pending;
+        this.createdAt = Instant.now();
     }
 
     public String getId() {
@@ -50,15 +55,19 @@ public class Withdrawal {
         return balanceId;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }
 
-    public Date getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Date getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 }

@@ -1,6 +1,7 @@
 package vembry.playground.app.models;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,18 +23,18 @@ public class Deposit {
     @JsonProperty("balance_id")
     String balanceId;
 
-    @Enumerated(EnumType.STRING)
     @JsonProperty("status")
+    @Enumerated(EnumType.STRING)
     Status status;
 
     @JsonProperty("amount")
     BigDecimal amount;
 
     @JsonProperty("created_at")
-    Date createdAt;
+    Instant createdAt;
 
     @JsonProperty("updated_at")
-    Date updatedAt;
+    Instant updatedAt;
 
     public Deposit() {
     }
@@ -43,6 +44,7 @@ public class Deposit {
         this.balanceId = balanceId;
         this.amount = amount;
         this.status = Status.pending;
+        this.createdAt = Instant.now();
     }
 
     public String getId() {
@@ -61,11 +63,11 @@ public class Deposit {
         return amount;
     }
 
-    public Date getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Date getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 }
