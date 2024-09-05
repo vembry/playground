@@ -28,6 +28,7 @@ note:
 - `./.docker`, contain definitions/configuration to setup container in docker 
 - `./.vscode`, contain repo's workspace setting for vscode
 - `./app-go`, credit managements app implemented using golang
+- `./app-java`, credit managements app implemented using java + spring boot
 - `./broker`, an attempt to create message-broker in golang
 - `./load-test`, contain scripts to execute load test scenarios
 
@@ -35,7 +36,8 @@ note:
 ## learning points
 1. learn how to make credits management doesnt go kaboom when theres huge transaction intake
    1. this covered inside `./app-go` and already fully implemented
-   2. additionally I wanted to created `./app-java` just to see how it performed compared to golang one. It should contain the same spec as `./app-go`
+   2. ~~additionally I wanted to created `./app-java` just to see how it performed compared to golang one. It should contain the same spec as `./app-go`~~
+      1. implemented, but only for server, no worker
 2. learn how to utilize docker for service orchestration
 3. ~~learn how to load test using `grafana/k6`, which we'll be using to run the scenario + replicate huge intake process~~
    1. this got scratched because as per writing this, we cannot meddle with `grafana/k6` directly with golang
