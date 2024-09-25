@@ -1,104 +1,80 @@
 package main
 
 import (
+	"broker/model"
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/segmentio/ksuid"
 )
 
-type ActiveQueue struct {
-	Id         ksuid.KSUID `json:"id"`
-	QueueName  string      `json:"queue_name"`
-	PollExpiry time.Time   `json:"poll_expiry"`
-	Payload    string      `json:"payload"`
-}
-
-type enqueuePayload struct {
-	Name    string `json:"name"`
-	Payload string `json:"payload"`
-}
-
 type queue struct {
-	activeQueue map[ksuid.KSUID]ActiveQueue
-	queue       map[string][]string
+	activeQueue map[ksuid.KSUID]model.ActiveQueue
+	queue       map[string]model.IdleQueue
 }
 
 func newQueue() *queue {
-
 	return &queue{
-		activeQueue: map[ksuid.KSUID]ActiveQueue{},
-		queue:       map[string][]string{},
+		activeQueue: map[ksuid.KSUID]model.ActiveQueue{},
+		queue:       map[string]model.IdleQueue{},
 	}
 }
 
-func (q *queue) get(c *gin.Context) {
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "ok",
-		"data": map[string]interface{}{
-			"activeQueue": q.activeQueue,
-			"queue":       q.queue,
-		},
-	})
+// Get is to retrieve all available queues
+func (q *queue) Get() model.QueueData {
+	return model.QueueData{
+		ActiveQueue: q.activeQueue,
+		Queue:       q.queue,
+	}
 }
 
-// enqueue is to enqueues queue
-func (q *queue) enqueue(c *gin.Context) {
-	var payload enqueuePayload
-
-	// retrieve queue payload
-	c.BindJSON(&payload) // need to handle error
-
+// Enqueue is to enqueues queue
+func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 	// retrieve queue maps
 	val, ok := q.queue[payload.Name]
 	if !ok {
 		// when not exists, create list
-		val = []string{}
+		val = model.IdleQueue{}
 	}
 
 	// add enqueued payload to queue maps
-	val = append(val, payload.Payload)
+	val.Items = append(val.Items, payload.Payload)
 	q.queue[payload.Name] = val
 
-	c.Status(http.StatusOK)
+	return nil
 }
 
 // poll is to get entry from queue head
-func (q *queue) poll(c *gin.Context) {
-	queueName := c.Param("queue_name")
+func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
+	// queueName := c.Param("queue_name")
 
 	// attempt to get queue
 	val, ok := q.queue[queueName]
 	if !ok {
-		val = []string{}
+		val = model.IdleQueue{}
 		q.queue[queueName] = val
 	}
 
 	// break away when queue has no entry
-	if len(val) == 0 {
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"message": "no active queue",
-			"data":    nil,
-		})
-		return
+	if len(val.Items) == 0 {
+		return nil, fmt.Errorf("no active queue")
 	}
 
 	// extract value from "q.queue" head
-	tempQueue := val[0]
+	tempQueue := val.Items[0]
 
 	// remove it from "q.queue"
-	val = val[1:]
+	val.Items = val.Items[1:]
 	q.queue[queueName] = val
 
 	queueId := ksuid.New()
 
 	// construct active queue entry
-	activeQueue := ActiveQueue{
+	activeQueue := model.ActiveQueue{
 		Id:         queueId,
 		QueueName:  queueName,
 		PollExpiry: time.Now().UTC().Add(1 * time.Minute), // this is for sweeping purposes
@@ -108,28 +84,19 @@ func (q *queue) poll(c *gin.Context) {
 	q.activeQueue[queueId] = activeQueue
 
 	// return the polled queue
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "ok",
-		"data":    activeQueue,
-	})
-
+	return &activeQueue, nil
 }
 
-// completePoll is to ack-ed out poll-ed queue so it wont get poll-ed anymore
-func (q *queue) completePoll(c *gin.Context) {
-	queueIdRaw := c.Param("queue_id")
-
-	queueId, _ := ksuid.Parse(queueIdRaw)
-
+// CompletePoll is to ack-ed out poll-ed queue so it wont get poll-ed anymore
+func (q *queue) CompletePoll(queueId ksuid.KSUID) error {
 	// attempt to get queue
 	_, ok := q.activeQueue[queueId]
 	if !ok {
-		c.Status(http.StatusNotFound)
-		return
+		return fmt.Errorf("queue not found")
 	}
 
 	delete(q.activeQueue, queueId)
-	c.Status(http.StatusOK)
+	return nil
 }
 
 // shutdown is a simple way to backup broker's queues
@@ -137,7 +104,7 @@ func (q *queue) shutdown() {
 	// move 'active queue' back to 'queue'
 	for _, value := range q.activeQueue {
 		val := q.queue[value.QueueName]
-		val = append(val, value.Payload)
+		val.Items = append(val.Items, value.Payload)
 		q.queue[value.QueueName] = val
 	}
 

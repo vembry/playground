@@ -1,46 +1,42 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 
+	brokergrpc "broker/grpc"
+	brokerhttp "broker/http"
 	sdksignal "sdk/signal"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	log.Printf("hello broker!")
 
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	queue := newQueue() // initiate core queue
+	queue.restore()     // restore backed-up queues
 
-	queue := newQueue()
-	queue.restore() // restore backed-up queues
+	httpServer := brokerhttp.NewHttpServer(queue) // initiate http server
+	grpcServer := brokergrpc.NewGrpcServer(queue) // iniitate grpc server
 
-	// queue handler
-	queueGroup := r.Group("/queue")
-	queueGroup.GET("", queue.get)
-	queueGroup.POST("/enqueue", queue.enqueue)
-	queueGroup.GET("/poll/:queue_name", queue.poll)
-	queueGroup.POST("/poll/:queue_id/complete", queue.completePoll)
-
-	httpserver := http.Server{
-		Addr:    ":2000",
-		Handler: r,
-	}
-
+	// http server
 	go func() {
-		if err := httpserver.ListenAndServe(); err != http.ErrServerClosed {
+		if err := httpServer.Start(); err != http.ErrServerClosed {
 			log.Fatalf("found error on starting http server. err=%v", err)
+		}
+	}()
+
+	// grpc server
+	go func() {
+		if err := grpcServer.Start(); err != nil {
+			log.Fatalf("found error on starting grpc server. err=%v", err)
 		}
 	}()
 
 	sdksignal.WatchForExitSignal()
 	log.Println("shutting down...")
 
-	httpserver.Shutdown(context.Background())
+	httpServer.Stop()
+	grpcServer.Stop()
 
-	queue.shutdown()
+	queue.shutdown() // shutdown queue
 }

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package broker;
+option go_package = "sdk-go/pb";
+
+service Broker {
+    rpc GetQueue(GetQueueRequest) returns (GetQueueResponse);
+}
+
+message GetQueueRequest {}
+message GetQueueResponse {
+    string message = 1;
+    QueueData data = 2;
+}
+
+message QueueData {
+  map<string, ActiveQueue> active_queue = 1;
+  map<string, QueueList> queue = 2;
+}
+
+message ActiveQueue {
+  string id = 1;
+  string queue_name = 2;
+  string poll_expiry = 3; // Handle as string (ISO format), or use google.protobuf.Timestamp
+  string payload = 4;
+}
+
+message QueueList {
+  repeated string items = 1;
+}
