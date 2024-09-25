@@ -36,12 +36,13 @@
     "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
     "LOCAL_USER_PATH": "${localEnv:HOME}${localEnv:USERPROFILE}"
   },
-  "postStartCommand": {},
+  "postStartCommand": {
+    "install-protoc-gen-go": "go install google.golang.org/protobuf/cmd/protoc-gen-go@latest",
+    "install-protoc-gen-go-grpc": "go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest",
+    "install-protobuf-compiler":"apt-get update && apt-get install -y protobuf-compiler"
+  },
   "postCreateCommand": {},
-  "mounts": [
-    "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly",
-    "type=bind,source=${localEnv:HOME}/go/pkg/mod,target=/go/pkg/mod,consistency=cached"
-  ],
+  "mounts": [],
   "remoteUser": "root",
   "runArgs": ["--name=playground-workspace"]
 }
