@@ -42,7 +42,9 @@
     "install-protobuf-compiler":"apt-get update && apt-get install -y protobuf-compiler"
   },
   "postCreateCommand": {},
-  "mounts": [],
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly" // this need to be kept due to git-ssh
+  ],
   "remoteUser": "root",
   "runArgs": ["--name=playground-workspace"]
 }
