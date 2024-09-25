@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	sdksignal "sdk/signal"
 
@@ -15,27 +17,55 @@ type IWorker interface {
 }
 
 func NewWork(metricServer IServer, workers ...IWorker) *cobra.Command {
-	return &cobra.Command{
+	// setup workers mapper for selection purposes
+	availableWorkerMap := map[string]IWorker{}
+	availableWorkers := []string{}
+	for _, worker := range workers {
+		availableWorkerMap[worker.Name()] = worker
+		availableWorkers = append(availableWorkers, worker.Name())
+	}
+
+	selectedWorkers := []string{}
+	c := &cobra.Command{
 		Use:   "work",
 		Short: "start worker",
 		Long:  "start worker",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Printf("starting worker...")
-			for i := range workers {
-				log.Printf("starting %s worker", workers[i].Name())
-				workers[i].Start()
+
+			// when 'selectedWorkers' is empy,
+			// default to run everything
+			if len(selectedWorkers) == 0 {
+				selectedWorkers = availableWorkers
+			}
+
+			// store selected worker for shutdown later
+			activeWorker := []IWorker{}
+
+			// iterate to run ONLY selected worker
+			for _, selectedWorker := range selectedWorkers {
+				val := availableWorkerMap[selectedWorker]
+				log.Printf("starting '%s' worker", val.Name())
+				val.Start()
+
+				activeWorker = append(activeWorker, val)
 			}
 
 			metricServer.Start()
 
 			sdksignal.WatchForExitSignal()
-			log.Printf("shutting down worker...")
+			log.Printf("shutting down '%d' worker(s)...", len(activeWorker))
 
-			for i := range workers {
-				log.Printf("shutting down %s worker", workers[i].Name())
-				workers[i].Stop()
+			for _, worker := range activeWorker {
+				log.Printf("shutting down '%s' worker", worker.Name())
+				worker.Stop()
 			}
 			metricServer.Stop()
 		},
 	}
+
+	// cli flags
+	c.Flags().StringArrayVarP(&selectedWorkers, "worker", "w", []string{}, fmt.Sprintf("determine worker(s) to be run. available worker=%s", strings.Join(availableWorkers, ", ")))
+
+	return c
 }

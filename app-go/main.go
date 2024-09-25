@@ -7,6 +7,7 @@ import (
 	internalhttp "app/internal/http"
 	"app/internal/repository/postgres"
 	repoRedis "app/internal/repository/redis"
+	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
 	"embed"
 	"log"
@@ -52,6 +53,7 @@ func main() {
 
 	// setup worker
 	workerRabbit := workerrabbit.New(appConfig.RabbitUri)
+	workerDummy := dummy.New()
 
 	// setup individual rabbit workers
 	transferWorkerRabbit := workerrabbit.NewTransfer(workerRabbit.GetConnection())
@@ -98,6 +100,7 @@ func main() {
 		cmd.NewWork(
 			appMetric,
 			workerRabbit,
+			workerDummy,
 		),
 		cmd.NewDummy(),
 	)
