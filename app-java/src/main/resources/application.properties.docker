@@ -2,7 +2,7 @@ server.port=80
 
 spring.application.name=app
 
-spring.datasource.url=jdbc:postgresql://postgres:5432/credit?stringtype=unspecified
+spring.datasource.url=jdbc:postgresql://postgres:5432/playground_app?stringtype=unspecified
 spring.datasource.username=local
 spring.datasource.password=local
 

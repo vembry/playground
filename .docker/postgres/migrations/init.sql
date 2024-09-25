@@ -1,7 +1,7 @@
--- CREATE DATABASE credit;
+-- CREATE DATABASE playground_app;
 
--- config `work_mem` for `credit` db
-alter database credit set work_mem = '64MB';
+-- config `work_mem` for `playground_app` db
+alter database playground_app set work_mem = '64MB';
 
 
 -- construct generic_status enum

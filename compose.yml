@@ -19,7 +19,7 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: credit
+      POSTGRES_DB: playground_app
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local
     volumes:
@@ -145,7 +145,7 @@ services:
     environment:
       HTTP_ADDRESS: 0.0.0.0:80
       PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
-      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      DB_CONN: host=postgres user=local password=local dbname=app port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: app-go-server
@@ -182,7 +182,7 @@ services:
     environment:
       HTTP_ADDRESS: 0.0.0.0:80
       PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
-      DB_CONN: host=postgres user=local password=local dbname=credit port=5432 sslmode=disable
+      DB_CONN: host=postgres user=local password=local dbname=app port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: app-go-worker
