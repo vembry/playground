@@ -3,6 +3,7 @@ go 1.22.6
 use (
 	./app-go
 	./broker
-	./sdk-go
 	./load-test
+	./load-test-broker
+	./sdk-go
 )

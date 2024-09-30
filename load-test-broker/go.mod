@@ -1,4 +1,4 @@
-module load-test
+module load-test-broker
 
 go 1.22.6
 
