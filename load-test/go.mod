@@ -1,8 +1,10 @@
 module load-test-go
 
-go 1.22
+go 1.22.6
 
-toolchain go1.22.4
+toolchain go1.22.7
+
+replace sdk v0.0.0 => ../sdk-go
 
 require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
@@ -10,6 +12,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0
 	go.opentelemetry.io/otel/sdk v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
+	sdk v0.0.0
 )
 
 require (

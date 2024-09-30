@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"load-test-go/tester"
 	"log/slog"
 	"math/rand/v2"
+	"sdk/tester"
 	"time"
 )
 
