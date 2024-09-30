@@ -2,25 +2,26 @@ package main
 
 import (
 	"log"
-	"net/http"
+	nethttp "net/http"
 
-	brokergrpc "broker/grpc"
-	brokerhttp "broker/http"
+	"broker/grpc"
+	"broker/http"
+	"broker/queue"
 	sdksignal "sdk/signal"
 )
 
 func main() {
 	log.Printf("hello broker!")
 
-	queue := newQueue() // initiate core queue
-	queue.restore()     // restore backed-up queues
+	queue := queue.New() // initiate core queue
+	queue.Restore()      // restore backed-up queues
 
-	httpServer := brokerhttp.NewHttpServer(queue) // initiate http server
-	grpcServer := brokergrpc.NewGrpcServer(queue) // iniitate grpc server
+	httpServer := http.NewServer(queue) // initiate http server
+	grpcServer := grpc.NewServer(queue) // iniitate grpc server
 
 	// http server
 	go func() {
-		if err := httpServer.Start(); err != http.ErrServerClosed {
+		if err := httpServer.Start(); err != nethttp.ErrServerClosed {
 			log.Fatalf("found error on starting http server. err=%v", err)
 		}
 	}()
@@ -38,5 +39,5 @@ func main() {
 	httpServer.Stop()
 	grpcServer.Stop()
 
-	queue.shutdown() // shutdown queue
+	queue.Shutdown() // shutdown queue
 }

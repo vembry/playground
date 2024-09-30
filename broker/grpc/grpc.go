@@ -21,7 +21,7 @@ type server struct {
 	server *grpc.Server
 }
 
-func NewGrpcServer(queue IQueue) *server {
+func NewServer(queue IQueue) *server {
 	grpcServer := grpc.NewServer()
 	handler := NewHandler(queue)
 

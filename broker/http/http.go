@@ -20,7 +20,7 @@ type IQueue interface {
 	CompletePoll(queueId ksuid.KSUID) error
 }
 
-func NewHttpServer(queue IQueue) *server {
+func NewServer(queue IQueue) *server {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()

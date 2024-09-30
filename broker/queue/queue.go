@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"broker/model"
@@ -17,7 +17,7 @@ type queue struct {
 	queue       map[string]model.IdleQueue
 }
 
-func newQueue() *queue {
+func New() *queue {
 	return &queue{
 		activeQueue: map[ksuid.KSUID]model.ActiveQueue{},
 		queue:       map[string]model.IdleQueue{},
@@ -100,7 +100,7 @@ func (q *queue) CompletePoll(queueId ksuid.KSUID) error {
 }
 
 // shutdown is a simple way to backup broker's queues
-func (q *queue) shutdown() {
+func (q *queue) Shutdown() {
 	// move 'active queue' back to 'queue'
 	for _, value := range q.activeQueue {
 		val := q.queue[value.QueueName]
@@ -127,12 +127,12 @@ func (q *queue) shutdown() {
 }
 
 // restore is a simple way to restore broker's queue backup
-func (q *queue) restore() {
+func (q *queue) Restore() {
 	data, err := os.ReadFile("broker-backup")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	json.Unmarshal(data, &q.queue)
-	os.Remove("broker-backup")
+	// os.Remove("broker-backup")
 }
