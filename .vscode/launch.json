@@ -6,7 +6,7 @@
   "configurations": [
     {
       "type": "java",
-      "name": "AppApplication",
+      "name": "app-java",
       "request": "launch",
       "mainClass": "vembry.playground.app.AppApplication",
       "projectName": "app-java"
@@ -33,10 +33,14 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/app-go",
-      "args": ["dumb"],
-      "env": {
-        "DEV_CONTAINER": "true"
-      }
+      "args": ["dumb"]
+    },
+    {
+      "name": "broker",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/broker"
     },
     {
       "name": "load-test",

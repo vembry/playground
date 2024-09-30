@@ -1,8 +1,12 @@
 package grpc
 
 import (
+	"broker/model"
 	"context"
+	"fmt"
 	"sdk/pb"
+
+	"github.com/segmentio/ksuid"
 )
 
 type handler struct {
@@ -16,8 +20,9 @@ func NewHandler(queue IQueue) *handler {
 	}
 }
 
-func (ig *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.GetQueueResponse, error) {
-	res := ig.queue.Get()
+// GetQueue gets all queues data
+func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.GetQueueResponse, error) {
+	res := h.queue.Get()
 
 	activeQueues := map[string]*pb.ActiveQueue{}
 	for _, activeQueue := range res.ActiveQueue {
@@ -42,5 +47,55 @@ func (ig *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.G
 			ActiveQueue: activeQueues,
 			Queue:       queueList,
 		},
+	}, nil
+}
+
+// Enqueue enqueues entry to the queue
+func (h *handler) Enqueue(ctx context.Context, req *pb.EnqueueRequest) (*pb.EnqueueResponse, error) {
+	err := h.queue.Enqueue(model.EnqueuePayload{
+		Name:    req.GetQueueName(),
+		Payload: req.GetPayload(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error on enqueue")
+	}
+	return &pb.EnqueueResponse{
+		Message: "ok",
+	}, nil
+}
+
+// Poll retrieves selected queue's entry
+func (h *handler) Poll(ctx context.Context, req *pb.PollRequest) (*pb.PollResponse, error) {
+	queue, err := h.queue.Poll(req.GetQueueName())
+	if err != nil {
+		return &pb.PollResponse{
+			Message: err.Error(),
+		}, fmt.Errorf("error to poll")
+	}
+	return &pb.PollResponse{
+		Message: "ok",
+		Data: &pb.ActiveQueue{
+			Id:         queue.Id.String(),
+			QueueName:  queue.QueueName,
+			PollExpiry: queue.PollExpiry.String(),
+			Payload:    queue.Payload,
+		},
+	}, nil
+}
+
+// CompletePoll acks polled queue entry
+func (h *handler) CompletePoll(ctx context.Context, req *pb.CompletePollRequest) (*pb.CompletePollResponse, error) {
+	queueId, err := ksuid.Parse(req.GetQueueId())
+	if err != nil {
+		return nil, fmt.Errorf("invalid queue id")
+	}
+
+	err = h.queue.CompletePoll(queueId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to complete-poll")
+	}
+
+	return &pb.CompletePollResponse{
+		Message: "ok",
 	}, nil
 }

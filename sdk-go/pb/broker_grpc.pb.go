@@ -19,7 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Broker_GetQueue_FullMethodName = "/broker.Broker/GetQueue"
+	Broker_GetQueue_FullMethodName     = "/broker.Broker/GetQueue"
+	Broker_Enqueue_FullMethodName      = "/broker.Broker/Enqueue"
+	Broker_Poll_FullMethodName         = "/broker.Broker/Poll"
+	Broker_CompletePoll_FullMethodName = "/broker.Broker/CompletePoll"
 )
 
 // BrokerClient is the client API for Broker service.
@@ -27,6 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BrokerClient interface {
 	GetQueue(ctx context.Context, in *GetQueueRequest, opts ...grpc.CallOption) (*GetQueueResponse, error)
+	Enqueue(ctx context.Context, in *EnqueueRequest, opts ...grpc.CallOption) (*EnqueueResponse, error)
+	Poll(ctx context.Context, in *PollRequest, opts ...grpc.CallOption) (*PollResponse, error)
+	CompletePoll(ctx context.Context, in *CompletePollRequest, opts ...grpc.CallOption) (*CompletePollResponse, error)
 }
 
 type brokerClient struct {
@@ -47,11 +53,44 @@ func (c *brokerClient) GetQueue(ctx context.Context, in *GetQueueRequest, opts .
 	return out, nil
 }
 
+func (c *brokerClient) Enqueue(ctx context.Context, in *EnqueueRequest, opts ...grpc.CallOption) (*EnqueueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnqueueResponse)
+	err := c.cc.Invoke(ctx, Broker_Enqueue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *brokerClient) Poll(ctx context.Context, in *PollRequest, opts ...grpc.CallOption) (*PollResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PollResponse)
+	err := c.cc.Invoke(ctx, Broker_Poll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *brokerClient) CompletePoll(ctx context.Context, in *CompletePollRequest, opts ...grpc.CallOption) (*CompletePollResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompletePollResponse)
+	err := c.cc.Invoke(ctx, Broker_CompletePoll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BrokerServer is the server API for Broker service.
 // All implementations must embed UnimplementedBrokerServer
 // for forward compatibility.
 type BrokerServer interface {
 	GetQueue(context.Context, *GetQueueRequest) (*GetQueueResponse, error)
+	Enqueue(context.Context, *EnqueueRequest) (*EnqueueResponse, error)
+	Poll(context.Context, *PollRequest) (*PollResponse, error)
+	CompletePoll(context.Context, *CompletePollRequest) (*CompletePollResponse, error)
 	mustEmbedUnimplementedBrokerServer()
 }
 
@@ -64,6 +103,15 @@ type UnimplementedBrokerServer struct{}
 
 func (UnimplementedBrokerServer) GetQueue(context.Context, *GetQueueRequest) (*GetQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueue not implemented")
+}
+func (UnimplementedBrokerServer) Enqueue(context.Context, *EnqueueRequest) (*EnqueueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Enqueue not implemented")
+}
+func (UnimplementedBrokerServer) Poll(context.Context, *PollRequest) (*PollResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Poll not implemented")
+}
+func (UnimplementedBrokerServer) CompletePoll(context.Context, *CompletePollRequest) (*CompletePollResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompletePoll not implemented")
 }
 func (UnimplementedBrokerServer) mustEmbedUnimplementedBrokerServer() {}
 func (UnimplementedBrokerServer) testEmbeddedByValue()                {}
@@ -104,6 +152,60 @@ func _Broker_GetQueue_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Broker_Enqueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnqueueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BrokerServer).Enqueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broker_Enqueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BrokerServer).Enqueue(ctx, req.(*EnqueueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Broker_Poll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BrokerServer).Poll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broker_Poll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BrokerServer).Poll(ctx, req.(*PollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Broker_CompletePoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompletePollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BrokerServer).CompletePoll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broker_CompletePoll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BrokerServer).CompletePoll(ctx, req.(*CompletePollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Broker_ServiceDesc is the grpc.ServiceDesc for Broker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +216,18 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQueue",
 			Handler:    _Broker_GetQueue_Handler,
+		},
+		{
+			MethodName: "Enqueue",
+			Handler:    _Broker_Enqueue_Handler,
+		},
+		{
+			MethodName: "Poll",
+			Handler:    _Broker_Poll_Handler,
+		},
+		{
+			MethodName: "CompletePoll",
+			Handler:    _Broker_CompletePoll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

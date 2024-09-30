@@ -23,7 +23,8 @@
         "esbenp.prettier-vscode",
         "vscjava.vscode-java-pack",
         "redhat.java",
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "zxh404.vscode-proto3"
       ]
     }
   },

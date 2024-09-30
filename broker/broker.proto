@@ -5,12 +5,9 @@ option go_package = "sdk-go/pb";
 
 service Broker {
     rpc GetQueue(GetQueueRequest) returns (GetQueueResponse);
-}
-
-message GetQueueRequest {}
-message GetQueueResponse {
-    string message = 1;
-    QueueData data = 2;
+    rpc Enqueue(EnqueueRequest) returns (EnqueueResponse);
+    rpc Poll(PollRequest) returns (PollResponse);
+    rpc CompletePoll(CompletePollRequest) returns (CompletePollResponse);
 }
 
 message QueueData {
@@ -27,4 +24,37 @@ message ActiveQueue {
 
 message QueueList {
   repeated string items = 1;
+}
+
+// GetQueue* gets all queue
+message GetQueueRequest {}
+message GetQueueResponse {
+    string message = 1;
+    QueueData data = 2;
+}
+
+// Enqueue* enqueue data to queue
+message EnqueueRequest {
+  string queue_name = 1;
+  string payload = 2;
+}
+message EnqueueResponse {
+  string message = 1;
+}
+
+// Poll* polls a single queue's entry
+message PollRequest {
+  string queue_name = 1;
+}
+message PollResponse {
+  string message = 1;
+  ActiveQueue data = 2;
+}
+
+// CompletePoll* ack polled queue entry
+message CompletePollRequest {
+  string queue_id = 1;
+}
+message CompletePollResponse {
+  string message = 1;
 }
