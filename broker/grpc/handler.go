@@ -34,9 +34,9 @@ func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.Ge
 		}
 	}
 
-	queueList := map[string]*pb.QueueList{}
-	for key, val := range res.Queue {
-		queueList[key] = &pb.QueueList{
+	idleQueueMap := map[string]*pb.IdleQueue{}
+	for key, val := range res.IdleQueue {
+		idleQueueMap[key] = &pb.IdleQueue{
 			Items: val.Items,
 		}
 	}
@@ -45,7 +45,7 @@ func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.Ge
 		Message: "ok",
 		Data: &pb.QueueData{
 			ActiveQueue: activeQueues,
-			Queue:       queueList,
+			IdleQueue:   idleQueueMap,
 		},
 	}, nil
 }

@@ -12,7 +12,7 @@ service Broker {
 
 message QueueData {
   map<string, ActiveQueue> active_queue = 1;
-  map<string, QueueList> queue = 2;
+  map<string, IdleQueue> idle_queue = 2;
 }
 
 message ActiveQueue {
@@ -22,7 +22,7 @@ message ActiveQueue {
   string payload = 4;
 }
 
-message QueueList {
+message IdleQueue {
   repeated string items = 1;
 }
 
