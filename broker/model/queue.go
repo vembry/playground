@@ -24,6 +24,6 @@ type EnqueuePayload struct {
 }
 
 type QueueData struct {
-	ActiveQueue map[ksuid.KSUID]ActiveQueue `json:"active_queue"`
-	Queue       map[string]IdleQueue        `json:"queue"`
+	ActiveQueue map[ksuid.KSUID]*ActiveQueue `json:"active_queue"`
+	IdleQueue   map[string]*IdleQueue        `json:"queue"`
 }

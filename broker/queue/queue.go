@@ -13,14 +13,14 @@ import (
 )
 
 type queue struct {
-	activeQueue map[ksuid.KSUID]model.ActiveQueue
-	queue       map[string]model.IdleQueue
+	activeQueue map[ksuid.KSUID]*model.ActiveQueue
+	idleQueue   map[string]*model.IdleQueue
 }
 
 func New() *queue {
 	return &queue{
-		activeQueue: map[ksuid.KSUID]model.ActiveQueue{},
-		queue:       map[string]model.IdleQueue{},
+		activeQueue: map[ksuid.KSUID]*model.ActiveQueue{},
+		idleQueue:   map[string]*model.IdleQueue{},
 	}
 }
 
@@ -28,22 +28,22 @@ func New() *queue {
 func (q *queue) Get() model.QueueData {
 	return model.QueueData{
 		ActiveQueue: q.activeQueue,
-		Queue:       q.queue,
+		IdleQueue:   q.idleQueue,
 	}
 }
 
 // Enqueue is to enqueues queue
 func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 	// retrieve queue maps
-	val, ok := q.queue[payload.Name]
+	val, ok := q.idleQueue[payload.Name]
 	if !ok {
 		// when not exists, create list
-		val = model.IdleQueue{}
+		val = &model.IdleQueue{}
 	}
 
 	// add enqueued payload to queue maps
 	val.Items = append(val.Items, payload.Payload)
-	q.queue[payload.Name] = val
+	q.idleQueue[payload.Name] = val
 
 	return nil
 }
@@ -53,10 +53,10 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	// queueName := c.Param("queue_name")
 
 	// attempt to get queue
-	val, ok := q.queue[queueName]
+	val, ok := q.idleQueue[queueName]
 	if !ok {
-		val = model.IdleQueue{}
-		q.queue[queueName] = val
+		val = &model.IdleQueue{}
+		q.idleQueue[queueName] = val
 	}
 
 	// break away when queue has no entry
@@ -69,12 +69,12 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 
 	// remove it from "q.queue"
 	val.Items = val.Items[1:]
-	q.queue[queueName] = val
+	q.idleQueue[queueName] = val
 
 	queueId := ksuid.New()
 
 	// construct active queue entry
-	activeQueue := model.ActiveQueue{
+	activeQueue := &model.ActiveQueue{
 		Id:         queueId,
 		QueueName:  queueName,
 		PollExpiry: time.Now().UTC().Add(1 * time.Minute), // this is for sweeping purposes
@@ -84,7 +84,7 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	q.activeQueue[queueId] = activeQueue
 
 	// return the polled queue
-	return &activeQueue, nil
+	return activeQueue, nil
 }
 
 // CompletePoll is to ack-ed out poll-ed queue so it wont get poll-ed anymore
@@ -103,12 +103,12 @@ func (q *queue) CompletePoll(queueId ksuid.KSUID) error {
 func (q *queue) Shutdown() {
 	// move 'active queue' back to 'queue'
 	for _, value := range q.activeQueue {
-		val := q.queue[value.QueueName]
+		val := q.idleQueue[value.QueueName]
 		val.Items = append(val.Items, value.Payload)
-		q.queue[value.QueueName] = val
+		q.idleQueue[value.QueueName] = val
 	}
 
-	rawQueue, _ := json.Marshal(q.queue)
+	rawQueue, _ := json.Marshal(q.idleQueue)
 
 	f, _ := os.Create("broker-backup")
 	defer func() {
@@ -133,6 +133,6 @@ func (q *queue) Restore() {
 		log.Fatal(err)
 	}
 
-	json.Unmarshal(data, &q.queue)
+	json.Unmarshal(data, &q.idleQueue)
 	// os.Remove("broker-backup")
 }
