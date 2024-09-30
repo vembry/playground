@@ -72,6 +72,16 @@ func (h *handler) Poll(ctx context.Context, req *pb.PollRequest) (*pb.PollRespon
 			Message: err.Error(),
 		}, fmt.Errorf("error to poll")
 	}
+
+	// when no entry can be polled from queue
+	// then return nothing
+	if queue == nil {
+		return &pb.PollResponse{
+			Message: "no queue",
+			Data:    nil,
+		}, nil
+	}
+
 	return &pb.PollResponse{
 		Message: "ok",
 		Data: &pb.ActiveQueue{
