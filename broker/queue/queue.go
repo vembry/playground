@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -16,6 +17,7 @@ type queue struct {
 	activeQueue map[ksuid.KSUID]*model.ActiveQueue
 	idleQueue   map[string]*model.IdleQueue
 
+	locker sync.Map
 	ticker *time.Ticker
 }
 
@@ -38,7 +40,7 @@ func (q *queue) Get() model.QueueData {
 // Enqueue is to enqueues queue
 func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 	// retrieve idle queue
-	idleQueue, unclocker := q.loadLockIdleQueue(payload.Name)
+	idleQueue, unclocker := q.retrieveIdleSafe(payload.Name)
 	defer unclocker()
 
 	// add enqueued payload to queue maps
@@ -50,9 +52,8 @@ func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 
 // poll is to get entry from queue head
 func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
-
 	// retrieve idle queue
-	idleQueue, unclocker := q.loadLockIdleQueue(queueName)
+	idleQueue, unclocker := q.retrieveIdleSafe(queueName)
 	defer unclocker()
 
 	// break away when queue has no entry
@@ -138,8 +139,17 @@ func (q *queue) restore() {
 	// os.Remove("broker-backup")
 }
 
-// loadLockIdleQueue loads and lock targeted queue
-func (q *queue) loadLockIdleQueue(queueName string) (*model.IdleQueue, func()) {
+// retrieveIdleSafe loads and lock targeted queue
+func (q *queue) retrieveIdleSafe(queueName string) (*model.IdleQueue, func()) {
+
+	// this suppose to be the safe-keeper
+	for {
+		_, checker := q.locker.LoadOrStore(queueName, queueName)
+		if !checker {
+			break
+		}
+	}
+
 	val, ok := q.idleQueue[queueName]
 	if !ok {
 		val = &model.IdleQueue{}
@@ -147,11 +157,9 @@ func (q *queue) loadLockIdleQueue(queueName string) (*model.IdleQueue, func()) {
 
 	log.Printf("locking '%s'", queueName)
 
-	val.Mutex.Lock()
-
 	return val, func() {
 		log.Printf("unlocking '%s'", queueName)
-		val.Mutex.Unlock()
+		q.locker.Delete(queueName)
 	}
 }
 
@@ -167,7 +175,7 @@ func (q *queue) sweep() {
 				delete(q.activeQueue, key)
 
 				// load/lock idle queue
-				idleQueue, unlocker := q.loadLockIdleQueue(val.QueueName)
+				idleQueue, unlocker := q.retrieveIdleSafe(val.QueueName)
 
 				// add it back to queue
 				idleQueue.Items = append(idleQueue.Items, val.Payload)

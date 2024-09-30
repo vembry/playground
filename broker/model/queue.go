@@ -1,7 +1,6 @@
 package model
 
 import (
-	"sync"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -15,8 +14,6 @@ type ActiveQueue struct {
 }
 
 type IdleQueue struct {
-	Mutex sync.Mutex
-
 	Items []string `json:"items"`
 	// add other info
 }
