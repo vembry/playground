@@ -2,7 +2,6 @@ package vembry.playground.app.models;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.ksuid.Ksuid;
