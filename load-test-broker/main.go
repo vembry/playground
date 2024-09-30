@@ -8,7 +8,6 @@ import (
 	"math/rand/v2"
 	sdkpb "sdk/pb"
 	"sdk/tester"
-	"time"
 
 	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc"
@@ -22,15 +21,16 @@ func main() {
 	// setup load tester
 	t := tester.New(
 		tester.Config{
+			Type:                  tester.LoadType_Count,
 			Logger:                logger,
-			Duration:              1 * time.Minute,
 			ConcurrentWorkerCount: 1,
+			Counter:               10000,
 		},
 	)
 
 	// setup parameter for test
 	params := []string{}
-	for i := range 20 {
+	for i := range 5 {
 		params = append(params, fmt.Sprintf("queue_%d", i))
 	}
 
@@ -49,10 +49,15 @@ func main() {
 		i := randRange(0, len(params)-1)
 		queueName := params[i]
 
-		client.Enqueue(ctx, &sdkpb.EnqueueRequest{
+		_, err := client.Enqueue(ctx, &sdkpb.EnqueueRequest{
 			QueueName: queueName,
 			Payload:   ksuid.New().String(),
 		})
+
+		// break away when theres error
+		if err != nil {
+			log.Panicf("load test panics. err=%v", err)
+		}
 	})
 }
 

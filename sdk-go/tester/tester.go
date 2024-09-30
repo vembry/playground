@@ -14,16 +14,45 @@ type tester struct {
 	cfg Config
 }
 
+// LoadType specify load test type
+type LoadType int
+
+const (
+	LoadType_Time LoadType = iota + 1
+	LoadType_Count
+)
+
 // Config contain load-tester configuration
 type Config struct {
 	Logger                *slog.Logger
-	Duration              time.Duration
 	ConcurrentWorkerCount int
+
+	Type     LoadType      // determine type of load, time based or counter based
+	Duration time.Duration // max duration of load test for time based
+	Counter  int           // max count of load test for counter based
 }
 
 // New initiate load-tester instance
 func New(cfg Config) *tester {
-	// when 'ConcurrentWorkerCount' not defined, defaulted to 1
+	// handle defaults
+
+	// default type to count when undefined
+	if cfg.Type == 0 {
+		cfg.Type = LoadType_Time
+	}
+
+	// default duration
+	if cfg.Duration == 0 {
+		cfg.Duration = 5 * time.Second
+	}
+
+	// default counter
+	if cfg.Counter == 0 {
+		cfg.Counter = 1000
+	}
+
+	// when 'ConcurrentWorkerCount' not defined,
+	// then defaults to 1
 	if cfg.ConcurrentWorkerCount == 0 {
 		cfg.ConcurrentWorkerCount = 1
 	}
@@ -40,13 +69,13 @@ func (t *tester) Do(execution func(ctx context.Context, l *slog.Logger)) {
 	tracer := otel.Tracer("load-test-tracer")
 
 	// setting up array of channel
-	taskChannelArray := make([]chan int, 5) // TODO: this should be parameterized
-	for i := range taskChannelArray {
-		taskChannelArray[i] = make(chan int)
+	taskChannels := make([]chan int, t.cfg.ConcurrentWorkerCount) // TODO: this should be parameterized
+	for i := range taskChannels {
+		taskChannels[i] = make(chan int)
 	}
 	defer func() {
-		for i := range taskChannelArray {
-			close(taskChannelArray[i])
+		for i := range taskChannels {
+			close(taskChannels[i])
 		}
 	}()
 
@@ -55,49 +84,45 @@ func (t *tester) Do(execution func(ctx context.Context, l *slog.Logger)) {
 	t.cfg.Logger.Enabled(context.Background(), slog.LevelInfo)
 
 	// setup concurrent worker to run the scenario
-	for channelIdx, taskCh := range taskChannelArray {
+	for i, taskChannel := range taskChannels {
+		// run scenario in goroutine
+		go func(channelId int, taskCh chan int) {
+			t.cfg.Logger.Debug("starting task worker", slog.Int("channelId", channelId))
 
-		// setup concurrent worker for each channel
-		// from channel array
-		for i := range t.cfg.ConcurrentWorkerCount {
-
-			// run scenario in goroutine
-			go func(channelIdx int, workerId int, taskCh chan int) {
-				t.cfg.Logger.Debug("starting task worker", slog.Int("channelIdx", channelIdx), slog.Int("workerId", workerId))
-
-				// load data
-				for taskId := range taskCh {
-					t.cfg.Logger.Debug("processing task", slog.Int("channelIdx", channelIdx), slog.Int("workerId", workerId), slog.Int("taskId", taskId))
-					t.do(tracer, execution)
-					taskWg.Done()
-				}
-				t.cfg.Logger.Debug("stopping task worker", slog.Int("channelIdx", channelIdx), slog.Int("workerId", workerId))
-			}(channelIdx, i, taskCh)
-		}
+			// load data
+			for taskId := range taskCh {
+				t.cfg.Logger.Debug("processing task", slog.Int("channelId", channelId), slog.Int("taskId", taskId))
+				t.do(tracer, execution)
+				taskWg.Done()
+			}
+			t.cfg.Logger.Debug("stopping task worker", slog.Int("channelId", channelId))
+		}(i, taskChannel)
 	}
 
-	// setup basic counters
-	counter := 0
-	counterCheckpoint := 1000
-	timeCounterPivot := time.Now()
-	start := time.Now()
+	timeCounterPivot := time.Now() // for logging purposes
 
 	t.cfg.Logger.Info("starting")
 
 	looperWg := sync.WaitGroup{}
 
-	// start enqueuing task to the concurrent worker
-	for counter < 60000 { // TODO: this should be parameterized
-		taskWg.Add(len(taskChannelArray))
+	// prep load conditions
+	start := time.Now()
+	end := start.Add(t.cfg.Duration)
+	counter := 0
 
-		for _, taskCh := range taskChannelArray {
+	// start actual load test
+	for t.isConditionAllow(counter, end) {
+		taskWg.Add(len(taskChannels)) // add count to wait-group
+
+		for _, taskCh := range taskChannels {
 			looperWg.Add(1)
 
-			// enqueue task using go routine because enqueuing
-			// task to a channel directly has some latency
+			// enqueue task using goroutine because enqueuing
+			// task to a channel directly has some latency. idk
 			go func() {
 				counter++
-				if counter%counterCheckpoint == 0 {
+				if counter%1000 == 0 {
+					// log every '1000' count
 					t.cfg.Logger.Info("counter checkpoint", slog.Int("counter", counter), slog.String("duration", time.Since(timeCounterPivot).String()))
 					timeCounterPivot = time.Now()
 				}
@@ -126,4 +151,15 @@ func (t *tester) do(tracer trace.Tracer, execution func(ctx context.Context, l *
 
 	// execute test script
 	execution(ctx, t.cfg.Logger)
+}
+
+func (t *tester) isConditionAllow(counter int, end time.Time) bool {
+	switch t.cfg.Type {
+	case LoadType_Count:
+		return counter < t.cfg.Counter
+	case LoadType_Time:
+		return time.Now().After(end)
+	}
+
+	return false
 }

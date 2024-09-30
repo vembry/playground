@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"sdk/tester"
-	"time"
 )
 
 func main() {
@@ -20,9 +19,10 @@ func main() {
 	// setup load tester
 	t := tester.New(
 		tester.Config{
+			Type:                  tester.LoadType_Count,
 			Logger:                logger,
-			Duration:              5 * time.Minute,
 			ConcurrentWorkerCount: 10,
+			Counter:               6000,
 		},
 	)
 
