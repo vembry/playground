@@ -15,12 +15,15 @@ import (
 type queue struct {
 	activeQueue map[ksuid.KSUID]*model.ActiveQueue
 	idleQueue   map[string]*model.IdleQueue
+
+	ticker *time.Ticker
 }
 
 func New() *queue {
 	return &queue{
 		activeQueue: map[ksuid.KSUID]*model.ActiveQueue{},
 		idleQueue:   map[string]*model.IdleQueue{},
+		ticker:      time.NewTicker(1 * time.Second),
 	}
 }
 
@@ -34,42 +37,35 @@ func (q *queue) Get() model.QueueData {
 
 // Enqueue is to enqueues queue
 func (q *queue) Enqueue(payload model.EnqueuePayload) error {
-	// retrieve queue maps
-	val, ok := q.idleQueue[payload.Name]
-	if !ok {
-		// when not exists, create list
-		val = &model.IdleQueue{}
-	}
+	// retrieve idle queue
+	idleQueue, unclocker := q.loadLockIdleQueue(payload.Name)
+	defer unclocker()
 
 	// add enqueued payload to queue maps
-	val.Items = append(val.Items, payload.Payload)
-	q.idleQueue[payload.Name] = val
+	idleQueue.Items = append(idleQueue.Items, payload.Payload)
+	q.idleQueue[payload.Name] = idleQueue
 
 	return nil
 }
 
 // poll is to get entry from queue head
 func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
-	// queueName := c.Param("queue_name")
 
-	// attempt to get queue
-	val, ok := q.idleQueue[queueName]
-	if !ok {
-		val = &model.IdleQueue{}
-		q.idleQueue[queueName] = val
-	}
+	// retrieve idle queue
+	idleQueue, unclocker := q.loadLockIdleQueue(queueName)
+	defer unclocker()
 
 	// break away when queue has no entry
-	if len(val.Items) == 0 {
-		return nil, fmt.Errorf("no active queue")
+	if len(idleQueue.Items) == 0 {
+		return nil, nil
 	}
 
 	// extract value from "q.queue" head
-	tempQueue := val.Items[0]
+	tempQueue := idleQueue.Items[0]
 
 	// remove it from "q.queue"
-	val.Items = val.Items[1:]
-	q.idleQueue[queueName] = val
+	idleQueue.Items = idleQueue.Items[1:]
+	q.idleQueue[queueName] = idleQueue
 
 	queueId := ksuid.New()
 
@@ -77,7 +73,7 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	activeQueue := &model.ActiveQueue{
 		Id:         queueId,
 		QueueName:  queueName,
-		PollExpiry: time.Now().UTC().Add(1 * time.Minute), // this is for sweeping purposes
+		PollExpiry: time.Now().UTC().Add(20 * time.Second), // this is for sweeping purposes
 		Payload:    tempQueue,
 	}
 
@@ -126,8 +122,13 @@ func (q *queue) Shutdown() {
 	w.Flush()
 }
 
+func (q *queue) Start() {
+	q.restore()
+	go q.sweep()
+}
+
 // restore is a simple way to restore broker's queue backup
-func (q *queue) Restore() {
+func (q *queue) restore() {
 	data, err := os.ReadFile("broker-backup")
 	if err != nil {
 		log.Fatal(err)
@@ -135,4 +136,46 @@ func (q *queue) Restore() {
 
 	json.Unmarshal(data, &q.idleQueue)
 	// os.Remove("broker-backup")
+}
+
+// loadLockIdleQueue loads and lock targeted queue
+func (q *queue) loadLockIdleQueue(queueName string) (*model.IdleQueue, func()) {
+	val, ok := q.idleQueue[queueName]
+	if !ok {
+		val = &model.IdleQueue{}
+	}
+
+	log.Printf("locking '%s'", queueName)
+
+	val.Mutex.Lock()
+
+	return val, func() {
+		log.Printf("unlocking '%s'", queueName)
+		val.Mutex.Unlock()
+	}
+}
+
+// sweep is to sweep active queues for expiring polled queues
+func (q *queue) sweep() {
+	for range q.ticker.C {
+		log.Printf("executing sweep...")
+
+		// execute sweep
+		for key, val := range q.activeQueue {
+			if time.Now().After(val.PollExpiry) {
+				// remove queue from active queue
+				delete(q.activeQueue, key)
+
+				// load/lock idle queue
+				idleQueue, unlocker := q.loadLockIdleQueue(val.QueueName)
+
+				// add it back to queue
+				idleQueue.Items = append(idleQueue.Items, val.Payload)
+				q.idleQueue[val.QueueName] = idleQueue
+
+				// unlock idle queue
+				unlocker()
+			}
+		}
+	}
 }

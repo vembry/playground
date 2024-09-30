@@ -13,8 +13,9 @@ import (
 func main() {
 	log.Printf("hello broker!")
 
-	queue := queue.New() // initiate core queue
-	queue.Restore()      // restore backed-up queues
+	queue := queue.New()   // initiate core queue
+	queue.Start()          // restore backed-up queues
+	defer queue.Shutdown() // shutdown queue
 
 	httpServer := http.NewServer(queue) // initiate http server
 	grpcServer := grpc.NewServer(queue) // iniitate grpc server
@@ -38,6 +39,4 @@ func main() {
 
 	httpServer.Stop()
 	grpcServer.Stop()
-
-	queue.Shutdown() // shutdown queue
 }
