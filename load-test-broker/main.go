@@ -24,7 +24,7 @@ func main() {
 			Type:                  tester.LoadType_Count,
 			Logger:                logger,
 			ConcurrentWorkerCount: 1,
-			Counter:               10000,
+			Counter:               1000,
 		},
 	)
 
