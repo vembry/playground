@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -17,7 +16,6 @@ type queue struct {
 	activeQueue map[ksuid.KSUID]*model.ActiveQueue
 	idleQueue   map[string]*model.IdleQueue
 
-	locker sync.Map
 	ticker *time.Ticker
 }
 
@@ -40,7 +38,7 @@ func (q *queue) Get() model.QueueData {
 // Enqueue is to enqueues queue
 func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 	// retrieve idle queue
-	idleQueue, unclocker := q.retrieveIdleSafe(payload.Name)
+	idleQueue, unclocker := q.retrieveIdle(payload.Name)
 	defer unclocker()
 
 	// add enqueued payload to queue maps
@@ -53,7 +51,7 @@ func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 // poll is to get entry from queue head
 func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	// retrieve idle queue
-	idleQueue, unclocker := q.retrieveIdleSafe(queueName)
+	idleQueue, unclocker := q.retrieveIdle(queueName)
 	defer unclocker()
 
 	// break away when queue has no entry
@@ -96,8 +94,13 @@ func (q *queue) CompletePoll(queueId ksuid.KSUID) error {
 	return nil
 }
 
-// shutdown is a simple way to backup broker's queues
+// Shutdown shutdown broker gracefully
 func (q *queue) Shutdown() {
+	// q.backupQueue()
+}
+
+// backupQueue backs up queues to temporary storage
+func (q *queue) backupQueue() {
 	// move 'active queue' back to 'queue'
 	for _, value := range q.activeQueue {
 		val := q.idleQueue[value.QueueName]
@@ -124,7 +127,7 @@ func (q *queue) Shutdown() {
 }
 
 func (q *queue) Start() {
-	q.restore()
+	// q.restore()
 	go q.sweep()
 }
 
@@ -139,28 +142,13 @@ func (q *queue) restore() {
 	// os.Remove("broker-backup")
 }
 
-// retrieveIdleSafe loads and lock targeted queue
-func (q *queue) retrieveIdleSafe(queueName string) (*model.IdleQueue, func()) {
-
-	// this suppose to be the safe-keeper
-	for {
-		_, checker := q.locker.LoadOrStore(queueName, queueName)
-		if !checker {
-			break
-		}
-	}
-
+// retrieveIdle loads and lock targeted queue
+func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 	val, ok := q.idleQueue[queueName]
 	if !ok {
 		val = &model.IdleQueue{}
 	}
-
-	log.Printf("locking '%s'", queueName)
-
-	return val, func() {
-		log.Printf("unlocking '%s'", queueName)
-		q.locker.Delete(queueName)
-	}
+	return val, func() {}
 }
 
 // sweep is to sweep active queues for expiring polled queues
@@ -175,7 +163,7 @@ func (q *queue) sweep() {
 				delete(q.activeQueue, key)
 
 				// load/lock idle queue
-				idleQueue, unlocker := q.retrieveIdleSafe(val.QueueName)
+				idleQueue, unlocker := q.retrieveIdle(val.QueueName)
 
 				// add it back to queue
 				idleQueue.Items = append(idleQueue.Items, val.Payload)
