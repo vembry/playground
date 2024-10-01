@@ -34,8 +34,14 @@ type Config struct {
 
 // New initiate load-tester instance
 func New(cfg Config) *tester {
-	// handle defaults
+	setDefault(&cfg) // handle defaults
 
+	return &tester{
+		cfg: cfg,
+	}
+}
+
+func setDefault(cfg *Config) {
 	// default type to count when undefined
 	if cfg.Type == 0 {
 		cfg.Type = LoadType_Time
@@ -56,92 +62,82 @@ func New(cfg Config) *tester {
 	if cfg.ConcurrentWorkerCount == 0 {
 		cfg.ConcurrentWorkerCount = 1
 	}
-
-	return &tester{
-		cfg: cfg,
-	}
 }
 
 // Do setup and execute load-tester
 func (t *tester) Do(execution func(ctx context.Context, l *slog.Logger)) {
-
 	// load otel trace
 	tracer := otel.Tracer("load-test-tracer")
 
-	// setting up array of channel
-	taskChannels := make([]chan int, t.cfg.ConcurrentWorkerCount) // TODO: this should be parameterized
+	// setup array of channels as task executor
+	taskChannels := make([]chan int, t.cfg.ConcurrentWorkerCount)
 	for i := range taskChannels {
-		taskChannels[i] = make(chan int)
+		taskChannels[i] = make(chan int, 100)
 	}
 	defer func() {
+		// close channels when it's done
 		for i := range taskChannels {
 			close(taskChannels[i])
 		}
 	}()
 
-	taskWg := sync.WaitGroup{}
+	taskExecutorWg := sync.WaitGroup{} // this is to control the task executor
+	taskProducerWg := sync.WaitGroup{} // this is to control the task producer
 
 	t.cfg.Logger.Enabled(context.Background(), slog.LevelInfo)
 
-	// setup concurrent worker to run the scenario
+	// setup concurrent worker to execute task
 	for i, taskChannel := range taskChannels {
 		// run scenario in goroutine
 		go func(channelId int, taskCh chan int) {
 			t.cfg.Logger.Debug("starting task worker", slog.Int("channelId", channelId))
 
-			// load data
+			// load task
 			for taskId := range taskCh {
 				t.cfg.Logger.Debug("processing task", slog.Int("channelId", channelId), slog.Int("taskId", taskId))
-				t.do(tracer, execution)
-				taskWg.Done()
+				t.do(tracer, execution) // execute scenario
+				taskExecutorWg.Done()
 			}
+
 			t.cfg.Logger.Debug("stopping task worker", slog.Int("channelId", channelId))
 		}(i, taskChannel)
 	}
-
-	timeCounterPivot := time.Now() // for logging purposes
-
-	t.cfg.Logger.Info("starting")
-
-	looperWg := sync.WaitGroup{}
 
 	// prep load conditions
 	start := time.Now()
 	end := start.Add(t.cfg.Duration)
 	counter := 0
 
+	t.cfg.Logger.Info("starting load test...")
+
 	// start actual load test
 	for t.isConditionAllow(counter, end) {
-		taskWg.Add(len(taskChannels)) // add count to wait-group
+		taskExecutorWg.Add(len(taskChannels)) // add count to wait-group
 
 		for _, taskCh := range taskChannels {
-			looperWg.Add(1)
+			taskProducerWg.Add(1)
 
-			// enqueue task using goroutine because enqueuing
-			// task to a channel directly has some latency. idk
-			go func() {
-				counter++
-				if counter%1000 == 0 {
-					// log every '1000' count
-					t.cfg.Logger.Info("counter checkpoint", slog.Int("counter", counter), slog.String("duration", time.Since(timeCounterPivot).String()))
-					timeCounterPivot = time.Now()
-				}
-				taskCh <- counter
-				looperWg.Done()
-			}()
+			counter += 1
+			taskCh <- counter // enqueue task using goroutine
+
+			if counter%1000 == 0 {
+				// log every '1000' count
+				t.cfg.Logger.Debug("counter checkpoint", slog.Int("counter", counter))
+			}
+			taskProducerWg.Done()
 		}
 	}
 
 	// waiting for concurrent worker to finish
-	t.cfg.Logger.Info("looper finished...", slog.String("duration", time.Since(start).String()))
-	looperWg.Wait()
-	taskWg.Wait()
+	t.cfg.Logger.Info("looper finished...", slog.String("duration", time.Since(start).String()), slog.Int("counter", counter))
+	taskProducerWg.Wait()
+	taskExecutorWg.Wait()
 
-	t.cfg.Logger.Info("finished", slog.Int("counter", counter)) // NOTE:  peak at 31,042,670,712 counts per 5 mins without operation
+	t.cfg.Logger.Info("worker finished", slog.String("duration", time.Since(start).String()), slog.Int("counter", counter)) // NOTE:  peak at 31,042,670,712 counts per 5 mins without operation
 }
 
-// do executes tests
-func (t *tester) do(tracer trace.Tracer, execution func(ctx context.Context, l *slog.Logger)) {
+// do executes test scenario
+func (t *tester) do(tracer trace.Tracer, scenario func(ctx context.Context, l *slog.Logger)) {
 	// start open-telemetry
 	ctx, span := tracer.Start(
 		context.Background(),
@@ -150,16 +146,16 @@ func (t *tester) do(tracer trace.Tracer, execution func(ctx context.Context, l *
 	defer span.End()
 
 	// execute test script
-	execution(ctx, t.cfg.Logger)
+	scenario(ctx, t.cfg.Logger)
 }
 
+// isConditionAllow validates whether task-producer are still allowed to produce
 func (t *tester) isConditionAllow(counter int, end time.Time) bool {
 	switch t.cfg.Type {
 	case LoadType_Count:
 		return counter < t.cfg.Counter
 	case LoadType_Time:
-		return time.Now().After(end)
+		return time.Now().Before(end)
 	}
-
 	return false
 }
