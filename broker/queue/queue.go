@@ -154,11 +154,11 @@ func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 // sweep is to sweep active queues for expiring polled queues
 func (q *queue) sweep() {
 	for range q.ticker.C {
-		log.Printf("executing sweep...")
-
 		// execute sweep
 		for key, val := range q.activeQueue {
 			if time.Now().After(val.PollExpiry) {
+				log.Printf("executing sweep...")
+
 				// remove queue from active queue
 				delete(q.activeQueue, key)
 
