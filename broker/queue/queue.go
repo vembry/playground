@@ -38,8 +38,7 @@ func (q *queue) Get() model.QueueData {
 // Enqueue is to enqueues queue
 func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 	// retrieve idle queue
-	idleQueue, unclocker := q.retrieveIdle(payload.Name)
-	defer unclocker()
+	idleQueue := q.retrieveIdle(payload.Name)
 
 	// add enqueued payload to queue maps
 	idleQueue.Items = append(idleQueue.Items, payload.Payload)
@@ -51,8 +50,7 @@ func (q *queue) Enqueue(payload model.EnqueuePayload) error {
 // poll is to get entry from queue head
 func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	// retrieve idle queue
-	idleQueue, unclocker := q.retrieveIdle(queueName)
-	defer unclocker()
+	idleQueue := q.retrieveIdle(queueName)
 
 	// break away when queue has no entry
 	if len(idleQueue.Items) == 0 {
@@ -143,12 +141,12 @@ func (q *queue) restore() {
 }
 
 // retrieveIdle loads and lock targeted queue
-func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
+func (q *queue) retrieveIdle(queueName string) *model.IdleQueue {
 	val, ok := q.idleQueue[queueName]
 	if !ok {
 		val = &model.IdleQueue{}
 	}
-	return val, func() {}
+	return val
 }
 
 // sweep is to sweep active queues for expiring polled queues
@@ -163,14 +161,11 @@ func (q *queue) sweep() {
 				delete(q.activeQueue, key)
 
 				// load/lock idle queue
-				idleQueue, unlocker := q.retrieveIdle(val.QueueName)
+				idleQueue := q.retrieveIdle(val.QueueName)
 
 				// add it back to queue
 				idleQueue.Items = append(idleQueue.Items, val.Payload)
 				q.idleQueue[val.QueueName] = idleQueue
-
-				// unlock idle queue
-				unlocker()
 			}
 		}
 	}
