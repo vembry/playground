@@ -23,8 +23,8 @@ func main() {
 		tester.Config{
 			Type:                  tester.LoadType_Count,
 			Logger:                logger,
-			ConcurrentWorkerCount: 2,
-			Counter:               1000,
+			ConcurrentWorkerCount: 50,
+			MaxCounter:            1000,
 		},
 	)
 
@@ -56,21 +56,21 @@ func main() {
 
 		// break away when theres error
 		if err != nil {
-			logger.Error("load test panics. err=%v", err)
+			logger.Error("load test panics", slog.String("error", err.Error()))
 		}
 	})
 
-	got, err := client.GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
-	if err != nil {
-		logger.Error("error on getting queue", slog.String("err", err.Error()))
-	} else {
-		count := 0
-		for _, val := range got.Data.IdleQueue {
-			count += len(val.Items)
-		}
+	// got, err := client.GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
+	// if err != nil {
+	// 	logger.Error("error on getting queue", slog.String("err", err.Error()))
+	// } else {
+	// 	count := 0
+	// 	for _, val := range got.Data.IdleQueue {
+	// 		count += len(val.Items)
+	// 	}
 
-		logger.Info("get queue return ok", slog.Int("count", count))
-	}
+	// 	logger.Info("get queue return ok", slog.Int("count", count))
+	// }
 
 }
 
