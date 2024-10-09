@@ -32,7 +32,7 @@ func (q *queue) Get() model.QueueData {
 
 	i, j := 0, 0
 	q.idleQueue.Range(func(key, value any) bool {
-		i++
+		i += len(value.(*model.IdleQueue).Items)
 		return true
 	})
 	q.activeQueue.Range(func(key, value any) bool {
