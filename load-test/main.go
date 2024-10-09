@@ -19,10 +19,10 @@ func main() {
 	// setup load tester
 	t := tester.New(
 		tester.Config{
-			Type:                  tester.LoadType_Count,
-			Logger:                logger,
-			ConcurrentWorkerCount: 10,
-			MaxCounter:            6000,
+			Type:        tester.LoadType_Count,
+			Logger:      logger,
+			WorkerCount: 10,
+			MaxCounter:  6000,
 		},
 	)
 

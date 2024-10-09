@@ -26,8 +26,8 @@ const (
 
 // Config contain load-tester configuration
 type Config struct {
-	Logger                *slog.Logger
-	ConcurrentWorkerCount int
+	Logger      *slog.Logger
+	WorkerCount int
 
 	Type       LoadType      // determine type of load, time based or counter based
 	Duration   time.Duration // max duration of load test for time based
@@ -44,29 +44,6 @@ func New(cfg Config) *tester {
 	}
 }
 
-func setDefault(cfg *Config) {
-	// default type to count when undefined
-	if cfg.Type == 0 {
-		cfg.Type = LoadType_Time
-	}
-
-	// default duration
-	if cfg.Duration == 0 {
-		cfg.Duration = 5 * time.Second
-	}
-
-	// default counter
-	if cfg.MaxCounter == 0 {
-		cfg.MaxCounter = 1000
-	}
-
-	// when 'ConcurrentWorkerCount' not defined,
-	// then defaults to 1
-	if cfg.ConcurrentWorkerCount == 0 {
-		cfg.ConcurrentWorkerCount = 1
-	}
-}
-
 // Do setup and execute load-tester
 func (t *tester) Do(scenario func(ctx context.Context, l *slog.Logger)) {
 	// setup task channel
@@ -76,36 +53,25 @@ func (t *tester) Do(scenario func(ctx context.Context, l *slog.Logger)) {
 	}()
 
 	taskExecutorWg := sync.WaitGroup{}
-	counterValidator := 0 // to verify the of task executed vs task produced
 
-	// setup task executor
-	for workerId := range t.cfg.ConcurrentWorkerCount {
-		go func(_workerId int) {
-			t.cfg.Logger.Debug("starting worker", slog.Int("workerId", _workerId))
-			for task := range taskChannel {
-				t.cfg.Logger.Info("processing task", slog.Int("workerId", _workerId), slog.Int("task", task))
-
-				t.do(scenario) // execute scenario
-
-				taskExecutorWg.Done()
-				counterValidator++
-			}
-			t.cfg.Logger.Debug("shutting down worker", slog.Int("workerId", _workerId))
-		}(workerId)
-	}
+	// run task's executor
+	go t.taskExecutor(taskChannel, func() {
+		t.do(scenario)
+		taskExecutorWg.Done()
+	})
 
 	// load test execution pre-reqs
 	start := time.Now()
 	counter := 0
 
-	// run task producer
+	// produce tasks
 	for t.isConditionAllow(counter, start.Add(t.cfg.Duration)) {
+		taskExecutorWg.Add(1)
 		counter++
 		taskChannel <- counter
-		taskExecutorWg.Add(1)
 	}
 
-	// wait for concurrent worker to finish
+	// wait for task's executor to finish
 	t.cfg.Logger.Info("awaiting worker...")
 	taskExecutorWg.Wait()
 
@@ -113,9 +79,11 @@ func (t *tester) Do(scenario func(ctx context.Context, l *slog.Logger)) {
 	t.cfg.Logger.Info(
 		"worker finished",
 		slog.Int("counter", counter),
-		slog.Int("counter_validator", counterValidator),
 		slog.String("duration", time.Since(start).String()),
 	)
+
+	// publish metric here?
+	// ...
 }
 
 // do executes test scenario
@@ -131,15 +99,33 @@ func (t *tester) do(scenario func(ctx context.Context, l *slog.Logger)) {
 
 	// execute test script
 	scenario(ctx, t.cfg.Logger)
+
+	// publish metric here?
+	// ...
 }
 
 // isConditionAllow validates whether task-producer are still allowed to produce
-func (t *tester) isConditionAllow(counter int, start time.Time) bool {
+func (t *tester) isConditionAllow(counter int, timeLimit time.Time) bool {
 	switch t.cfg.Type {
 	case LoadType_Count:
 		return counter < t.cfg.MaxCounter
 	case LoadType_Time:
-		return time.Now().Before(start)
+		return time.Now().Before(timeLimit)
 	}
 	return false
+}
+
+// taskExecutor encapsulate concurrent executor
+func (t *tester) taskExecutor(taskChannel chan int, callback func()) {
+	for i := range t.cfg.WorkerCount {
+		go func(workerId int) {
+			t.cfg.Logger.Debug("starting worker", slog.Int("worker", workerId))
+			for task := range taskChannel {
+				t.cfg.Logger.Info("processing task", slog.Int("worker", workerId), slog.Int("task", task))
+
+				callback()
+			}
+			t.cfg.Logger.Debug("shutting down worker", slog.Int("worker", workerId))
+		}(i)
+	}
 }
