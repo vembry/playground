@@ -24,28 +24,11 @@ func NewHandler(queue IQueue) *handler {
 func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.GetQueueResponse, error) {
 	res := h.queue.Get()
 
-	activeQueues := map[string]*pb.ActiveQueue{}
-	for _, activeQueue := range res.ActiveQueue {
-		activeQueues[activeQueue.Id.String()] = &pb.ActiveQueue{
-			Id:         activeQueue.Id.String(),
-			QueueName:  activeQueue.QueueName,
-			PollExpiry: activeQueue.PollExpiry.String(),
-			Payload:    activeQueue.Payload,
-		}
-	}
-
-	idleQueueMap := map[string]*pb.IdleQueue{}
-	for key, val := range res.IdleQueue {
-		idleQueueMap[key] = &pb.IdleQueue{
-			Items: val.Items,
-		}
-	}
-
 	return &pb.GetQueueResponse{
 		Message: "ok",
 		Data: &pb.QueueData{
-			ActiveQueue: activeQueues,
-			IdleQueue:   idleQueueMap,
+			IdleQueueCount:   res.IdleQueueCount,
+			ActiveQueueCount: res.ActiveQueueCount,
 		},
 	}, nil
 }

@@ -11,8 +11,8 @@ service Broker {
 }
 
 message QueueData {
-  map<string, ActiveQueue> active_queue = 1;
-  map<string, IdleQueue> idle_queue = 2;
+  int64 active_queue_count = 1;
+  int64 idle_queue_count = 2;
 }
 
 message ActiveQueue {
