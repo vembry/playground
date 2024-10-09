@@ -24,7 +24,7 @@ func main() {
 			Type:                  tester.LoadType_Count,
 			Logger:                logger,
 			ConcurrentWorkerCount: 50,
-			MaxCounter:            1000,
+			MaxCounter:            100000,
 		},
 	)
 
@@ -49,28 +49,38 @@ func main() {
 		i := randRange(0, len(params)-1)
 		queueName := params[i]
 
+		// enqueue
 		_, err := client.Enqueue(ctx, &sdkpb.EnqueueRequest{
 			QueueName: queueName,
 			Payload:   ksuid.New().String(),
 		})
-
-		// break away when theres error
 		if err != nil {
-			logger.Error("load test panics", slog.String("error", err.Error()))
+			logger.Error("'Enqueue' return error", slog.String("error", err.Error()))
+		}
+
+		// poll it
+		queue, err := client.Poll(ctx, &sdkpb.PollRequest{
+			QueueName: queueName,
+		})
+		if err != nil {
+			logger.Error("'Poll' return error", slog.String("error", err.Error()))
+		}
+
+		// complete it
+		_, err = client.CompletePoll(ctx, &sdkpb.CompletePollRequest{
+			QueueId: queue.Data.Id,
+		})
+		if err != nil {
+			logger.Error("'CompletePoll' return error", slog.String("error", err.Error()))
 		}
 	})
 
-	// got, err := client.GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
-	// if err != nil {
-	// 	logger.Error("error on getting queue", slog.String("err", err.Error()))
-	// } else {
-	// 	count := 0
-	// 	for _, val := range got.Data.IdleQueue {
-	// 		count += len(val.Items)
-	// 	}
-
-	// 	logger.Info("get queue return ok", slog.Int("count", count))
-	// }
+	got, err := client.GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
+	if err != nil {
+		logger.Error("error on getting queue", slog.String("err", err.Error()))
+	} else {
+		logger.Info("get queue return ok", slog.Int64("IdleQueueCount", got.Data.IdleQueueCount), slog.Int64("ActiveQueueCount", got.Data.ActiveQueueCount))
+	}
 
 }
 
