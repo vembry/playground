@@ -14,8 +14,8 @@ type queue struct {
 	idleQueue   sync.Map
 	activeQueue sync.Map
 
-	ticker   *time.Ticker
-	mutexMap sync.Map
+	mutexMap sync.Map     // for locking purposes
+	ticker   *time.Ticker // for sweeping purposes
 }
 
 func New() *queue {
@@ -132,25 +132,25 @@ func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 // sweep is to sweep active queues for expiring polled queues
 func (q *queue) sweep() {
 	for range q.ticker.C {
-		// execute sweep
-		q.activeQueue.Range(func(key, value any) bool {
-			val := value.(*model.ActiveQueue)
-			if time.Now().After(val.PollExpiry) {
-				log.Printf("executing sweep...")
-
-				// remove queue from active queue
-				q.activeQueue.Delete(key)
-
-				// load/lock idle queue
-				idleQueue, unlocker := q.retrieveIdle(val.QueueName)
-
-				// add it back to queue
-				idleQueue.Items = append(idleQueue.Items, val.Payload)
-
-				unlocker()
-			}
-
-			return true
-		})
+		q.activeQueue.Range(q.sweepActual)
 	}
+}
+
+// sweepActual is to check and remove if an active-queue entry has expired
+func (q *queue) sweepActual(key, value any) bool {
+	val := value.(*model.ActiveQueue)
+	if time.Now().After(val.PollExpiry) {
+		log.Printf("sweeping out %s...", val.Id)
+
+		// remove queue from active queue
+		q.activeQueue.Delete(key)
+
+		idleQueue, unlocker := q.retrieveIdle(val.QueueName)
+		defer unlocker()
+
+		// add active queue back to idle queue
+		idleQueue.Items = append(idleQueue.Items, val.Payload)
+	}
+
+	return true
 }
