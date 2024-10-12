@@ -12,5 +12,8 @@ down:
 	docker compose -f "compose.yml" down
 	(echo "y" | docker volume prune)
 
+prep-deps:
+	npm create vite@latest
+
 watch: # this is still in testing
 	docker compose alpha watch
