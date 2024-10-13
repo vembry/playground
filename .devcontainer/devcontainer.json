@@ -27,6 +27,7 @@
         "bierner.markdown-mermaid",
         "zxh404.vscode-proto3",
         "svelte.svelte-vscode",
+        "Prisma.prisma"
       ]
     }
   },
@@ -49,5 +50,8 @@
     "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly" // this need to be kept due to git-ssh
   ],
   "remoteUser": "root",
-  "runArgs": ["--name=playground-workspace"]
+  "runArgs": ["--name=playground-workspace"],
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  }
 }

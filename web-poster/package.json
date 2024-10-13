@@ -25,6 +25,7 @@
 		"globals": "^15.0.0",
 		"prettier": "^3.1.1",
 		"prettier-plugin-svelte": "^3.1.2",
+		"prisma": "^5.20.0",
 		"svelte": "^4.2.7",
 		"svelte-check": "^4.0.0",
 		"typescript": "^5.0.0",
@@ -33,6 +34,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@prisma/client": "^5.20.0",
 		"js-cookie": "^3.0.5",
 		"uuid": "^10.0.0"
 	}
