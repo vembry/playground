@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Postx } from '$lib/post';
+	import { Postx, type PostPojo } from '$lib/post';
 	import Nav from '../../../components/nav.svelte';
-	import Post from '../../../components/post.svelte';
+	import Post from './post.svelte';
 
 	export let data: {
 		postId: string;
-		post: any;
+		post: PostPojo;
 	};
 
-	const post = new Postx().constructorFromPrisma(data.post);
+	const post = new Postx().constructorFromPojo(data.post);
 </script>
 
 <Nav></Nav>

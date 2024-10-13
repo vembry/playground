@@ -19,7 +19,7 @@ export const actions = {
 			return fail(400, { content, missing: true });
 		}
 
-		return await prisma.posts
+		return prisma.posts
 			.create({
 				data: {
 					id: uuid7(),
@@ -31,7 +31,9 @@ export const actions = {
 				}
 			})
 			.then((res) => {
-				return res;
+				return {
+					...res
+				};
 			})
 			.catch((e) => {
 				console.log('error');

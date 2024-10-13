@@ -1,33 +1,16 @@
 <script lang="ts">
 	import { Postx } from '$lib/post';
-	import { getUserId } from '../lib/user';
-	import Post from '../components/post.svelte';
+	import Post from './post.svelte';
+	import { enhance } from '$app/forms';
 
 	export let post: Postx;
-	let newPost: string = '';
-
-	function handleKeydown(event: KeyboardEvent) {
-		// Check if "Enter" key is pressed
-		if (event.key === 'Enter' && !event.shiftKey) {
-			event.preventDefault(); // Prevent new line
-			addPost(); // Submit the form
-		}
-	}
-
-	function addPost() {
-		if (newPost.trim()) {
-			post.addPost(new Postx().constructBasic(getUserId(), newPost));
-
-			newPost = '';
-			post = post; // trigger svelte reactivity
-		}
-	}
+	let postContent: string = '';
 </script>
 
 <div class="post">
 	<div class="box">
 		<div>
-			<strong>{post.userId}</strong>
+			<strong>{post.userId}</strong> - {post.createdAt}
 		</div>
 		<div>
 			{post.content}
@@ -47,17 +30,30 @@
 		</div>
 		<div>
 			<form
-				on:submit|preventDefault={() => {
-					addPost();
+				method="POST"
+				action="?/addPostThread"
+				use:enhance={() => {
+					return async ({ result }) => {
+						console.log(result);
+						if (result.status == 200) {
+							alert('reply sent!');
+
+							// add post to the threads on UI
+							const newPost = new Postx().constructorFromPojo(result.data);
+							post.addPost(newPost);
+							postContent = ''
+
+							// trigger svelte reactivity
+							post = post; 
+						} else {
+							alert('failed to send reply');
+						}
+					};
 				}}
 			>
 				<div>
-					<textarea
-						placeholder="Write your post..."
-						bind:value={newPost}
-						on:keydown={(e) => {
-							handleKeydown(e);
-						}}
+					<input type="hidden" name="parentPostId" value={post.id} />
+					<textarea placeholder="Write your post..." name="content" bind:value={postContent}
 					></textarea>
 				</div>
 				<div>
@@ -67,7 +63,7 @@
 		</div>
 	</div>
 	<div>
-		{#each post.getThreads() as thread}
+		{#each post.threads as thread}
 			<div>
 				<Post post={thread}></Post>
 			</div>

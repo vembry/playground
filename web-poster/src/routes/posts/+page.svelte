@@ -19,7 +19,7 @@
 
 	function convertToPostx(post: any): Postx {
 		const postx: Postx = new Postx();
-		postx.constructorFromPrisma(post);
+		postx.constructorFromPojo(post);
 		return postx;
 	}
 </script>
@@ -29,7 +29,7 @@
 	<!-- posts form submission -->
 	<div class="mb-10">
 		<form
-			method="POST"
+			method="post"
 			action="?/addPost"
 			use:enhance={() => {
 				return async ({ result }) => {
