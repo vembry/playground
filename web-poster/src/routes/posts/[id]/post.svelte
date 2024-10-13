@@ -5,6 +5,7 @@
 
 	export let post: Postx;
 	let postContent: string = '';
+	let showThread = true;
 </script>
 
 <div class="post">
@@ -21,12 +22,28 @@
 					post.like();
 					post = post;
 				}}>like | {post.likeCount}</button
-			><button
+			>
+			<button
 				on:click={(e) => {
 					post.dislike();
 					post = post;
 				}}>dislike | {post.dislikeCount}</button
 			>
+			<button
+				hidden={post.threads.length == 0}
+				on:click={(e) => {
+					post.toggleThread();
+					post = post;
+				}}
+			>
+				{#if post.showThread}
+					<span>hide</span>
+				{/if}
+				{#if !post.showThread}
+					<span>show</span>
+				{/if}
+				thread
+			</button>
 		</div>
 		<div>
 			<form
@@ -41,10 +58,10 @@
 							// add post to the threads on UI
 							const newPost = new Postx().constructorFromPojo(result.data);
 							post.addPost(newPost);
-							postContent = ''
+							postContent = '';
 
 							// trigger svelte reactivity
-							post = post; 
+							post = post;
 						} else {
 							alert('failed to send reply');
 						}
@@ -63,11 +80,13 @@
 		</div>
 	</div>
 	<div>
-		{#each post.threads as thread}
-			<div>
-				<Post post={thread}></Post>
-			</div>
-		{/each}
+		{#if post.showThread}
+			{#each post.threads as thread}
+				<div>
+					<Post post={thread}></Post>
+				</div>
+			{/each}
+		{/if}
 	</div>
 </div>
 

@@ -10,6 +10,7 @@ export class Postx {
 	dislikeCount: number;
 	createdAt: Date;
 	threads: Postx[];
+	showThread: boolean;
 
 	constructor() {
 		this.id = '';
@@ -19,6 +20,7 @@ export class Postx {
 		this.dislikeCount = 0;
 		this.createdAt = new Date();
 		this.threads = [];
+		this.showThread = true;
 	}
 
 	constructorFromPojo(post: PostPojo): Postx {
@@ -29,6 +31,7 @@ export class Postx {
 		this.dislikeCount = post.dislikeCount;
 		this.createdAt = post.createdAt;
 		this.threads = [];
+		this.showThread = true;
 		for (const thread of post.threads) {
 			this.threads.push(new Postx().constructorFromPojo(thread));
 		}
@@ -45,6 +48,11 @@ export class Postx {
 
 	dislike() {
 		this.dislikeCount = this.dislikeCount + 1;
+	}
+
+	toggleThread(){
+		console.log(`this.showThread=${this.showThread}`)
+		this.showThread = !this.showThread;
 	}
 }
 
