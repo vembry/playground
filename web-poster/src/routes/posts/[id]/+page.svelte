@@ -3,22 +3,17 @@
 	import Nav from '../../../components/nav.svelte';
 	import Post from '../../../components/post.svelte';
 
-	type pageParam = {
+	export let data: {
 		postId: string;
+		post: any;
 	};
 
-	export let data: pageParam;
-
-	// dummy post data
-	let post: Postx = new Postx(
-		`bot-${Date.now()}`,
-		`this is an amazing post! created at '${new Date()}'`
-	);
+	const post = new Postx().constructorFromPrisma(data.post);
 </script>
 
 <Nav></Nav>
 <div>
-	id=#{data.postId}
+	post#{data.postId}
 </div>
 <div>
 	<Post {post}></Post>

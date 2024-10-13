@@ -16,7 +16,7 @@
 
 	function addPost() {
 		if (newPost.trim()) {
-			post.addPost(new Postx(getUserId(), newPost));
+			post.addPost(new Postx().constructBasic(getUserId(), newPost));
 
 			newPost = '';
 			post = post; // trigger svelte reactivity
@@ -27,7 +27,7 @@
 <div class="post">
 	<div class="box">
 		<div>
-			<strong>{post.sender}</strong>
+			<strong>{post.userId}</strong>
 		</div>
 		<div>
 			{post.content}
