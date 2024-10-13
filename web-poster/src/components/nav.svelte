@@ -21,16 +21,14 @@
 	</div>
 	{#if isEditName}
 		<div>
-			<form>
-				<input type="text" bind:value={userId} />
-				<button
-					on:click={(e) => {
-						setUserId(userId);
-						isEditName = !isEditName;
-						userId = userId;
-					}}>save</button
-				>
-			</form>
+			<input type="text" bind:value={userId} />
+			<button
+				on:click={(e) => {
+					setUserId(userId);
+					isEditName = !isEditName;
+					userId = userId;
+				}}>save</button
+			>
 		</div>
 	{/if}
 	<div>
