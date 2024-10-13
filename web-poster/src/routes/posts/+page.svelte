@@ -4,37 +4,86 @@
 	import { getUserId } from '$lib/user';
 	import Nav from '../../components/nav.svelte';
 	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 
 	onMount(function () {
 		getUserId();
 	});
 
-	let posts: Postx[] = [];
+	export let data: {
+		posts: Postx[];
+	};
+	let content = '';
 
-	function addPost() {
-		posts = [new Postx(`bot-${Date.now()}`, `this is a post! created at ${new Date()}`), ...posts];
+	let posts = data.posts.map(convertToPostx);
+
+	function convertToPostx(post: any): Postx {
+		const postx: Postx = new Postx();
+		postx.constructorFromPrisma(post);
+		return postx;
 	}
 </script>
 
 <Nav></Nav>
 <div>
+	<!-- posts form submission -->
 	<div class="mb-10">
-		<button on:click={(e) => addPost()}>add dummy post</button>
+		<form
+			method="POST"
+			action="?/addPost"
+			use:enhance={() => {
+				return async ({ result }) => {
+					console.log(result);
+					if (result.status == 200) {
+						alert('post submitted');
+						content = '';
+
+						// convert 'post' retrieved from server into 'Postx' format
+						const post = convertToPostx(result.data);
+						posts = [post, ...posts];
+					} else {
+						alert('fail to submit post');
+					}
+				};
+			}}
+		>
+			<div>
+				<textarea placeholder="Write your post..." name="content" bind:value={content}></textarea>
+			</div>
+			<div>
+				<button type="submit">submit post</button>
+			</div>
+		</form>
 	</div>
+
+	<!-- put posts here -->
 	<div class="mb-10 post-list">
-		<!-- put posts here -->
 		{#each posts as post}
 			<div class="post mb-10">
 				<div>
-					{post.sender}
+					<strong>{post.userId}</strong>
 				</div>
 				<div>
 					{post.content}
 				</div>
 				<div>
-					<button on:click={(e) => {post.like()}}>like | {post.likeCount}</button>
-					<button on:click={(e) => {post.dislike()}}>dislike | {post.dislikeCount}</button>
-					<button on:click={(e) => {goto(`/posts/${post.id}`)}}>reply</button>
+					<button
+						on:click={(e) => {
+							post.like();
+							post = post;
+						}}>like | {post.likeCount}</button
+					>
+					<button
+						on:click={(e) => {
+							post.dislike();
+							post = post;
+						}}>dislike | {post.dislikeCount}</button
+					>
+					<button
+						on:click={(e) => {
+							goto(`/posts/${post.id}`);
+						}}>reply</button
+					>
 				</div>
 			</div>
 		{/each}
@@ -44,10 +93,6 @@
 <style>
 	.mb-10 {
 		margin-bottom: 10px;
-	}
-
-	.post-list a {
-		text-decoration: none;
 	}
 
 	.post {
