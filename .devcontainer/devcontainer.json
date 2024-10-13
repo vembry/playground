@@ -26,7 +26,7 @@
         "redhat.java",
         "bierner.markdown-mermaid",
         "zxh404.vscode-proto3",
-        "svelte.svelte-vscode"
+        "svelte.svelte-vscode",
       ]
     }
   },
