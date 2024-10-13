@@ -1,5 +1,7 @@
 -- CREATE DATABASE playground_app;
 
+\c playground_app;
+
 -- config `work_mem` for `playground_app` db
 alter database playground_app set work_mem = '64MB';
 

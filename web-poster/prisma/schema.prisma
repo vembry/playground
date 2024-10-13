@@ -14,11 +14,11 @@ datasource db {
 }
 
 model posts {
-  id             String   @id
-  user_id        String
-  parent_post_id String?
-  content        String
-  like_count     Int
-  dislike_count  Int
-  created_at     DateTime @default(now())
+  id           String   @id @map("id")
+  userId       String   @map("user_id")
+  parentPostId String?  @map("parent_post_id")
+  content      String   @map("content")
+  likeCount    Int      @map("like_count")
+  dislikeCount Int      @map("dislike_count")
+  createdAt    DateTime @default(now()) @map("created_at")
 }
