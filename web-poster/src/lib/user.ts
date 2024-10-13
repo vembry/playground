@@ -7,6 +7,9 @@ export function getUserId(): string {
 	setUserId(userId);
 	return userId;
 }
+export function getUserIdFromCookies(cookies: any): string {
+	return cookies.get(USER_ID);
+}
 export function setUserId(userId: string) {
 	Cookie.set(USER_ID, userId);
 }
