@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Postx } from '$lib/post';
-	import { getUserId } from '../lib/user'
+	import { getUserId } from '../lib/user';
 	import Post from '../components/post.svelte';
 
 	export let post: Postx;
@@ -16,11 +16,10 @@
 
 	function addPost() {
 		if (newPost.trim()) {
-			const newId = Date.now();
-
-			post.threads = [...post.threads, new Postx(getUserId(), newPost)];
+			post.addPost(new Postx(getUserId(), newPost));
 
 			newPost = '';
+			post = post; // trigger svelte reactivity
 		}
 	}
 </script>
@@ -33,13 +32,32 @@
 		<div>
 			{post.content}
 		</div>
-        <div>
-            <button on:click={(e) => {post.like(); post = post}}>like | {post.likeCount}</button><button on:click={(e) => {post.dislike(); post = post}}>dislike | {post.dislikeCount}</button>
-        </div>
 		<div>
-			<form on:submit|preventDefault={addPost}>
+			<button
+				on:click={(e) => {
+					post.like();
+					post = post;
+				}}>like | {post.likeCount}</button
+			><button
+				on:click={(e) => {
+					post.dislike();
+					post = post;
+				}}>dislike | {post.dislikeCount}</button
+			>
+		</div>
+		<div>
+			<form
+				on:submit|preventDefault={() => {
+					addPost();
+				}}
+			>
 				<div>
-					<textarea placeholder="Write your post..." bind:value={newPost} on:keydown={handleKeydown}
+					<textarea
+						placeholder="Write your post..."
+						bind:value={newPost}
+						on:keydown={(e) => {
+							handleKeydown(e);
+						}}
 					></textarea>
 				</div>
 				<div>
