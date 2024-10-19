@@ -47,13 +47,13 @@ func (q *queue) Get() model.QueueData {
 }
 
 // Enqueue is to enqueues queue
-func (q *queue) Enqueue(payload model.EnqueuePayload) error {
+func (q *queue) Enqueue(request model.EnqueuePayload) error {
 	// retrieve idle queue
-	idleQueue, unlocker := q.retrieveIdle(payload.Name)
+	idleQueue, unlocker := q.retrieveIdle(request.Name)
 	defer unlocker()
 
 	// add enqueued payload to queue maps
-	idleQueue.Items = append(idleQueue.Items, payload.Payload)
+	idleQueue.Items = append(idleQueue.Items, &model.Queue{Payload: request.Payload})
 
 	return nil
 }
@@ -70,7 +70,7 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 	}
 
 	// extract value from idleQueue's head
-	tempQueue := idleQueue.Items[0]
+	queue := idleQueue.Items[0]
 
 	// slice extracted-queue from idleQueue
 	idleQueue.Items = idleQueue.Items[1:]
@@ -82,7 +82,7 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 		Id:         queueId,
 		QueueName:  queueName,
 		PollExpiry: time.Now().UTC().Add(20 * time.Second), // this is for sweeping purposes
-		Payload:    tempQueue,
+		Queue:      queue,
 	}
 
 	q.activeQueue.Store(queueId, activeQueue)
@@ -149,7 +149,7 @@ func (q *queue) sweepActual(key, value any) bool {
 		defer unlocker()
 
 		// add active queue back to idle queue
-		idleQueue.Items = append(idleQueue.Items, val.Payload)
+		idleQueue.Items = append(idleQueue.Items, val.Queue)
 	}
 
 	return true

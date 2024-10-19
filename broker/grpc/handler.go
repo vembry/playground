@@ -71,7 +71,9 @@ func (h *handler) Poll(ctx context.Context, req *pb.PollRequest) (*pb.PollRespon
 			Id:         queue.Id.String(),
 			QueueName:  queue.QueueName,
 			PollExpiry: queue.PollExpiry.String(),
-			Payload:    queue.Payload,
+			Queue: &pb.Queue{
+				Payload: queue.Queue.Payload,
+			},
 		},
 	}, nil
 }

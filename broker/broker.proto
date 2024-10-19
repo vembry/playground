@@ -20,6 +20,11 @@ message ActiveQueue {
   string queue_name = 2;
   string poll_expiry = 3; // Handle as string (ISO format), or use google.protobuf.Timestamp
   string payload = 4;
+  Queue queue = 5;
+}
+
+message Queue {
+  string payload = 1;
 }
 
 message IdleQueue {
