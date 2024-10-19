@@ -3,16 +3,15 @@ package broker
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"math/rand/v2"
+	"sdk/broker"
 	sdkpb "sdk/broker/pb"
 	"sdk/loadtest"
+	"sync"
 
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func New(logger *slog.Logger) *cobra.Command {
@@ -37,48 +36,70 @@ func New(logger *slog.Logger) *cobra.Command {
 				params = append(params, fmt.Sprintf("queue_%d", i))
 			}
 
-			// setup grpc connection
-			conn, err := grpc.NewClient("localhost:4000", grpc.WithTransportCredentials(insecure.NewCredentials())) // Use the server's address and port
-			if err != nil {
-				log.Fatalf("did not connect: %v", err)
-			}
-			defer conn.Close()
+			// setup broker client
+			client, shutdown := broker.New("localhost:4000")
+			defer shutdown()
 
-			client := sdkpb.NewBrokerClient(conn)
+			wg := sync.WaitGroup{}
+			wg.Add(2)
 
 			// run load tester
-			t.Do(func(ctx context.Context, logger *slog.Logger) {
-				// choose balance id
-				i := randRange(0, len(params)-1)
-				queueName := params[i]
 
-				// enqueue
-				_, err := client.Enqueue(ctx, &sdkpb.EnqueueRequest{
-					QueueName: queueName,
-					Payload:   ksuid.New().String(),
+			// run enqueues
+			go func() {
+				t.Do(func(ctx context.Context, logger *slog.Logger) {
+					// choose balance id
+					i := randRange(0, len(params)-1)
+					queueName := params[i]
+
+					// enqueue
+					_, err := client.GRPC().Enqueue(ctx, &sdkpb.EnqueueRequest{
+						QueueName: queueName,
+						Payload:   ksuid.New().String(),
+					})
+					if err != nil {
+						logger.Error("'Enqueue' return error", slog.String("error", err.Error()))
+					}
 				})
-				if err != nil {
-					logger.Error("'Enqueue' return error", slog.String("error", err.Error()))
-				}
+				wg.Done()
+			}()
 
-				// poll it
-				queue, err := client.Poll(ctx, &sdkpb.PollRequest{
-					QueueName: queueName,
+			// run polls and ack
+			go func() {
+				t.Do(func(ctx context.Context, logger *slog.Logger) {
+					// choose balance id
+					i := randRange(0, len(params)-1)
+					queueName := params[i]
+
+					// poll it
+					queue, err := client.GRPC().Poll(ctx, &sdkpb.PollRequest{
+						QueueName: queueName,
+					})
+					if err != nil {
+						logger.Error("'Poll' return error", slog.String("error", err.Error()))
+					}
+
+					// this means when theres no queue found
+					if queue.Data == nil {
+						return
+					}
+
+					// complete it
+					_, err = client.GRPC().CompletePoll(ctx, &sdkpb.CompletePollRequest{
+						QueueId: queue.Data.Id,
+					})
+					if err != nil {
+						logger.Error("'CompletePoll' return error", slog.String("error", err.Error()))
+					}
 				})
-				if err != nil {
-					logger.Error("'Poll' return error", slog.String("error", err.Error()))
-				}
+				wg.Done()
+			}()
 
-				// complete it
-				_, err = client.CompletePoll(ctx, &sdkpb.CompletePollRequest{
-					QueueId: queue.Data.Id,
-				})
-				if err != nil {
-					logger.Error("'CompletePoll' return error", slog.String("error", err.Error()))
-				}
-			})
+			logger.Info("waiting...")
+			wg.Wait()
+			logger.Info("load test done...")
 
-			got, err := client.GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
+			got, err := client.GRPC().GetQueue(context.Background(), &sdkpb.GetQueueRequest{})
 			if err != nil {
 				logger.Error("error on getting queue", slog.String("err", err.Error()))
 			} else {

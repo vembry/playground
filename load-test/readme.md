@@ -9,6 +9,8 @@ is a load/stress test executor.
 
 ## app tests
 
+> go run ./load-test app
+
 ### scenario
 1. prepared `x` amount as the transacting balance
 2. call `get balance` to, check whether current active balance is enough
@@ -21,6 +23,8 @@ is a load/stress test executor.
 2. nothing went brokey
 
 ## broker tests
+
+> go run ./load-test broker
 
 ### scenario
 run `./broker` whole lifecycle

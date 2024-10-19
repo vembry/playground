@@ -3,6 +3,7 @@ package main
 import (
 	"load-test/cmd/app"
 	"load-test/cmd/broker"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -21,4 +22,8 @@ func main() {
 		broker.New(logger),
 		app.New(logger),
 	)
+
+	if err := cli.Execute(); err != nil {
+		log.Fatalf("found error on executing app's cli. err=%v", err)
+	}
 }
