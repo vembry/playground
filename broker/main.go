@@ -13,6 +13,10 @@ import (
 func main() {
 	log.Printf("hello broker!")
 
+	// setup app's tracer
+	shutdownHandler := NewTracer()
+	defer shutdownHandler()
+
 	queue := queue.New()   // initiate core queue
 	queue.Start()          // restore backed-up queues
 	defer queue.Shutdown() // shutdown queue

@@ -7,6 +7,7 @@ import (
 	"sdk/broker/pb"
 
 	"github.com/segmentio/ksuid"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -22,7 +23,11 @@ type server struct {
 }
 
 func NewServer(queue IQueue) *server {
-	grpcServer := grpc.NewServer()
+	// create grpc server
+	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
+
 	handler := NewHandler(queue)
 
 	pb.RegisterBrokerServer(grpcServer, handler)
