@@ -4,7 +4,7 @@ import (
 	"broker/model"
 	"context"
 	"fmt"
-	"sdk/pb"
+	"sdk/broker/pb"
 
 	"github.com/segmentio/ksuid"
 )

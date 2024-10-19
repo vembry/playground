@@ -4,7 +4,7 @@ import (
 	"broker/model"
 	"log"
 	"net"
-	"sdk/pb"
+	"sdk/broker/pb"
 
 	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc"
