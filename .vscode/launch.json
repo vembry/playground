@@ -43,11 +43,12 @@
       "program": "${workspaceFolder}/broker"
     },
     {
-      "name": "load-test",
+      "name": "load-test - broker",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/load-test"
+      "program": "${workspaceFolder}/load-test",
+      "args": ["broker"]
     }
   ]
 }
