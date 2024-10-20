@@ -21,7 +21,8 @@ type broker struct {
 }
 
 func New(backupProvider IBackup) *broker {
-	// force
+	// force backup provider to use file dumper
+	// when not defined
 	if backupProvider == nil {
 		backupProvider = NewFileDumper("broker-backup")
 	}
