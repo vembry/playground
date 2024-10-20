@@ -2,6 +2,7 @@ package http
 
 import (
 	"broker/model"
+	"broker/server"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +10,7 @@ import (
 )
 
 type handler struct {
-	queue IQueue
+	queue server.IBroker
 }
 
 func (h *handler) get(c *gin.Context) {

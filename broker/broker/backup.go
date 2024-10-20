@@ -1,26 +1,26 @@
-package queue
+package broker
 
 // // restore is a simple way to restore broker's queue backup
-// func (q *queue) restore() {
+// func (b *broker) restore() {
 // 	data, err := os.ReadFile("broker-backup")
 // 	if err != nil {
 // 		log.Fatal(err)
 // 	}
 
-// 	json.Unmarshal(data, &q.idleQueue)
+// 	json.Unmarshal(data, &b.idleQueue)
 // 	// os.Remove("broker-backup")
 // }
 
 // // backupQueue backs up queues to temporary storage
-// func (q *queue) backupQueue() {
+// func (b *broker) backupQueue() {
 // 	// move 'active queue' back to 'queue'
-// 	for _, value := range q.activeQueue {
-// 		val := q.idleQueue[value.QueueName]
+// 	for _, value := range b.activeQueue {
+// 		val := b.idleQueue[value.QueueName]
 // 		val.Items = append(val.Items, value.Payload)
-// 		q.idleQueue[value.QueueName] = val
+// 		b.idleQueue[value.QueueName] = val
 // 	}
 
-// 	rawQueue, _ := json.Marshal(q.idleQueue)
+// 	rawQueue, _ := json.Marshal(b.idleQueue)
 
 // 	f, _ := os.Create("broker-backup")
 // 	defer func() {

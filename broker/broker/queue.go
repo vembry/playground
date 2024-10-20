@@ -1,4 +1,4 @@
-package queue
+package broker
 
 import (
 	"broker/model"
@@ -10,7 +10,7 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-type queue struct {
+type broker struct {
 	idleQueue   sync.Map
 	activeQueue sync.Map
 
@@ -18,8 +18,8 @@ type queue struct {
 	ticker   *time.Ticker // for sweeping purposes
 }
 
-func New() *queue {
-	return &queue{
+func New() *broker {
+	return &broker{
 		idleQueue:   sync.Map{},
 		activeQueue: sync.Map{},
 		ticker:      time.NewTicker(1 * time.Second),
@@ -28,14 +28,14 @@ func New() *queue {
 }
 
 // Get is to retrieve all available queues
-func (q *queue) Get() model.QueueData {
+func (b *broker) Get() model.QueueData {
 
 	i, j := 0, 0
-	q.idleQueue.Range(func(key, value any) bool {
+	b.idleQueue.Range(func(key, value any) bool {
 		i += len(value.(*model.IdleQueue).Items)
 		return true
 	})
-	q.activeQueue.Range(func(key, value any) bool {
+	b.activeQueue.Range(func(key, value any) bool {
 		j++
 		return true
 	})
@@ -47,9 +47,9 @@ func (q *queue) Get() model.QueueData {
 }
 
 // Enqueue is to enqueues queue
-func (q *queue) Enqueue(request model.EnqueuePayload) error {
+func (b *broker) Enqueue(request model.EnqueuePayload) error {
 	// retrieve idle queue
-	idleQueue, unlocker := q.retrieveIdle(request.Name)
+	idleQueue, unlocker := b.retrieveIdle(request.Name)
 	defer unlocker()
 
 	// add enqueued payload to queue maps
@@ -59,9 +59,9 @@ func (q *queue) Enqueue(request model.EnqueuePayload) error {
 }
 
 // poll is to get entry from queue head
-func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
+func (b *broker) Poll(queueName string) (*model.ActiveQueue, error) {
 	// retrieve idle queue
-	idleQueue, unlocker := q.retrieveIdle(queueName)
+	idleQueue, unlocker := b.retrieveIdle(queueName)
 	defer unlocker()
 
 	// break away when queue has no entry
@@ -85,44 +85,44 @@ func (q *queue) Poll(queueName string) (*model.ActiveQueue, error) {
 		Queue:      queue,
 	}
 
-	q.activeQueue.Store(queueId, activeQueue)
+	b.activeQueue.Store(queueId, activeQueue)
 
 	// return the polled queue
 	return activeQueue, nil
 }
 
 // CompletePoll is to ack-ed out poll-ed queue so it wont get poll-ed anymore
-func (q *queue) CompletePoll(queueId ksuid.KSUID) error {
+func (b *broker) CompletePoll(queueId ksuid.KSUID) error {
 	// attempt to get queue
-	_, ok := q.activeQueue.Load(queueId)
+	_, ok := b.activeQueue.Load(queueId)
 	if !ok {
 		return fmt.Errorf("queue not found")
 	}
 
-	q.activeQueue.Delete(queueId)
+	b.activeQueue.Delete(queueId)
 	return nil
 }
 
-// Shutdown shutdown broker gracefully
-func (q *queue) Shutdown() {
-	// q.backupQueue()
+// Stop shutdown broker gracefully
+func (b *broker) Stop() {
+	// b.backupQueue()
 }
 
-func (q *queue) Start() {
-	// q.restore()
-	go q.sweep()
+func (b *broker) Start() {
+	// b.restore()
+	go b.sweep()
 }
 
 // retrieveIdle loads and lock targeted queue
-func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
+func (b *broker) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 	// Get or create a mutex for the specific queueName
-	mutex, _ := q.mutexMap.LoadOrStore(queueName, &sync.Mutex{})
+	mutex, _ := b.mutexMap.LoadOrStore(queueName, &sync.Mutex{})
 
 	// Lock the mutex for this specific queue
 	mutex.(*sync.Mutex).Lock()
 
 	// retrieve queue from map
-	val, _ := q.idleQueue.LoadOrStore(queueName, &model.IdleQueue{})
+	val, _ := b.idleQueue.LoadOrStore(queueName, &model.IdleQueue{})
 
 	return val.(*model.IdleQueue), func() {
 		mutex.(*sync.Mutex).Unlock()
@@ -130,22 +130,22 @@ func (q *queue) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 }
 
 // sweep is to sweep active queues for expiring polled queues
-func (q *queue) sweep() {
-	for range q.ticker.C {
-		q.activeQueue.Range(q.sweepActual)
+func (b *broker) sweep() {
+	for range b.ticker.C {
+		b.activeQueue.Range(b.sweepActual)
 	}
 }
 
 // sweepActual is to check and remove if an active-queue entry has expired
-func (q *queue) sweepActual(key, value any) bool {
+func (b *broker) sweepActual(key, value any) bool {
 	val := value.(*model.ActiveQueue)
 	if time.Now().After(val.PollExpiry) {
 		log.Printf("sweeping out %s...", val.Id)
 
 		// remove queue from active queue
-		q.activeQueue.Delete(key)
+		b.activeQueue.Delete(key)
 
-		idleQueue, unlocker := q.retrieveIdle(val.QueueName)
+		idleQueue, unlocker := b.retrieveIdle(val.QueueName)
 		defer unlocker()
 
 		// add active queue back to idle queue

@@ -1,26 +1,18 @@
 package http
 
 import (
-	"broker/model"
+	"broker/server"
 	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/segmentio/ksuid"
 )
 
-type server struct {
+type httpserver struct {
 	server http.Server
 }
 
-type IQueue interface {
-	Get() model.QueueData
-	Enqueue(payload model.EnqueuePayload) error
-	Poll(queueName string) (*model.ActiveQueue, error)
-	CompletePoll(queueId ksuid.KSUID) error
-}
-
-func NewServer(queue IQueue) *server {
+func New(queue server.IBroker) *httpserver {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -36,7 +28,7 @@ func NewServer(queue IQueue) *server {
 	queueGroup.GET("/poll/:queue_name", h.poll)
 	queueGroup.POST("/poll/:queue_id/complete", h.completePoll)
 
-	return &server{
+	return &httpserver{
 		// queue: queue,
 		server: http.Server{
 			Addr:    ":2000",
@@ -45,5 +37,5 @@ func NewServer(queue IQueue) *server {
 	}
 }
 
-func (s *server) Start() error { return s.server.ListenAndServe() }
-func (s *server) Stop() error  { return s.server.Shutdown(context.Background()) }
+func (s *httpserver) Start() error { return s.server.ListenAndServe() }
+func (s *httpserver) Stop() error  { return s.server.Shutdown(context.Background()) }

@@ -4,9 +4,9 @@ import (
 	"log"
 	nethttp "net/http"
 
-	"broker/grpc"
-	"broker/http"
-	"broker/queue"
+	"broker/broker"
+	grpcserver "broker/server/grpc"
+	httpserver "broker/server/http"
 	sdksignal "sdk/signal"
 )
 
@@ -17,11 +17,11 @@ func main() {
 	shutdownHandler := NewTracer()
 	defer shutdownHandler()
 
-	queue := queue.New() // initiate core queue
-	queue.Start()        // restore backed-up queues
+	queue := broker.New() // initiate core queue
+	queue.Start()         // restore backed-up queues
 
-	httpServer := http.NewServer(queue) // initiate http server
-	grpcServer := grpc.NewServer(queue) // iniitate grpc server
+	httpServer := httpserver.New(queue) // initiate http server
+	grpcServer := grpcserver.New(queue) // iniitate grpc server
 
 	// http server
 	go func() {
@@ -42,5 +42,5 @@ func main() {
 
 	httpServer.Stop()
 	grpcServer.Stop()
-	queue.Shutdown() // shutdown queue
+	queue.Stop() // shutdown queue
 }

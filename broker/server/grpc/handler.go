@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"broker/model"
+	"broker/server"
 	"context"
 	"fmt"
 	"sdk/broker/pb"
@@ -11,18 +12,18 @@ import (
 
 type handler struct {
 	pb.UnimplementedBrokerServer
-	queue IQueue
+	broker server.IBroker
 }
 
-func NewHandler(queue IQueue) *handler {
+func NewHandler(broker server.IBroker) *handler {
 	return &handler{
-		queue: queue,
+		broker: broker,
 	}
 }
 
 // GetQueue gets all queues data
 func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.GetQueueResponse, error) {
-	res := h.queue.Get()
+	res := h.broker.Get()
 
 	return &pb.GetQueueResponse{
 		Message: "ok",
@@ -35,7 +36,7 @@ func (h *handler) GetQueue(ctx context.Context, req *pb.GetQueueRequest) (*pb.Ge
 
 // Enqueue enqueues entry to the queue
 func (h *handler) Enqueue(ctx context.Context, req *pb.EnqueueRequest) (*pb.EnqueueResponse, error) {
-	err := h.queue.Enqueue(model.EnqueuePayload{
+	err := h.broker.Enqueue(model.EnqueuePayload{
 		Name:    req.GetQueueName(),
 		Payload: req.GetPayload(),
 	})
@@ -49,7 +50,7 @@ func (h *handler) Enqueue(ctx context.Context, req *pb.EnqueueRequest) (*pb.Enqu
 
 // Poll retrieves selected queue's entry
 func (h *handler) Poll(ctx context.Context, req *pb.PollRequest) (*pb.PollResponse, error) {
-	queue, err := h.queue.Poll(req.GetQueueName())
+	queue, err := h.broker.Poll(req.GetQueueName())
 	if err != nil {
 		return &pb.PollResponse{
 			Message: err.Error(),
@@ -85,7 +86,7 @@ func (h *handler) CompletePoll(ctx context.Context, req *pb.CompletePollRequest)
 		return nil, fmt.Errorf("invalid queue id")
 	}
 
-	err = h.queue.CompletePoll(queueId)
+	err = h.broker.CompletePoll(queueId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to complete-poll")
 	}
