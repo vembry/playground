@@ -17,8 +17,8 @@ func main() {
 	shutdownHandler := NewTracer()
 	defer shutdownHandler()
 
-	queue := broker.New() // initiate core queue
-	queue.Start()         // restore backed-up queues
+	queue := broker.New(nil) // initiate core queue
+	queue.Start()            // restore backed-up queues
 
 	httpServer := httpserver.New(queue) // initiate http server
 	grpcServer := grpcserver.New(queue) // iniitate grpc server

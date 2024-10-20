@@ -16,14 +16,22 @@ type broker struct {
 
 	mutexMap sync.Map     // for locking purposes
 	ticker   *time.Ticker // for sweeping purposes
+
+	backupProvider IBackup // to handle broker backups
 }
 
-func New() *broker {
+func New(backupProvider IBackup) *broker {
+	// force
+	if backupProvider == nil {
+		backupProvider = NewFileDumper("broker-backup")
+	}
+
 	return &broker{
-		idleQueue:   sync.Map{},
-		activeQueue: sync.Map{},
-		ticker:      time.NewTicker(1 * time.Second),
-		mutexMap:    sync.Map{},
+		idleQueue:      sync.Map{},
+		activeQueue:    sync.Map{},
+		ticker:         time.NewTicker(1 * time.Second),
+		mutexMap:       sync.Map{},
+		backupProvider: backupProvider,
 	}
 }
 
@@ -99,18 +107,36 @@ func (b *broker) CompletePoll(queueId ksuid.KSUID) error {
 		return fmt.Errorf("queue not found")
 	}
 
+	// remove queue from active queue
 	b.activeQueue.Delete(queueId)
 	return nil
 }
 
-// Stop shutdown broker gracefully
+// Stop handler to shutdown broker
 func (b *broker) Stop() {
-	// b.backupQueue()
+	b.deactivateQueues()
+
+	maps := map[string]*model.IdleQueue{}
+	b.idleQueue.Range(func(key, value any) bool {
+		maps[key.(string)] = value.(*model.IdleQueue)
+		return true
+	})
+
+	b.backupProvider.Backup(maps)
 }
 
+// Start handler to start broker
 func (b *broker) Start() {
-	// b.restore()
-	go b.sweep()
+	b.restore()
+	go b.sweepWorker()
+}
+
+func (b *broker) restore() {
+	maps := b.backupProvider.Restore()
+
+	for key, val := range maps {
+		b.idleQueue.Store(key, val)
+	}
 }
 
 // retrieveIdle loads and lock targeted queue
@@ -129,8 +155,8 @@ func (b *broker) retrieveIdle(queueName string) (*model.IdleQueue, func()) {
 	}
 }
 
-// sweep is to sweep active queues for expiring polled queues
-func (b *broker) sweep() {
+// sweepWorker is to sweep expiring active queues
+func (b *broker) sweepWorker() {
 	for range b.ticker.C {
 		b.activeQueue.Range(b.sweepActual)
 	}
@@ -142,15 +168,28 @@ func (b *broker) sweepActual(key, value any) bool {
 	if time.Now().After(val.PollExpiry) {
 		log.Printf("sweeping out %s...", val.Id)
 
-		// remove queue from active queue
-		b.activeQueue.Delete(key)
-
-		idleQueue, unlocker := b.retrieveIdle(val.QueueName)
-		defer unlocker()
-
-		// add active queue back to idle queue
-		idleQueue.Items = append(idleQueue.Items, val.Queue)
+		b.deactivateQueue(val)
 	}
 
 	return true
+}
+
+// deactivateQueue deactivate queue and put it back to idle queue
+func (b *broker) deactivateQueue(queue *model.ActiveQueue) {
+	// remove queue from active queue
+	b.activeQueue.Delete(queue.Id)
+
+	idleQueue, unlocker := b.retrieveIdle(queue.QueueName)
+	defer unlocker()
+
+	// add active queue back to idle queue
+	idleQueue.Items = append(idleQueue.Items, queue.Queue)
+}
+
+// deactivateQueue deactivate queue and put it back to idle queue
+func (b *broker) deactivateQueues() {
+	b.activeQueue.Range(func(key, value any) bool {
+		b.deactivateQueue(value.(*model.ActiveQueue))
+		return true
+	})
 }
