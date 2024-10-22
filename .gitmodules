@@ -1,3 +1,4 @@
 [submodule "broker"]
 	path = broker
 	url = git@github.com:vembry/broker.git
+	branch = main
