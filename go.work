@@ -4,5 +4,6 @@ use (
 	./app-go
 	./broker
 	./load-test
+	./sandbox-go
 	./sdk-go
 )
