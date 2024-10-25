@@ -11,7 +11,7 @@ func New() *saga {
 	return &saga{}
 }
 
-type WorkflowGroup[T any] struct {
+type Workflow[T any] struct {
 	name       string
 	activities []Activity[T]
 }
@@ -21,14 +21,15 @@ type Activity[T any] interface {
 	Rollback(T)
 }
 
-func CreateWorkflow[T any](name string, activities ...Activity[T]) *WorkflowGroup[T] {
-	return &WorkflowGroup[T]{
+// CreateWorkflow create a workflow group
+func CreateWorkflow[T any](name string, activities ...Activity[T]) *Workflow[T] {
+	return &Workflow[T]{
 		name:       name,
 		activities: activities,
 	}
 }
 
-func (w *WorkflowGroup[T]) Commit(param T) {
+func (w *Workflow[T]) Commit(param T) {
 	fallbacks := []func(T){}
 
 	isFallingBack := false
