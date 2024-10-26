@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -14,38 +15,48 @@ type someparameter struct {
 func main() {
 	// s := saga.New()
 
-	a := &resource{name: "a"}
-	b := &resource{name: "b"}
-	c := &resource{name: "c"}
-	d := &failingresource{name: "d"}
+	a := &resource{name: "a"}        // mock activity provider
+	b := &resource{name: "b"}        // mock activity provider
+	c := &resource{name: "c"}        // mock activity provider
+	d := &failingresource{name: "d"} // mock activity provider
 
-	workflow1 := saga.CreateWorkflow("workflow-1", a, b, c, d)
+	// create workflow
+	workflow1 := saga.NewWorkflow(
+		"workflow-1",
+		saga.NewActivity("activity-a", a.SomeFunctionToCommit, a.SomeFunctionToRollback),
+		saga.NewActivity("activity-b", b.SomeFunctionToCommit, b.SomeFunctionToRollback),
+		saga.NewActivity("activity-c", c.SomeFunctionToCommit, c.SomeFunctionToRollback),
+		saga.NewActivity("activity-d", d.AnotherFunctionToCommit, d.AnotherFunctionToRollback),
+	)
 
-	workflow1.Commit(&someparameter{})
+	// execute workflow
+	workflow1.Commit(context.Background(), &someparameter{})
 }
 
 type resource struct {
 	name string
 }
 
-func (r *resource) Commit(param *someparameter) error {
+func (r *resource) SomeFunctionToCommit(ctx context.Context, param *someparameter) error {
 	param.task = append(param.task, fmt.Sprintf("task-%s", r.name))
 	log.Printf("committing resource=%s", r.name)
 	return nil
 }
 
-func (r *resource) Rollback(param *someparameter) {
+func (r *resource) SomeFunctionToRollback(ctx context.Context, param *someparameter) error {
 	log.Printf("rolling back resource=%s", r.name)
+	return nil
 }
 
 type failingresource struct {
 	name string
 }
 
-func (r *failingresource) Commit(param *someparameter) error {
+func (r *failingresource) AnotherFunctionToCommit(ctx context.Context, param *someparameter) error {
 	return errors.New("lol fail")
 }
 
-func (r *failingresource) Rollback(param *someparameter) {
+func (r *failingresource) AnotherFunctionToRollback(ctx context.Context, param *someparameter) error {
 	log.Printf("rolling back failingresource=%s", r.name)
+	return nil
 }
