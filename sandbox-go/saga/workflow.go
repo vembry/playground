@@ -16,7 +16,11 @@ type IActivity[T any] interface {
 
 // Workflow a group of activities to be executed
 type Workflow[T any] struct {
-	name       string
+	// name refer to workflow's name
+	name string
+
+	// activities refer to an ordered one or
+	// more activity of a workflow
 	activities []IActivity[T]
 }
 
@@ -30,6 +34,8 @@ func NewWorkflow[T any](name string, activities ...IActivity[T]) *Workflow[T] {
 
 // Commit executes the workflow
 func (w *Workflow[T]) Commit(ctx context.Context, param T) {
+	log.Printf("starting workflow='%s'", w.name)
+
 	fallbacks := []execute[T]{}
 	isFallingBack := false
 
