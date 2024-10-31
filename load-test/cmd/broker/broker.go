@@ -103,7 +103,7 @@ func New(logger *slog.Logger) *cobra.Command {
 			if err != nil {
 				logger.Error("error on getting queue", slog.String("err", err.Error()))
 			} else {
-				logger.Info("get queue return ok", slog.Int64("IdleQueueCount", got.Data.IdleQueueCount), slog.Int64("ActiveQueueCount", got.Data.ActiveQueueCount))
+				logger.Info("get queue return ok", slog.Int64("IdleQueueCount", got.Data.IdleQueueCount), slog.Int64("ActiveQueueCount", got.Data.ActiveMessageCount))
 			}
 		},
 	}
