@@ -1,5 +1,8 @@
 {
 	"java.import.gradle.java.home": "/usr/local/sdkman/candidates/java/current",
 	"java.configuration.runtimes": [],
-	"java.configuration.updateBuildConfiguration": "interactive"
+	"java.configuration.updateBuildConfiguration": "interactive",
+	"files.watcherExclude": {
+		"**/target": true
+	}
 }

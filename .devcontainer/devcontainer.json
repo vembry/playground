@@ -25,7 +25,9 @@
         "bierner.markdown-mermaid",
         "zxh404.vscode-proto3",
         "svelte.svelte-vscode",
-        "Prisma.prisma"
+        "Prisma.prisma",
+        "scalameta.metals",
+        "scala-lang.scala"
       ]
     }
   },
