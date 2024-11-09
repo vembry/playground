@@ -5,13 +5,10 @@
   "features": {
     "ghcr.io/devcontainers/features/go:1": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/java:1.6.0": {
-      "version": "21.0.4",
-      "installMaven": "false",
-      "installGradle": "true"
-    },
     "ghcr.io/devcontainers/features/node:1": {},
-    "ghcr.io/ebaskoro/devcontainer-features/scala:1": {}
+    "ghcr.io/devcontainers/features/java:1": {
+      "installGradle": "true"
+    }
   },
   "customizations": {
     "vscode": {
@@ -20,14 +17,12 @@
         "golang.go",
         "eamodio.gitlens",
         "esbenp.prettier-vscode",
-        "vscjava.vscode-java-pack",
-        "redhat.java",
+        // "vscjava.vscode-java-pack",
+        // "redhat.java",
         "bierner.markdown-mermaid",
         "zxh404.vscode-proto3",
         "svelte.svelte-vscode",
-        "Prisma.prisma",
-        "scalameta.metals",
-        "scala-lang.scala"
+        "Prisma.prisma"
       ]
     }
   },
