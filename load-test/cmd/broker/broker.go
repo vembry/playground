@@ -37,7 +37,7 @@ func New(logger *slog.Logger) *cobra.Command {
 			}
 
 			// setup broker client
-			client, shutdown := broker.New("localhost:4000")
+			client, shutdown := broker.New("0.0.0.0:4000")
 			defer shutdown()
 
 			wg := sync.WaitGroup{}
