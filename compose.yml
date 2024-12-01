@@ -231,11 +231,12 @@ services:
     build:
       context: ./broker
       dockerfile: Dockerfile
+      target: dev # specify "dev" stage to run
     image: broker:local
     container_name: broker
     ports:
       - "4000:4000"
-    command: /broker
+    command: /home/app/broker/bin/broker
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: broker
