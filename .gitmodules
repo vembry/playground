@@ -2,3 +2,6 @@
 	path = broker
 	url = git@github.com:vembry/broker.git
 	branch = main
+[submodule "saga"]
+	path = saga
+	url = git@github.com:vembry/saga.git
