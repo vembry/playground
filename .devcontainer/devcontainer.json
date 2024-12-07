@@ -17,12 +17,11 @@
         "golang.go",
         "eamodio.gitlens",
         "esbenp.prettier-vscode",
-        // "vscjava.vscode-java-pack",
-        // "redhat.java",
         "bierner.markdown-mermaid",
         "zxh404.vscode-proto3",
         "svelte.svelte-vscode",
-        "Prisma.prisma"
+        "Prisma.prisma",
+        "github.vscode-github-actions"
       ]
     }
   },

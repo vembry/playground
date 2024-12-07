@@ -4,6 +4,7 @@ use (
 	./app-go
 	./broker
 	./load-test
-	./sandbox-go
+	./saga
+	./saga-sandbox
 	./sdk-go
 )
