@@ -4,7 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"math/rand/v2"
-	"sdk/loadtest"
+
+	loadtest "github.com/vembry/load-test"
 
 	"github.com/spf13/cobra"
 )

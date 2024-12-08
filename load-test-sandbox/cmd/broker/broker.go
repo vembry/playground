@@ -7,8 +7,9 @@ import (
 	"math/rand/v2"
 	"sdk/broker"
 	sdkpb "sdk/broker/pb"
-	"sdk/loadtest"
 	"sync"
+
+	loadtest "github.com/vembry/load-test"
 
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"

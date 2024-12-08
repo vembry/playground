@@ -2,7 +2,7 @@ module load-test
 
 go 1.23.2
 
-replace sdk v0.0.0 => ../sdk-go
+replace github.com/vembry/load-test v0.0.0 => ../load-test
 
 require (
 	github.com/segmentio/ksuid v1.0.4
@@ -13,7 +13,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.31.0
 	go.opentelemetry.io/otel/trace v1.31.0
 	google.golang.org/grpc v1.67.1
-	sdk v0.0.0
+	github.com/vembry/load-test v0.0.0
 )
 
 require (
