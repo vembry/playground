@@ -99,10 +99,11 @@ services:
 
   monitoring-otel-collector:
     <<: *deps
-    image: otel/opentelemetry-collector-contrib
+    image: docker.io/otel/opentelemetry-collector-contrib
     container_name: monitoring-otel-collector
+    command: [ "--config", "/etc/otelcollector/otelcollector.yml" ]
     volumes:
-      - ${LOCAL_WORKSPACE_FOLDER:-.}//.docker/otel-collector.yml:/etc/otelcol-contrib/config.yaml
+      - ${LOCAL_WORKSPACE_FOLDER:-./}/.docker/otelcollector:/etc/otelcollector
     ports:
       - 10002:4317 # OTLP gRPC receiver
 
@@ -132,80 +133,81 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 
-  # app-go-server:
-  #   <<: *default
-  #   build:
-  #     context: .
-  #     dockerfile: app-go/Dockerfile
-  #   # x-develop:
-  #   #   watch:
-  #   #     - action: rebuild
-  #   #       path: ./app-go
-  #   image: playground-app-go:local
-  #   container_name: app-go-server
-  #   command: /app-go serve
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   ports:
-  #     - "8080:80"
-  #     - "8081:81"
-  #   environment:
-  #     HTTP_ADDRESS: 0.0.0.0:80
-  #     PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
-  #     DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
-  #     REDIS_URI: redis://:local@redis:6379/0
-  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
-  #     OTEL_SERVICE_NAME: app-go-server
-  #     RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "/wget",
-  #         "--quiet",
-  #         "--output-document=-",
-  #         "http://0.0.0.0:80/health",
-  #       ]
+  app-go-server:
+    <<: *default
+    build:
+      context: .
+      dockerfile: app-go/Dockerfile
+    # x-develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./app-go
+    image: playground-app-go:local
+    container_name: app-go-server
+    command: /app-go serve
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+      - "8081:81"
+    environment:
+      HTTP_ADDRESS: 0.0.0.0:80
+      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
+      DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_SERVICE_NAME: app-go-server
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
 
-  # app-go-worker:
-  #   <<: *default
-  #   build:
-  #     context: .
-  #     dockerfile: app-go/Dockerfile
-  #   # x-develop:
-  #   #   watch:
-  #   #     - action: rebuild
-  #   #       path: ./app-go
-  #   image: playground-app-go:local
-  #   container_name: app-go-worker
-  #   command: /app-go work
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   ports:
-  #     - "8082:81"
-  #   environment:
-  #     HTTP_ADDRESS: 0.0.0.0:80
-  #     PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
-  #     DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
-  #     REDIS_URI: redis://:local@redis:6379/0
-  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
-  #     OTEL_SERVICE_NAME: app-go-worker
-  #     RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "/wget",
-  #         "--quiet",
-  #         "--output-document=-",
-  #         "http://0.0.0.0:80/health",
-  #       ]
+  app-go-worker:
+    <<: *default
+    build:
+      context: .
+      dockerfile: app-go/Dockerfile
+    # x-develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./app-go
+    image: playground-app-go:local
+    container_name: app-go-worker
+    command: /app-go work
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8082:81"
+    environment:
+      HTTP_ADDRESS: 0.0.0.0:80
+      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
+      DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
+      REDIS_URI: redis://:local@redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_SERVICE_NAME: app-go-worker
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
+
   # app-java-server:
   #   build:
   #     context: .

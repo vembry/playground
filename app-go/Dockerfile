@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build the application from source
-FROM golang:1.22.6-alpine AS build-stage
+FROM golang:1.23.2-alpine AS build-stage
 
 # copy app-go
 WORKDIR /home/app/app-go

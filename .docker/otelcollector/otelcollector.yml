@@ -1,0 +1,35 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: monitoring-otel-collector:4317
+      http:
+        endpoint: monitoring-otel-collector:4318
+
+processors:
+  batch:
+
+connectors:
+  spanmetrics:
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+
+exporters:
+  debug/metrics:
+    verbosity: basic
+  debug/traces:
+    verbosity: basic
+  otlphttp/prometheus:
+    metrics_endpoint: http://monitoring-prometheus:9090/api/v1/otlp/v1/metrics
+    tls:
+      insecure: true
+  otlphttp/tempo:
+    endpoint: http://monitoring-tempo:4418
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/tempo]
