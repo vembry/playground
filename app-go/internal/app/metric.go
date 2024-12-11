@@ -11,17 +11,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type metric struct {
+type metricx struct {
 	server             *http.Server
 	httpRequestLatency *prometheus.HistogramVec
 }
 
-func (m *metric) Name() string {
+func (m *metricx) Name() string {
 	return "metric"
 }
 
-func NewMetric(cfg *EnvConfig) *metric {
-	return &metric{
+func NewMetric(cfg *EnvConfig) *metricx {
+	return &metricx{
 		server: constructPrometheusServer(cfg),
 		httpRequestLatency: promauto.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "http_request_latency_milliseconds",
@@ -31,7 +31,7 @@ func NewMetric(cfg *EnvConfig) *metric {
 	}
 }
 
-func (m *metric) RecordInbound(route string, method string, statusCode string, duration time.Duration) {
+func (m *metricx) RecordInbound(route string, method string, statusCode string, duration time.Duration) {
 	m.httpRequestLatency.WithLabelValues(route, method, statusCode).Observe(float64(duration.Milliseconds()))
 }
 
@@ -52,7 +52,7 @@ func constructPrometheusServer(cfg *EnvConfig) *http.Server {
 }
 
 // Start is to initiate metric provider to be scraped by prometheus
-func (m *metric) Start() {
+func (m *metricx) Start() {
 	go func() {
 		if err := m.server.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("failed to start. err=%v", err)
@@ -61,6 +61,6 @@ func (m *metric) Start() {
 }
 
 // Stop is to shutdown metric provider
-func (m *metric) Stop() {
+func (m *metricx) Stop() {
 	m.server.Shutdown(context.Background())
 }

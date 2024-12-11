@@ -9,6 +9,7 @@ import (
 	repoRedis "app/internal/repository/redis"
 	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
+	"context"
 	"embed"
 	"log"
 
@@ -22,11 +23,16 @@ var (
 )
 
 func main() {
+	ctx := context.Background()
+
 	// setup config
 	appConfig := app.NewConfig(embedFS)
 
-	tracerShutdownHandler := app.NewTracer()
-	defer tracerShutdownHandler()
+	telemetryShutdownHandler, err := app.NewTelemetry(ctx)
+	if err != nil {
+		log.Fatalf("failed to initiate telemetry")
+	}
+	defer telemetryShutdownHandler()
 
 	// setup app metric
 	appMetric := app.NewMetric(appConfig)
