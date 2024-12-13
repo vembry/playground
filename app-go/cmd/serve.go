@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"log"
 	sdksignal "sdk/signal"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -10,7 +12,7 @@ import (
 type IServer interface {
 	Name() string
 	Start()
-	Stop()
+	Stop(context.Context)
 }
 
 func NewServe(
@@ -35,8 +37,13 @@ func NewServe(
 
 			// stop servers gracefully
 			for i := range servers {
+				// context for stop timeout
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
 				log.Printf("shutting down %s server", servers[i].Name())
-				servers[i].Stop()
+
+				servers[i].Stop(ctx)
 			}
 		},
 	}

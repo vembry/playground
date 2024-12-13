@@ -10,9 +10,6 @@ func New() *locker {
 	return &locker{}
 }
 
-func (l *locker) Lock(ctx context.Context, key string) error {
-	return nil
-}
-
-func (l *locker) Unlock(ctx context.Context, key string) {
+func (l *locker) Lock(ctx context.Context, key string) (func(context.Context), error) {
+	return func(context.Context) {}, nil
 }

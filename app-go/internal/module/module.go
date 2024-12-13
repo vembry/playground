@@ -14,3 +14,7 @@ type IBalance interface {
 	Withdraw(ctx context.Context, in *model.WithdrawParam) (*model.Withdrawal, error)
 	Transfer(ctx context.Context, in *model.TransferParam) (*model.Transfer, error)
 }
+
+type ILocker interface {
+	Lock(ctx context.Context, key string) (func(context.Context), error)
+}

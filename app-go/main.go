@@ -3,10 +3,11 @@ package main
 import (
 	"app/cmd"
 	"app/internal/app"
-	"app/internal/domain"
-	internalhttp "app/internal/http"
+	"app/internal/module/balance"
+	"app/internal/module/locker"
 	"app/internal/repository/postgres"
-	repoRedis "app/internal/repository/redis"
+	"app/internal/server/http"
+	"app/internal/server/http/handler"
 	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
 	"context"
@@ -25,17 +26,18 @@ var (
 func main() {
 	ctx := context.Background()
 
+	// setup app's pre-requisites
+	// ==========================
+
 	// setup config
 	appConfig := app.NewConfig(embedFS)
 
+	// setup telemetry
 	telemetryShutdownHandler, err := app.NewTelemetry(ctx)
 	if err != nil {
 		log.Fatalf("failed to initiate telemetry")
 	}
 	defer telemetryShutdownHandler()
-
-	// setup app metric
-	appMetric := app.NewMetric(appConfig)
 
 	// setup cache
 	cacheOpts, err := redis.ParseURL(appConfig.RedisUri)
@@ -49,13 +51,15 @@ func main() {
 	appDb, closer := app.NewOrmDb(appConfig)
 	defer closer() // close connection when main.go closes
 
-	// setup repository(s)
+	// setup internal modules
+	// ======================
+
+	// setup repository
 	balanceRepo := postgres.NewBalance(appDb)
 	ledgerRepo := postgres.NewLedger(appDb)
 	depositRepo := postgres.NewDeposit(appDb)
 	withdrawalRepo := postgres.NewWithdrawal(appDb)
 	transferRepo := postgres.NewTransfer(appDb)
-	lockerRepo := repoRedis.NewLocker(cache)
 
 	// setup worker
 	workerRabbit := workerrabbit.New(appConfig.RabbitUri)
@@ -73,8 +77,9 @@ func main() {
 		transferWorkerRabbit,
 	)
 
-	// setup domain(s)
-	balanceDomain := domain.NewBalance(
+	// setup modules
+	lockermodule := locker.New()
+	balancemodule := balance.New(
 		balanceRepo,
 		depositRepo,
 		withdrawalRepo,
@@ -83,34 +88,37 @@ func main() {
 		withdrawWorkerRabbit,
 		transferWorkerRabbit,
 		ledgerRepo,
-		lockerRepo,
+		lockermodule,
 	)
 
-	withdrawWorkerRabbit.InjectDeps(balanceDomain)
-	depositWorkerRabbit.InjectDeps(balanceDomain)
-	transferWorkerRabbit.InjectDeps(balanceDomain)
+	// inject modules to workers
+	withdrawWorkerRabbit.InjectDeps(balancemodule)
+	depositWorkerRabbit.InjectDeps(balancemodule)
+	transferWorkerRabbit.InjectDeps(balancemodule)
 
-	httpserver := internalhttp.NewServer(
-		appConfig.HttpAddress,
-		appMetric,
-		balanceDomain,
-	)
+	// setup http server
+	// =================
+
+	// setup handler(s)
+	balanceHandler := handler.NewBalance(balancemodule)
+
+	// setup http server
+	httpserver := http.New(appConfig.HttpAddress, balanceHandler.GetMux())
 
 	// initiate CLI(s)
 	cli := &cobra.Command{}
 	cli.AddCommand(
 		cmd.NewServe(
 			httpserver,
-			appMetric,
 		),
 		cmd.NewWork(
-			appMetric,
 			workerRabbit,
 			workerDummy,
 		),
 		cmd.NewDummy(),
 	)
 
+	// run app
 	if err := cli.Execute(); err != nil {
 		log.Fatalf("found error on executing app's cli. err=%v", err)
 	}

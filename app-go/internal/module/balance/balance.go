@@ -2,6 +2,7 @@ package balance
 
 import (
 	"app/internal/model"
+	"app/internal/module"
 	"app/internal/repository"
 	"app/internal/worker"
 	"context"
@@ -26,10 +27,10 @@ type balance struct {
 	withdrawalProducer worker.IWithdrawalProducer
 	transferProducer   worker.ITransferProducer
 	ledgerRepo         repository.ILedger
-	lockerRepo         repository.ILocker
+	locker             module.ILocker
 }
 
-func NewBalance(
+func New(
 	balanceRepo repository.IBalance,
 	depositRepo repository.IDeposit,
 	withdrawalRepo repository.IWithdrawal,
@@ -38,7 +39,7 @@ func NewBalance(
 	withdrawalProducer worker.IWithdrawalProducer,
 	transferProducer worker.ITransferProducer,
 	ledgerRepo repository.ILedger,
-	lockerRepo repository.ILocker,
+	locker module.ILocker,
 ) *balance {
 	return &balance{
 		balanceRepo:        balanceRepo,
@@ -49,7 +50,7 @@ func NewBalance(
 		withdrawalProducer: withdrawalProducer,
 		transferProducer:   transferProducer,
 		ledgerRepo:         ledgerRepo,
-		lockerRepo:         lockerRepo,
+		locker:             locker,
 	}
 }
 
@@ -69,7 +70,7 @@ func (d *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balanc
 func (d *balance) GetLock(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, func(context.Context), error) {
 	var err error
 
-	unlocker, err := d.lockerRepo.AcquireLock(ctx, balanceId.String())
+	unlocker, err := d.locker.Lock(ctx, balanceId.String())
 	defer func() {
 		if err != nil && unlocker != nil {
 			unlocker(ctx)
@@ -88,41 +89,4 @@ func (d *balance) GetLock(ctx context.Context, balanceId ksuid.KSUID) (*model.Ba
 	return balance, func(_ctx context.Context) {
 		unlocker(_ctx)
 	}, nil
-}
-
-func (d *balance) Deposit(ctx context.Context, in *model.DepositParam) (*model.Deposit, error) {
-	deposit, err := d.depositRepo.Create(ctx, &model.Deposit{BalanceId: in.BalanceId, Amount: in.Amount, Status: model.StatusPending})
-	if err != nil {
-		return nil, err
-	}
-
-	// produce task for worker
-	d.depositProducer.Produce(ctx, deposit.Id)
-
-	return deposit, nil
-}
-
-func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model.Withdrawal, error) {
-	// create entry
-	withdrawal, err := d.withdrawalRepo.Create(ctx, &model.Withdrawal{BalanceId: in.BalanceId, Amount: in.Amount, Status: model.StatusPending})
-	if err != nil {
-		return nil, err
-	}
-
-	// produce task for worker
-	d.withdrawalProducer.Produce(ctx, withdrawal.Id)
-
-	return withdrawal, nil
-}
-
-func (d *balance) Transfer(ctx context.Context, in *model.TransferParam) (*model.Transfer, error) {
-	transfer, err := d.transferRepo.Create(ctx, &model.Transfer{BalanceIdFrom: in.BalanceIdFrom, BalanceIdTo: in.BalanceIdTo, Amount: in.Amount, Status: model.StatusPending})
-	if err != nil {
-		return nil, err
-	}
-
-	// produce task for worker
-	d.transferProducer.Produce(ctx, transfer.Id)
-
-	return transfer, nil
 }

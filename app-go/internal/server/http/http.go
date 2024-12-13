@@ -26,6 +26,10 @@ func New(addr string, handlers ...*nethttp.ServeMux) *server {
 	}
 }
 
+func (s *server) Name() string {
+	return "core"
+}
+
 func (s *server) Start() {
 	go func() {
 		if err := s.server.ListenAndServe(); err != nethttp.ErrServerClosed {

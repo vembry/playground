@@ -16,7 +16,7 @@ type IWorker interface {
 	Stop()
 }
 
-func NewWork(metricServer IServer, workers ...IWorker) *cobra.Command {
+func NewWork(workers ...IWorker) *cobra.Command {
 	// setup workers mapper for selection purposes
 	availableWorkerMap := map[string]IWorker{}
 	availableWorkers := []string{}
@@ -51,16 +51,14 @@ func NewWork(metricServer IServer, workers ...IWorker) *cobra.Command {
 				activeWorker = append(activeWorker, val)
 			}
 
-			metricServer.Start()
-
 			sdksignal.WatchForExitSignal()
 			log.Printf("shutting down '%d' worker(s)...", len(activeWorker))
 
+			// iteratively shutdown worker
 			for _, worker := range activeWorker {
 				log.Printf("shutting down '%s' worker", worker.Name())
 				worker.Stop()
 			}
-			metricServer.Stop()
 		},
 	}
 

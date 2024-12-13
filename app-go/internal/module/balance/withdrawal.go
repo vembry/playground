@@ -7,6 +7,19 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+func (d *balance) Withdraw(ctx context.Context, in *model.WithdrawParam) (*model.Withdrawal, error) {
+	// create entry
+	withdrawal, err := d.withdrawalRepo.Create(ctx, &model.Withdrawal{BalanceId: in.BalanceId, Amount: in.Amount, Status: model.StatusPending})
+	if err != nil {
+		return nil, err
+	}
+
+	// produce task for worker
+	d.withdrawalProducer.Produce(ctx, withdrawal.Id)
+
+	return withdrawal, nil
+}
+
 func (d *balance) ProcessWithdraw(ctx context.Context, withdrawId ksuid.KSUID) error {
 	// get withdraw
 	withdrawal, err := d.withdrawalRepo.Get(ctx, withdrawId)

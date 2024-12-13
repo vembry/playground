@@ -7,6 +7,18 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+func (d *balance) Transfer(ctx context.Context, in *model.TransferParam) (*model.Transfer, error) {
+	transfer, err := d.transferRepo.Create(ctx, &model.Transfer{BalanceIdFrom: in.BalanceIdFrom, BalanceIdTo: in.BalanceIdTo, Amount: in.Amount, Status: model.StatusPending})
+	if err != nil {
+		return nil, err
+	}
+
+	// produce task for worker
+	d.transferProducer.Produce(ctx, transfer.Id)
+
+	return transfer, nil
+}
+
 func (d *balance) ProcessTransfer(ctx context.Context, transferId ksuid.KSUID) error {
 	// get withdraw
 	transfer, err := d.transferRepo.Get(ctx, transferId)

@@ -18,7 +18,7 @@ func NewBalance(balanceModule module.IBalance) *balance {
 	}
 }
 
-func (b *balance) GetRoutes() *http.ServeMux {
+func (b *balance) GetMux() *http.ServeMux {
 	balancemux := http.NewServeMux()
 
 	balancemux.HandleFunc("POST /open", b.Open)

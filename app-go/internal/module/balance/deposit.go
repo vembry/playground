@@ -7,6 +7,18 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+func (d *balance) Deposit(ctx context.Context, in *model.DepositParam) (*model.Deposit, error) {
+	deposit, err := d.depositRepo.Create(ctx, &model.Deposit{BalanceId: in.BalanceId, Amount: in.Amount, Status: model.StatusPending})
+	if err != nil {
+		return nil, err
+	}
+
+	// produce task for worker
+	d.depositProducer.Produce(ctx, deposit.Id)
+
+	return deposit, nil
+}
+
 func (d *balance) ProcessDeposit(ctx context.Context, depositId ksuid.KSUID) error {
 	// get deposit data
 	deposit, err := d.depositRepo.Get(ctx, depositId)
