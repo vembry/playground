@@ -21,13 +21,14 @@ func NewBalance(balanceModule module.IBalance) *balance {
 func (b *balance) GetMux() *http.ServeMux {
 	balancemux := http.NewServeMux()
 
-	balancemux.HandleFunc("POST /open", b.Open)
-	balancemux.HandleFunc("GET /:balance_id", b.Get)
-	balancemux.HandleFunc("POST /:balance_id/deposit", b.Deposit)
-	balancemux.HandleFunc("POST /:balance_id/withdraw", b.Withdraw)
-	balancemux.HandleFunc("POST /:balance_id_from/transfer/:balance_id_to", b.Transfer)
+	balancemux.HandleFunc("POST /balance/open", b.Open)
+	balancemux.HandleFunc("GET /balance/:balance_id", b.Get)
+	balancemux.HandleFunc("POST /balance/:balance_id/deposit", b.Deposit)
+	balancemux.HandleFunc("POST /balance/:balance_id/withdraw", b.Withdraw)
+	balancemux.HandleFunc("POST /balance/:balance_id_from/transfer/:balance_id_to", b.Transfer)
 
-	return groupMux("/balance", balancemux)
+	// return groupMux("/balance", balancemux)
+	return balancemux
 }
 
 // Open opens new balance. Basically creates new balance entry

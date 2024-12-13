@@ -10,7 +10,6 @@ import (
 	"app/internal/server/http/handler"
 	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
-	"context"
 	"embed"
 	"log"
 
@@ -24,20 +23,11 @@ var (
 )
 
 func main() {
-	ctx := context.Background()
-
 	// setup app's pre-requisites
 	// ==========================
 
 	// setup config
 	appConfig := app.NewConfig(embedFS)
-
-	// setup telemetry
-	telemetryShutdownHandler, err := app.NewTelemetry(ctx)
-	if err != nil {
-		log.Fatalf("failed to initiate telemetry")
-	}
-	defer telemetryShutdownHandler()
 
 	// setup cache
 	cacheOpts, err := redis.ParseURL(appConfig.RedisUri)
