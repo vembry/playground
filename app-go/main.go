@@ -3,9 +3,9 @@ package main
 import (
 	"app/cmd"
 	"app/internal/app"
-	"app/internal/module/balance"
+	balanceModuleRepo "app/internal/module/balance/repository/postgres"
+	balanceModuleService "app/internal/module/balance/service"
 	"app/internal/module/locker"
-	"app/internal/repository/postgres"
 	"app/internal/server/http"
 	"app/internal/server/http/handler"
 	"app/internal/worker/dummy"
@@ -44,8 +44,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to parse redis url. err=%v", err)
 	}
-	cache := redis.NewClient(cacheOpts)
-	defer cache.Close()
+	appCache := redis.NewClient(cacheOpts)
+	defer appCache.Close()
 
 	// setup db
 	appDb, closer := app.NewOrmDb(appConfig)
@@ -55,11 +55,11 @@ func main() {
 	// ======================
 
 	// setup repository
-	balanceRepo := postgres.NewBalance(appDb)
-	ledgerRepo := postgres.NewLedger(appDb)
-	depositRepo := postgres.NewDeposit(appDb)
-	withdrawalRepo := postgres.NewWithdrawal(appDb)
-	transferRepo := postgres.NewTransfer(appDb)
+	balanceRepo := balanceModuleRepo.NewBalance(appDb)
+	ledgerRepo := balanceModuleRepo.NewLedger(appDb)
+	depositRepo := balanceModuleRepo.NewDeposit(appDb)
+	withdrawalRepo := balanceModuleRepo.NewWithdrawal(appDb)
+	transferRepo := balanceModuleRepo.NewTransfer(appDb)
 
 	// setup worker
 	workerRabbit := workerrabbit.New(appConfig.RabbitUri)
@@ -78,8 +78,8 @@ func main() {
 	)
 
 	// setup modules
-	lockermodule := locker.New()
-	balancemodule := balance.New(
+	lockermodule := locker.New(appCache)
+	balancemodule := balanceModuleService.New(
 		balanceRepo,
 		depositRepo,
 		withdrawalRepo,

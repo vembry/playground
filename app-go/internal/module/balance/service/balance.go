@@ -1,9 +1,9 @@
-package balance
+package service
 
 import (
 	"app/internal/model"
 	"app/internal/module"
-	"app/internal/repository"
+	"app/internal/module/balance/repository"
 	"app/internal/worker"
 	"context"
 
@@ -66,10 +66,11 @@ func (d *balance) Get(ctx context.Context, balanceId ksuid.KSUID) (*model.Balanc
 	return d.balanceRepo.Get(ctx, balanceId)
 }
 
-// TODO: this need review :/
+// GetLock retrieve balance with locker
 func (d *balance) GetLock(ctx context.Context, balanceId ksuid.KSUID) (*model.Balance, func(context.Context), error) {
 	var err error
 
+	// attempt to retrieve lock
 	unlocker, err := d.locker.Lock(ctx, balanceId.String())
 	defer func() {
 		if err != nil && unlocker != nil {
@@ -81,12 +82,13 @@ func (d *balance) GetLock(ctx context.Context, balanceId ksuid.KSUID) (*model.Ba
 		return nil, nil, err
 	}
 
+	// retrieve balance
 	balance, err := d.Get(ctx, balanceId)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return balance, func(_ctx context.Context) {
-		unlocker(_ctx)
+	return balance, func(ctx context.Context) {
+		unlocker(ctx)
 	}, nil
 }

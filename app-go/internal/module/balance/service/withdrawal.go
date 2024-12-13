@@ -1,4 +1,4 @@
-package balance
+package service
 
 import (
 	"app/internal/model"
@@ -77,7 +77,7 @@ func (d *balance) ProcessWithdraw(ctx context.Context, withdrawId ksuid.KSUID) e
 
 	if withdrawal.Status == model.StatusCompleted {
 		// create ledger entry when withdrawal is ok
-		ledger, err = d.ledgerRepo.Create(ctx, ledger)
+		_, err = d.ledgerRepo.Create(ctx, ledger)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package balance
+package service
 
 import (
 	"app/internal/model"

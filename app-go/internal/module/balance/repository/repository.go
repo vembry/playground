@@ -32,6 +32,3 @@ type ITransfer interface {
 	Get(ctx context.Context, transferId ksuid.KSUID) (*model.Transfer, error)
 	Update(ctx context.Context, in *model.Transfer) (*model.Transfer, error)
 }
-type ILocker interface {
-	AcquireLock(ctx context.Context, key string) (func(context.Context), error)
-}
