@@ -8,6 +8,7 @@ import (
 	"app/internal/module/locker"
 	"app/internal/server/http"
 	"app/internal/server/http/handler"
+	"app/internal/telemetry"
 	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
 	"embed"
@@ -28,6 +29,10 @@ func main() {
 
 	// setup config
 	appConfig := app.NewConfig(embedFS)
+
+	// setup telemetry
+	telemetryShutdown := telemetry.New()
+	defer telemetryShutdown()
 
 	// setup cache
 	cacheOpts, err := redis.ParseURL(appConfig.RedisUri)
