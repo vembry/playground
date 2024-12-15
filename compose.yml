@@ -1,10 +1,5 @@
-# default configs
-x-default: &default
-  deploy:
-    resources:
-      limits:
-        memory: 64m # defaulted memory limit to 512mb
-  restart: unless-stopped
+name: playground
+
 x-deps: &deps
   deploy:
     resources:
@@ -128,7 +123,6 @@ services:
       - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 
   app-go-server:
-    <<: *default
     build:
       context: .
       dockerfile: app-go/Dockerfile
@@ -145,15 +139,18 @@ services:
       redis:
         condition: service_healthy
     environment:
-      HTTP_ADDRESS: 0.0.0.0:80
-      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
       DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
-      REDIS_URI: redis://:local@redis:6379/0
+      HTTP_ADDRESS: 0.0.0.0:80
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: app-go-server
+      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URI: redis://:local@redis:6379/0
     deploy:
       replicas: 3
+      resources:
+        limits:
+          memory: 512m # defaulted memory limit to 512mb
     healthcheck:
       test:
         [
@@ -165,7 +162,6 @@ services:
         ]
 
   app-go-worker:
-    <<: *default
     build:
       context: .
       dockerfile: app-go/Dockerfile
@@ -191,6 +187,10 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_SERVICE_NAME: app-go-worker
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+    deploy:
+      resources:
+        limits:
+          memory: 512m # defaulted memory limit to 512mb
     healthcheck:
       test:
         [
