@@ -8,6 +8,10 @@ receivers:
 
 processors:
   batch:
+  resourcedetection:
+    detectors: [env, docker]
+    timeout: 2s
+    override: false
 
 connectors:
   spanmetrics:
@@ -29,7 +33,11 @@ exporters:
 
 service:
   pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [debug/metrics, otlphttp/prometheus]
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlphttp/tempo]
+      processors: [resourcedetection, batch]
+      exporters: [debug/traces, otlphttp/tempo]

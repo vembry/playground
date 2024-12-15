@@ -43,14 +43,15 @@ services:
       - 5672:5672
       - 15672:15672
 
-  proxy: 
-    image: docker.io/nginx:latest
+  proxy:
+    image: docker.io/nginx:alpine-otel
     container_name: proxy
     restart: unless-stopped
     ports:
       - 8089:80
     volumes:
       - ${LOCAL_WORKSPACE_FOLDER-.}/.docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ${LOCAL_WORKSPACE_FOLDER-.}/.docker/nginx/nginx.conf:/etc/nginx/nginx.conf
 
   grafana:
     <<: *deps
@@ -90,11 +91,18 @@ services:
     <<: *deps
     image: docker.io/otel/opentelemetry-collector-contrib:latest
     container_name: monitoring-otel-collector
-    command: [ "--config", "/etc/otelcollector/otelcollector.yml" ]
+    command: ["--config", "/etc/otelcollector/otelcollector.yml"]
     volumes:
       - ${LOCAL_WORKSPACE_FOLDER:-./}/.docker/otelcollector:/etc/otelcollector
     ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
       - 10002:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
 
   monitoring-tempo:
     <<: *deps
@@ -185,6 +193,7 @@ services:
       DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
       REDIS_URI: redis://:local@redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_SERVICE_NAME: app-go-worker
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
     deploy:
@@ -222,16 +231,16 @@ services:
   #         "http://0.0.0.0:80/health",
   #       ]
 
-  broker:
-    build:
-      context: ./broker
-      dockerfile: Dockerfile
-      target: dev # specify "dev" stage to run
-    image: broker:local
-    container_name: broker
-    ports:
-      - "4000:4000"
-    command: /home/app/broker/bin/broker
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
-      OTEL_SERVICE_NAME: broker
+  # broker:
+  #   build:
+  #     context: ./broker
+  #     dockerfile: Dockerfile
+  #     target: dev # specify "dev" stage to run
+  #   image: broker:local
+  #   container_name: broker
+  #   ports:
+  #     - "4000:4000"
+  #   command: /home/app/broker/bin/broker
+  #   environment:
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+  #     OTEL_SERVICE_NAME: broker
