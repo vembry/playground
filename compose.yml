@@ -88,7 +88,7 @@ services:
 
   monitoring-otel-collector:
     <<: *deps
-    image: docker.io/otel/opentelemetry-collector-contrib
+    image: docker.io/otel/opentelemetry-collector-contrib:latest
     container_name: monitoring-otel-collector
     command: [ "--config", "/etc/otelcollector/otelcollector.yml" ]
     volumes:
