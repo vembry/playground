@@ -12,12 +12,11 @@ import (
 
 // EnvConfig is the instance to compile all env vars
 type EnvConfig struct {
-	HttpAddress           string `env:"HTTP_ADDRESS"`
-	PrometheusHttpAddress string `env:"PROMETHEUS_HTTP_ADDRESS"`
-	DBConn                string `env:"DB_CONN"`
-	RedisUri              string `env:"REDIS_URI"`
-	KafkaBroker           string `env:"KAFKA_BROKER"`
-	RabbitUri             string `env:"RABBIT_URI"`
+	HttpAddress string `env:"HTTP_ADDRESS"`
+	DBConn      string `env:"DB_CONN"`
+	RedisUri    string `env:"REDIS_URI"`
+	KafkaBroker string `env:"KAFKA_BROKER"`
+	RabbitUri   string `env:"RABBIT_URI"`
 }
 
 // NewConfig is to parse env

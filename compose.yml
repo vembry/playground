@@ -150,8 +150,11 @@ services:
       DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
       HTTP_ADDRESS: 0.0.0.0:80
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_EXPORTER_OTLP_TIMEOUT: 5000
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=playground
       OTEL_SERVICE_NAME: app-go-server
-      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
+      OTEL_TRACES_SAMPLER: always_on
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
       REDIS_URI: redis://:local@redis:6379/0
     deploy:
@@ -188,14 +191,16 @@ services:
     ports:
       - "8082:81"
     environment:
-      HTTP_ADDRESS: 0.0.0.0:80
-      PROMETHEUS_HTTP_ADDRESS: 0.0.0.0:81
       DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
-      REDIS_URI: redis://:local@redis:6379/0
+      HTTP_ADDRESS: 0.0.0.0:80
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_EXPORTER_OTLP_TIMEOUT: 5000
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=playground
       OTEL_SERVICE_NAME: app-go-worker
+      OTEL_TRACES_SAMPLER: always_on
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URI: redis://:local@redis:6379/0
     deploy:
       resources:
         limits:
