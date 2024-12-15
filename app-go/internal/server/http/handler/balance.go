@@ -6,6 +6,9 @@ import (
 	"net/http"
 
 	"github.com/segmentio/ksuid"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/propagation"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
 type balance struct {
@@ -21,13 +24,26 @@ func NewBalance(balanceModule module.IBalance) *balance {
 func (b *balance) GetMux() *http.ServeMux {
 	balancemux := http.NewServeMux()
 
-	balancemux.HandleFunc("POST /open", b.Open)
-	balancemux.HandleFunc("GET /{balance_id}", b.Get)
-	balancemux.HandleFunc("POST /{balance_id}/deposit", b.Deposit)
-	balancemux.HandleFunc("POST /{balance_id}/withdraw", b.Withdraw)
-	balancemux.HandleFunc("POST /{balance_id_from}/transfer/{balance_id_to}", b.Transfer)
+	handle(balancemux, "POST /balance/open", b.Open)
+	handle(balancemux, "GET /balance/{balance_id}", b.Get)
+	handle(balancemux, "POST /balance/{balance_id}/deposit", b.Deposit)
+	handle(balancemux, "POST /balance/{balance_id}/withdraw", b.Withdraw)
+	handle(balancemux, "POST /balance/{balance_id_from}/transfer/{balance_id_to}", b.Transfer)
 
-	return groupMux("/balance", balancemux)
+	return balancemux
+}
+
+// handle is a mini middleware to incorporate otelhttp into the http handler
+func handle(mux *http.ServeMux, pattern string, h func(http.ResponseWriter, *http.Request)) {
+	// Configure the "http.route" for the HTTP instrumentation
+	handler := otelhttp.NewHandler(
+		otelhttp.WithRouteTag(pattern, http.HandlerFunc(h)),
+		pattern,
+		otelhttp.WithPropagators(propagation.TraceContext{}),
+		otelhttp.WithTracerProvider(tracenoop.NewTracerProvider()),
+	)
+
+	mux.Handle(pattern, handler)
 }
 
 // Open opens new balance. Basically creates new balance entry
