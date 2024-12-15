@@ -6,7 +6,7 @@ global:
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-    monitor: "credits"
+    monitor: "playground"
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
@@ -15,8 +15,6 @@ scrape_configs:
     static_configs:
       - targets: # add service that provides prometheus metrics
           - monitoring-prometheus:9090
-          # - app-go:81
-          # - app-go-worker:81
 
   - job_name: "docker"
     metrics_path: /metrics
