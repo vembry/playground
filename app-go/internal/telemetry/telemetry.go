@@ -19,6 +19,12 @@ func New() func() {
 		ctx       context.Context = context.Background()
 	)
 
+	// setup propagation
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+
 	// setup resource
 	res, err := resource.New(
 		ctx,
@@ -57,12 +63,6 @@ func New() func() {
 	shutdowns = append(shutdowns, func() {
 		traceProvider.Shutdown(context.Background())
 	})
-
-	// setup propagation
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
 
 	// return shutdown handler
 	return func() {
