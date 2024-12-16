@@ -8,7 +8,6 @@ import (
 	"github.com/segmentio/ksuid"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/propagation"
-	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
 type balance struct {
@@ -40,7 +39,6 @@ func handle(mux *http.ServeMux, pattern string, h func(http.ResponseWriter, *htt
 		otelhttp.WithRouteTag(pattern, http.HandlerFunc(h)),
 		pattern,
 		otelhttp.WithPropagators(propagation.TraceContext{}),
-		otelhttp.WithTracerProvider(tracenoop.NewTracerProvider()),
 	)
 
 	mux.Handle(pattern, handler)

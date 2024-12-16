@@ -8,7 +8,6 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/propagation"
-	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
 type server struct {
@@ -43,7 +42,6 @@ func middlewarex(next nethttp.Handler) nethttp.Handler {
 			),
 			fmt.Sprintf("%s %s", r.Method, r.URL.Path),
 			otelhttp.WithPropagators(propagation.TraceContext{}),
-			otelhttp.WithTracerProvider(tracenoop.NewTracerProvider()),
 		)
 
 		handler.ServeHTTP(w, r)
