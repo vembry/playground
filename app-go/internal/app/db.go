@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 // newOrmDb is to initialize DB in ORM form using gorm
@@ -12,7 +13,12 @@ func NewOrmDb(cfg *EnvConfig) (*gorm.DB, func()) {
 	// dsn := "host=localhost user=local password=local dbname=playground_app port=5432 sslmode=disable"
 	db, err := gorm.Open(postgres.Open(cfg.DBConn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to initiate db. err=%v", err)
+		log.Fatalf("error on initiating db. err=%v", err)
+	}
+
+	// add otel plugin
+	if err := db.Use(tracing.NewPlugin()); err != nil {
+		log.Fatalf("error on installing tracing into gorm. err=%v", err)
 	}
 
 	return db, func() {
