@@ -14,6 +14,8 @@ import (
 
 const AppHost string = "http://host.docker.internal:8089"
 
+// const AppHost string = "http://host.docker.internal:8080"
+
 type response[T any] struct {
 	Error  string `json:"error"`
 	Object T      `json:"object"`
