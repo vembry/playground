@@ -3,7 +3,6 @@ package rabbit
 import (
 	"context"
 	"fmt"
-	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/ksuid"
@@ -14,23 +13,12 @@ type withdraw struct {
 	withdrawProcessor IWithdrawProcessor
 }
 
-func NewWithdraw(conn *amqp.Connection) *withdraw {
-	// setup channel
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("failed to open a channel. err=%v", err)
-	}
-
-	return &withdraw{
-		ch: ch,
-	}
+func NewWithdraw() *withdraw {
+	return &withdraw{}
 }
 
 func (t *withdraw) Name() string {
 	return "withdraw"
-}
-func (t *withdraw) Channel() *amqp.Channel {
-	return t.ch
 }
 
 func (t *withdraw) Produce(ctx context.Context, withdrawId ksuid.KSUID) error {

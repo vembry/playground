@@ -3,7 +3,6 @@ package rabbit
 import (
 	"context"
 	"fmt"
-	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/ksuid"
@@ -14,25 +13,13 @@ type transfer struct {
 	transferProcessor ITransferProcessor
 }
 
-func NewTransfer(conn *amqp.Connection) *transfer {
-	// setup channel
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("failed to open a channel. err=%v", err)
-	}
-
-	return &transfer{
-		ch: ch,
-	}
+func NewTransfer() *transfer {
+	return &transfer{}
 }
 
 func (t *transfer) Name() string {
 	return "transfer"
 }
-func (t *transfer) Channel() *amqp.Channel {
-	return t.ch
-}
-
 func (t *transfer) Produce(ctx context.Context, transferId ksuid.KSUID) error {
 	body, _ := transferId.MarshalText()
 
