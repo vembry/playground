@@ -3,6 +3,7 @@ package rabbit
 import (
 	"context"
 	"fmt"
+	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/ksuid"
@@ -13,12 +14,23 @@ type deposit struct {
 	depositProcessor IDepositProcessor
 }
 
-func NewDeposit() *deposit {
-	return &deposit{}
+func NewDeposit(conn *amqp.Connection) *deposit {
+	// setup channel
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("failed to open a channel. err=%v", err)
+	}
+
+	return &deposit{
+		ch: ch,
+	}
 }
 
 func (t *deposit) Name() string {
 	return "deposit"
+}
+func (t *deposit) Channel() *amqp.Channel {
+	return t.ch
 }
 
 func (t *deposit) Produce(ctx context.Context, depositId ksuid.KSUID) error {

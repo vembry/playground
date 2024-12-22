@@ -10,10 +10,10 @@ import (
 type rabbit struct {
 	conn      *amqp.Connection
 	consumers []iConsumer
-	channels  map[string]*amqp.Channel
 }
 
 type iConsumer interface {
+	Channel() *amqp.Channel
 	Name() string
 	Handle(context.Context, amqp.Delivery) error
 }
@@ -26,8 +26,7 @@ func New(rabbitUri string) *rabbit {
 	}
 
 	return &rabbit{
-		conn:     conn,
-		channels: make(map[string]*amqp.Channel),
+		conn: conn,
 	}
 }
 
@@ -53,12 +52,7 @@ func (r *rabbit) Start() {
 
 // startConsumer is to start consumer by prepping needed preps
 func (r *rabbit) startConsumer(consumer iConsumer) {
-	ch, err := r.conn.Channel()
-	if err != nil {
-		log.Fatalf("rabbit: error on opening a new channel for '%s' consumer. err=%v", consumer.Name(), err)
-	}
-
-	r.channels[consumer.Name()] = ch
+	ch := consumer.Channel()
 
 	// declare queue in case it is missing
 	// for now the config will be defined here
@@ -122,10 +116,10 @@ func (r *rabbit) consumeMessage(queue amqp.Queue, message amqp.Delivery, handler
 
 func (r *rabbit) Stop() {
 	// close channels
-	for key, channel := range r.channels {
-		err := channel.Close()
+	for _, consumer := range r.consumers {
+		err := consumer.Channel().Close()
 		if err != nil {
-			log.Printf("rabbit: error trying to close channel for '%s' consumer. err=%v", key, err)
+			log.Printf("rabbit: error trying to close channel for '%s'", consumer.Name())
 		}
 	}
 

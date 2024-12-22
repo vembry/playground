@@ -61,9 +61,9 @@ func main() {
 	workerDummy := dummy.New()
 
 	// setup individual rabbit workers
-	transferWorkerRabbit := workerrabbit.NewTransfer()
-	depositWorkerRabbit := workerrabbit.NewDeposit()
-	withdrawWorkerRabbit := workerrabbit.NewWithdraw()
+	transferWorkerRabbit := workerrabbit.NewTransfer(workerRabbit.GetConnection())
+	depositWorkerRabbit := workerrabbit.NewDeposit(workerRabbit.GetConnection())
+	withdrawWorkerRabbit := workerrabbit.NewWithdraw(workerRabbit.GetConnection())
 
 	// register individual-workers to the rabbit
 	workerRabbit.RegisterWorkers(
