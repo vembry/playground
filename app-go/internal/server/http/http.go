@@ -22,6 +22,11 @@ func New(addr string, handlers ...*nethttp.ServeMux) *server {
 		mux.Handle("/", handler)
 	}
 
+	// manually inject health check endpoints
+	mux.HandleFunc("GET /health", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		w.WriteHeader(nethttp.StatusOK)
+	})
+
 	return &server{
 		server: &nethttp.Server{
 			Addr:    addr,
