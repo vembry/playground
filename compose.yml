@@ -60,6 +60,9 @@ services:
     image: docker.io/nginx:alpine-otel
     container_name: proxy
     restart: unless-stopped
+    depends_on:
+      app-go-server:
+        condition: service_healthy
     ports:
       - 8089:80
     volumes:
@@ -118,7 +121,7 @@ services:
       - 55679:55679 # zpages extension
 
   monitoring-tempo:
-    <<: *deps
+    # <<: *deps
     container_name: monitoring-tempo
     image: docker.io/grafana/tempo:main-13885de
     command: ["-config.file=/etc/tempo.yml"]
