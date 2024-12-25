@@ -7,13 +7,6 @@ import (
 	"net/http"
 )
 
-// groupMux groups endpoints with 1 prefix
-func groupMux(path string, mux *http.ServeMux) *http.ServeMux {
-	group := http.NewServeMux()
-	group.Handle(fmt.Sprintf("%s/", path), http.StripPrefix(path, mux)) // cover the entrypoint with middleware
-	return group
-}
-
 type BaseResponse[T any] struct {
 	Error  string `json:"error"`
 	Object T      `json:"object"`
