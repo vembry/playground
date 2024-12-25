@@ -304,3 +304,16 @@ services:
   #   environment:
   #     OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
   #     OTEL_SERVICE_NAME: broker
+
+  k6:
+    build:
+      context: ./k6
+    image: k6-scenario-0:local
+    container_name: k6
+    command: run scenario-0.ts
+    depends_on:
+      proxy:
+        condition: service_started
+    restart: no
+    environment:
+      - API_HOST=http://proxy
