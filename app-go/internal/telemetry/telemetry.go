@@ -15,15 +15,21 @@ import (
 
 func New() func() {
 	var (
-		shutdowns []func()        = []func(){}
-		ctx       context.Context = context.Background()
+		shutdowns  []func()        = []func(){}
+		ctx        context.Context = context.Background()
+		shutdownFn func()          = func() {
+			for _, shutdown := range shutdowns {
+				shutdown()
+			}
+		}
 	)
 
 	// setup propagation
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+	prop := propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
-	))
+	)
+	otel.SetTextMapPropagator(prop)
 
 	// setup resource
 	res, err := resource.New(
@@ -33,10 +39,28 @@ func New() func() {
 	)
 	if err != nil {
 		log.Fatalf("error on initiating otel's resource. err=%v", err)
-		return func() {}
+		return shutdownFn
 	}
 
 	// setup tracer
+	traceProvider := newTraceProvider(ctx, res)
+	otel.SetTracerProvider(traceProvider)
+	shutdowns = append(shutdowns, func() {
+		traceProvider.Shutdown(context.Background())
+	})
+
+	// setup meter
+	meterProvider := newMeterProvider(ctx, res)
+	otel.SetMeterProvider(meterProvider)
+	shutdowns = append(shutdowns, func() {
+		traceProvider.Shutdown(context.Background())
+	})
+
+	// return shutdown handler
+	return shutdownFn
+}
+
+func newTraceProvider(ctx context.Context, res *resource.Resource) *trace.TracerProvider {
 	traceExporter, err := otlptracegrpc.New(ctx)
 	if err != nil {
 		log.Fatalf("error on initiating otel's trace exporter. err=%v", err)
@@ -45,12 +69,11 @@ func New() func() {
 		trace.WithResource(res),
 		trace.WithSpanProcessor(trace.NewBatchSpanProcessor(traceExporter)),
 	)
-	otel.SetTracerProvider(traceProvider)
-	shutdowns = append(shutdowns, func() {
-		traceProvider.Shutdown(context.Background())
-	})
 
-	// setup meter
+	return traceProvider
+}
+
+func newMeterProvider(ctx context.Context, res *resource.Resource) *metric.MeterProvider {
 	metricExporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
 		log.Fatalf("error on initiating otel's metric exporter. err=%v", err)
@@ -59,15 +82,6 @@ func New() func() {
 		metric.WithResource(res),
 		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
 	)
-	otel.SetMeterProvider(meterProvider)
-	shutdowns = append(shutdowns, func() {
-		traceProvider.Shutdown(context.Background())
-	})
 
-	// return shutdown handler
-	return func() {
-		for _, shutdown := range shutdowns {
-			shutdown()
-		}
-	}
+	return meterProvider
 }
