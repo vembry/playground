@@ -27,7 +27,7 @@ func NewServe(
 
 			// start servers
 			for i := range servers {
-				log.Printf("starting %s server", servers[i].Name())
+				log.Printf("starting '%s' server", servers[i].Name())
 				servers[i].Start()
 			}
 
@@ -41,7 +41,7 @@ func NewServe(
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 
-				log.Printf("shutting down %s server", servers[i].Name())
+				log.Printf("shutting down '%s' server", servers[i].Name())
 
 				servers[i].Stop(ctx)
 			}
