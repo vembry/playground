@@ -1,10 +1,8 @@
 import http from "k6/http";
 
 export const options = {
-  vus: 1,
-  // duration: "1m",
-
-  iterations: 10,
+  vus: 5,
+  duration: "1m",
 };
 
 const host = __ENV.API_HOST
