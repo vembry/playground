@@ -108,7 +108,7 @@ services:
       ]
 
   monitoring-otel-collector:
-    <<: *deps
+    # <<: *deps
     image: docker.io/otel/opentelemetry-collector-contrib:0.115.1
     container_name: monitoring-otel-collector
     command: ["--config", "/etc/otelcollector/otelcollector.yml"]
@@ -247,8 +247,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "8082:81"
     environment:
       DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
       HTTP_ADDRESS: 0.0.0.0:80
@@ -310,14 +308,15 @@ services:
   #     OTEL_SERVICE_NAME: broker
 
   k6:
-    build:
-      context: ./k6
-    image: k6-scenario-0:local
+    image: docker.io/grafana/k6:latest
     container_name: k6
-    command: run scenario-0.ts
+    command: run /scenarios/scenario-0.ts
     depends_on:
       proxy:
         condition: service_started
     restart: no
     environment:
       - API_HOST=http://proxy
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
+ 
