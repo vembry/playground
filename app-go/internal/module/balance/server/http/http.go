@@ -3,12 +3,10 @@ package http
 import (
 	"app/internal/model"
 	"app/internal/module"
-	middleware "app/internal/server/http/middleware/chi"
 	"app/internal/server/http/util"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/riandyrn/otelchi"
 	"github.com/segmentio/ksuid"
 )
 
@@ -23,14 +21,7 @@ func New(balanceModule module.IBalance) *handler {
 }
 
 func (h *handler) GetHandler() http.Handler {
-	var serverName = "app-go"
-
-	// define router
 	r := chi.NewRouter()
-	r.Use(
-		otelchi.Middleware(serverName, otelchi.WithChiRoutes(r)),
-		middleware.NewRequestDurationMillis(serverName), // because riandyrn/otelchi has different way handling this
-	)
 
 	r.Post("/balance/open", h.Open)
 	r.Get("/balance/{balance_id}", h.Get)

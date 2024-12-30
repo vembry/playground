@@ -2,9 +2,13 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	nethttp "net/http"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type server struct {
@@ -27,11 +31,28 @@ func New(addr string, handlers ...http.Handler) *server {
 	return &server{
 		server: &nethttp.Server{
 			Addr:    addr,
-			Handler: mux,
+			Handler: middlewarex(mux),
 		},
 	}
 }
 
+// middlewarex is a testing middleware to propagate otel span
+func middlewarex(next nethttp.Handler) nethttp.Handler {
+	return nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		handler := otelhttp.NewHandler(
+			otelhttp.WithRouteTag(
+				r.URL.Path,
+				nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
+					next.ServeHTTP(w, r)
+				}),
+			),
+			fmt.Sprintf("%s %s", r.Method, r.URL.Path),
+			otelhttp.WithPropagators(propagation.TraceContext{}),
+		)
+
+		handler.ServeHTTP(w, r)
+	})
+}
 func (s *server) Name() string {
 	return "core"
 }

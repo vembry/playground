@@ -10,10 +10,10 @@ require (
 	github.com/jackc/pgconn v1.14.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.0.3
-	github.com/riandyrn/otelchi v0.11.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/spf13/cobra v1.8.1
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.33.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0
