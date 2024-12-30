@@ -3,14 +3,13 @@ package http
 import (
 	"app/internal/model"
 	"app/internal/module"
+	middleware "app/internal/server/http/middleware/chi"
 	"app/internal/server/http/util"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/riandyrn/otelchi"
-	otelchimetric "github.com/riandyrn/otelchi/metric"
 	"github.com/segmentio/ksuid"
-	"go.opentelemetry.io/otel"
 )
 
 type handler struct {
@@ -26,16 +25,11 @@ func New(balanceModule module.IBalance) *handler {
 func (h *handler) GetHandler() http.Handler {
 	var serverName = "app-go"
 
-	// define base config for metric middlewares
-	baseCfg := otelchimetric.NewBaseConfig(serverName, otelchimetric.WithMeterProvider(otel.GetMeterProvider()))
-
 	// define router
 	r := chi.NewRouter()
 	r.Use(
 		otelchi.Middleware(serverName, otelchi.WithChiRoutes(r)),
-		otelchimetric.NewRequestDurationMillis(baseCfg),
-		otelchimetric.NewRequestInFlight(baseCfg),
-		otelchimetric.NewResponseSizeBytes(baseCfg),
+		middleware.NewRequestDurationMillis(serverName), // because riandyrn/otelchi has different way handling this
 	)
 
 	r.Post("/balance/open", h.Open)
