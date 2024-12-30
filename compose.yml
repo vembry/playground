@@ -310,7 +310,7 @@ services:
   k6:
     image: docker.io/grafana/k6:latest
     container_name: k6
-    command: run /scenarios/scenario-0.ts
+    command: run /scenarios/scenario-0.js
     depends_on:
       proxy:
         condition: service_started
