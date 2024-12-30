@@ -4,10 +4,10 @@ import (
 	"app/cmd"
 	"app/internal/app"
 	balanceModuleRepo "app/internal/module/balance/repository/postgres"
+	balancehttpserver "app/internal/module/balance/server/http"
 	balanceModuleService "app/internal/module/balance/service"
 	"app/internal/module/locker"
 	"app/internal/server/http"
-	"app/internal/server/http/handler"
 	"app/internal/telemetry"
 	"app/internal/worker/dummy"
 	workerrabbit "app/internal/worker/rabbit"
@@ -95,10 +95,10 @@ func main() {
 	// =================
 
 	// setup handler(s)
-	balanceHandler := handler.NewBalance(balancemodule)
+	balancehttp := balancehttpserver.New(balancemodule)
 
 	// setup http server
-	httpserver := http.New(appConfig.HttpAddress, balanceHandler.GetMux())
+	httpserver := http.New(appConfig.HttpAddress, balancehttp.GetHandler())
 
 	// initiate CLI(s)
 	cli := &cobra.Command{}
