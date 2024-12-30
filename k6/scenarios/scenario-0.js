@@ -1,14 +1,17 @@
 import http from "k6/http";
 
+export const options = {
+  vus: 1,
+  // duration: "1m",
+
+  iterations: 10,
+};
+
 const host = __ENV.API_HOST
   ? __ENV.API_HOST
   : "http://host.docker.internal:8080";
 
-export const options = {
-  vus: 1,
-  duration: "5m",
-};
-
+  
 // list of available user-ids
 const balanceIds = [
   "2TeSprhp2cN6nEIcayZsjjvnlsK",
