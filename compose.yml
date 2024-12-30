@@ -172,6 +172,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_EXPORTER_OTLP_TIMEOUT: 5000
+      OTEL_EXPORTER_OTLP_COMPRESSION: gzip
       OTEL_RESOURCE_ATTRIBUTES: service.namespace=playground
       OTEL_SERVICE_NAME: app-go-server
       OTEL_TRACES_SAMPLER: always_on
@@ -214,6 +215,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_EXPORTER_OTLP_TIMEOUT: 5000
+      OTEL_EXPORTER_OTLP_COMPRESSION: gzip
       OTEL_RESOURCE_ATTRIBUTES: service.namespace=playground
       OTEL_SERVICE_NAME: app-go-server
       OTEL_TRACES_SAMPLER: always_on
