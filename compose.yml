@@ -159,7 +159,6 @@ services:
     #     - action: rebuild
     #       path: ./app-go
     image: playground-app-go:local
-    # container_name: app-go-server
     command: /app-go serve
     depends_on:
       postgres:
@@ -179,50 +178,10 @@ services:
       RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
       REDIS_URI: redis://:local@redis:6379/0
     deploy:
-      replicas: 3
+      # replicas: 3
       resources:
         limits:
           memory: 512m # defaulted memory limit to 512mb
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "/wget",
-          "--quiet",
-          "--output-document=-",
-          "http://0.0.0.0:80/health",
-        ]
-
-  app-go-server-debug:
-    build:
-      context: .
-      dockerfile: app-go/Dockerfile
-    # x-develop:
-    #   watch:
-    #     - action: rebuild
-    #       path: ./app-go
-    image: playground-app-go:local
-    # container_name: app-go-server
-    command: /app-go serve
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DB_CONN: host=postgres user=local password=local dbname=playground_app port=5432 sslmode=disable
-      HTTP_ADDRESS: 0.0.0.0:80
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
-      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_EXPORTER_OTLP_TIMEOUT: 5000
-      OTEL_EXPORTER_OTLP_COMPRESSION: gzip
-      OTEL_RESOURCE_ATTRIBUTES: service.namespace=playground
-      OTEL_SERVICE_NAME: app-go-server
-      OTEL_TRACES_SAMPLER: always_on
-      RABBIT_URI: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URI: redis://:local@redis:6379/0
-    ports:
-      - 8080:80
     healthcheck:
       test:
         [
@@ -274,26 +233,26 @@ services:
           "http://0.0.0.0:80/health",
         ]
 
-  # app-java-server:
-  #   build:
-  #     context: .
-  #     dockerfile: app-java/Dockerfile
-  #   image: playground-app-java:local
-  #   container_name: app-java-server
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "8083:80"
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "/wget",
-  #         "--quiet",
-  #         "--output-document=-",
-  #         "http://0.0.0.0:80/health",
-  #       ]
+  app-java-server:
+    build:
+      context: .
+      dockerfile: app-java/Dockerfile
+    image: playground-app-java:local
+    container_name: app-java-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/wget",
+          "--quiet",
+          "--output-document=-",
+          "http://0.0.0.0:80/health",
+        ]
 
   # broker:
   #   build:
