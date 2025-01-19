@@ -1,7 +1,7 @@
 import http from "k6/http";
 
 export const options = {
-  vus: 5,
+  vus: 4,
   duration: "5m",
 };
 
@@ -9,7 +9,7 @@ const host = __ENV.API_HOST
   ? __ENV.API_HOST
   : "http://host.docker.internal:8080";
 
-  
+
 // list of available user-ids
 const balanceIds = [
   "2TeSprhp2cN6nEIcayZsjjvnlsK",
@@ -70,7 +70,7 @@ export default function () {
 
   const trxAmount = Math.floor(Math.random() * 1000);
 
-  if (out["object"]["amount"] < trxAmount) {
+  if (out["data"]["amount"] < trxAmount) {
     const topupAmount = Math.floor(Math.random() * 10) * 10000 + 1000;
 
     // do topup
