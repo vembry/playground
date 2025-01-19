@@ -160,6 +160,7 @@ services:
     #       path: ./app-go
     image: playground-app-go:local
     command: /app-go serve
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -202,6 +203,7 @@ services:
     #       path: ./app-go
     image: playground-app-go:local
     container_name: app-go-worker
+    restart: unless-stopped
     command: /app-go work
     depends_on:
       postgres:
@@ -238,12 +240,16 @@ services:
       context: .
       dockerfile: app-java/Dockerfile
     image: playground-app-java:local
-    container_name: app-java-server
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "8081:80"
+    deploy:
+      resources:
+        limits:
+          memory: 512m # defaulted memory limit to 512mb
     healthcheck:
       test:
         [
