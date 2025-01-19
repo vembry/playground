@@ -6,7 +6,8 @@ to see how a webapp behave under load test with minimum resource. rather than se
 
 in a company, we will always wanted to maximize ROI margin and tech infrastructure is be one of the variables that can contributes this margin. to maximize the ROI we want the most performant, best dev-experience, with the lowest infra cost possible.
 
-#### outline
+### outline
+
 The test only covers APIs/backends and does not include frontends
 
 ## scenarios
@@ -46,7 +47,7 @@ focusing on the performance of an webapp's worker within constraint on handling 
 
 ```mermaid
 flowchart LR
-   subgraph work producer 
+   subgraph work producer
       k6 --> server
       server --> queue
    end
@@ -66,6 +67,9 @@ flowchart LR
 - `./.vscode`, contain repo's workspace setting for vscode
 - `./app-*`, web app focusing on the backend using respective language
 - `./web-*`, web app focusing on the frontend using respective language
+- `./k6`, contain scenario for load-test. utilizing k6
+- `./compose.yml`, contain specs for docker cluster containing services and their deps
+- `./compose.k6.yml`, contain specs for k6 to run, deliberately separating this file to avoid bloating the main compose file
 
 ## setup
 
@@ -75,7 +79,7 @@ flowchart LR
 
   > make start
 
-  it will setup the docker cluster and run k6's scenarios
+  it will setup the docker cluster
 
 ## links
 
