@@ -6,8 +6,8 @@ import (
 )
 
 type BaseResponse[T any] struct {
-	Error  string `json:"error"`
-	Object T      `json:"object"`
+	Error string `json:"error"`
+	Data  T      `json:"data"`
 }
 
 // RespondErrorJson is a generic handler to return error json response to api requester
@@ -27,7 +27,7 @@ func RespondErrorJson(w http.ResponseWriter, httpstatusCode int, message string)
 func RespondJson[T any](w http.ResponseWriter, httpstatusCode int, body T) {
 	// construct response
 	raw, _ := json.Marshal(BaseResponse[T]{
-		Object: body,
+		Data: body,
 	})
 
 	// write to response
