@@ -1,0 +1,22 @@
+name: playground
+services:
+  # k6:
+  #   image: docker.io/grafana/k6:latest
+  #   container_name: k6
+  #   command: run /scenarios/scenario-0.js
+  #   restart: no
+  #   environment:
+  #     - API_HOST=http://proxy
+  #   volumes:
+  #     - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
+
+  k6-broker:
+    image: docker.io/grafana/k6:latest
+    command: run /scenarios/scenario-broker.js
+    restart: no
+    environment:
+      - BROKER_HOST=broker:4000
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/broker/broker.proto:/scenarios/broker.proto # to use ./broker's proto
+ 

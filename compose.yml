@@ -254,30 +254,16 @@ services:
           "http://0.0.0.0:80/health",
         ]
 
-  # broker:
-  #   build:
-  #     context: ./broker
-  #     dockerfile: Dockerfile
-  #     target: dev # specify "dev" stage to run
-  #   image: broker:local
-  #   container_name: broker
-  #   ports:
-  #     - "4000:4000"
-  #   command: /home/app/broker/bin/broker
-  #   environment:
-  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
-  #     OTEL_SERVICE_NAME: broker
-
-  k6:
-    image: docker.io/grafana/k6:latest
-    container_name: k6
-    command: run /scenarios/scenario-0.js
-    depends_on:
-      proxy:
-        condition: service_started
-    restart: no
+  broker:
+    build:
+      context: ./broker
+      dockerfile: Dockerfile
+      target: dev # specify "dev" stage to run
+    image: broker:local
+    container_name: broker
+    ports: 
+      - "4000:4000"
+    command: /home/app/broker/bin/broker
     environment:
-      - API_HOST=http://proxy
-    volumes:
-      - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
- 
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector:4317
+      OTEL_SERVICE_NAME: broker
