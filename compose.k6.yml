@@ -1,14 +1,14 @@
 name: playground
 services:
-  # k6:
-  #   image: docker.io/grafana/k6:latest
-  #   container_name: k6
-  #   command: run /scenarios/scenario-0.js
-  #   restart: no
-  #   environment:
-  #     - API_HOST=http://proxy
-  #   volumes:
-  #     - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
+  k6:
+    image: docker.io/grafana/k6:latest
+    container_name: k6
+    command: run /scenarios/scenario-0.js
+    restart: no
+    environment:
+      - API_HOST=http://proxy
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/k6/scenarios:/scenarios
 
   k6-broker:
     image: docker.io/grafana/k6:latest
