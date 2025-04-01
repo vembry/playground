@@ -1,6 +1,6 @@
 module load-test
 
-go 1.23.3
+go 1.24.1
 
 replace github.com/vembry/load-test v0.0.0 => ../load-test
 
