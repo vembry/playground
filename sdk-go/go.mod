@@ -1,6 +1,6 @@
 module sdk
 
-go 1.24.1
+go 1.25
 
 require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0
