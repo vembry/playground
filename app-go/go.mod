@@ -1,6 +1,6 @@
 module app
 
-go 1.24.1
+go 1.25
 
 replace sdk v0.0.0 => ../sdk-go
 
